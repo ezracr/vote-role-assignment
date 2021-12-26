@@ -38,6 +38,8 @@ const genDislikeButton = (count = 0): dsc.MessageButton => new dsc.MessageButton
 
 const genVotersString = (voters: string[]): string => voters.join(', ')
 
+const genMention = (user: dsc.User): string => `<@${user.id}>`
+
 const genInFavorMessage = (inFavor = ''): string => `**Voted in favor**: ${inFavor}\n`
 const genAgainstMessage = (against = ''): string => `**Voted against**: ${against}\n`
 const genMessageContent = (user: dsc.User, url: string): string => (
@@ -52,8 +54,6 @@ const updateMessageContent = (oldMessage: string[], inFavor: string[] = [], agai
 )
 
 const genButton = (id: 'like' | 'dislike', count: number): dsc.MessageButton => id === 'like' ? genLikeButton(count) : genDislikeButton(count)
-
-const genMention = (user: dsc.User): string => `<@${user.id}>`
 
 const changeButtonCount = (actionRow: dsc.MessageActionRow, offset: number, id: 'like' | 'dislike'): number | undefined => {
   const index = id === 'like' ? 0 : 1
@@ -87,10 +87,10 @@ const addRemoveVote = (username: string, voters: string[]): [offset: 1 | -1, vot
   return [-1, [...voters.slice(0, userPos), ...voters.slice(userPos + 1)]]
 }
 
-const assignRole = async (count: number, interaction: dsc.ButtonInteraction<dsc.CacheType>, normMessage: string[]) => {
+const assignRole = async (count: number, interaction: dsc.ButtonInteraction<dsc.CacheType>, norMessage: string[]) => {
   if (count >= config.votesThreshold) {
     const guild = await client.guilds.fetch(interaction.guildId)
-    const authorLine = normMessage[0]
+    const authorLine = norMessage[0]
     const id = authorLine.slice(authorLine.indexOf('<') + 2, authorLine.indexOf('>'))
     const member = guild.members.cache.get(id)
     if (interaction.message.type === 'REPLY' && interaction.message.pinned) {
@@ -116,7 +116,7 @@ const processInteraction = async (interaction: dsc.ButtonInteraction<dsc.CacheTy
 
   const { customId: id, message: msg, user } = interaction
   const message = msg as dsc.Message<boolean>
-  const actionRow = message.components?.at(0)
+  const actionRow = message.components.at(0)
 
   if ((id === 'like' || id === 'dislike') && actionRow?.type === 'ACTION_ROW') {
     const norMessage = normMessage(message)
@@ -148,7 +148,7 @@ const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s
 
 const extractUrl = (msg: dsc.Message<boolean>): string | null => {
   const res = msg.content.match(new RegExp(`(?:\\s|^)(${escapeRegExp('https://docs.google.com/document/d/')}[\\S]+?)(?:\\s|$)`, 'i'))
-  if (res && res[1]) {
+  if (res?.[1]) {
     return res[1]
   }
   return null
@@ -170,7 +170,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
         await botMsg.pin()
       }
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.log(e)
   }
 })
@@ -192,9 +192,9 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
         }
       }
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.log(e)
   }
 })
 
-client.login(config.token)
+client.login(config.token).catch((e: unknown) => console.log(e))

@@ -93,6 +93,9 @@ const assignRole = async (count: number, interaction: dsc.ButtonInteraction<dsc.
     const authorLine = normMessage[0]
     const id = authorLine.slice(authorLine.indexOf('<') + 2, authorLine.indexOf('>'))
     const member = guild.members.cache.get(id)
+    if (interaction.message.type === 'REPLY' && interaction.message.pinned) {
+      await interaction.message.unpin()
+    }
     if (member) {
       await member.roles.add(config.awardedRoleId)
     }
@@ -160,10 +163,11 @@ client.on('messageCreate', async (msg): Promise<void> => {
           components: [genLikeButton(), genDislikeButton()]
         })
 
-        await msg.reply({
+        const botMsg = await msg.reply({
           content: genMessageContent(msg.author, url),
           components: [actionRow]
         })
+        await botMsg.pin()
       }
     }
   } catch (e) {

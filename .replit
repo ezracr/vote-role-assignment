@@ -1,2 +1,2 @@
 language="nodejs"
-run="npm i node@16 --no-save && npm config set prefix=$(pwd)/node_modules/node && export PATH=$(pwd)/node_modules/node/bin:$PATH && npm run start:repl"
+run="npm i node@16 --no-save && npm config set prefix=$(pwd)/node_modules/node && export PATH=$(pwd)/node_modules/node/bin:$PATH && npm run build:start"

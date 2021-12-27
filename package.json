@@ -8,7 +8,7 @@
     "run": "node dist/index.js",
     "start": "ts-node-dev --transpile-only src/index.ts",
     "start:repl": "npm run build ; npm run run",
-    "lint": "kcd-scripts lint --fix",
+    "lint": "kcd-scripts lint",
     "lint:staged": "lint-staged --allow-empty",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

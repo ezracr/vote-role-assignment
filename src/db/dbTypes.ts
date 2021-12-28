@@ -1,5 +1,10 @@
+export type Setting = {
+  id: string;
+  data: SettingsData;
+}
+
 export type SettingsData = {
-  allowedRoleIds: string[];
-  awardedRoleId: string;
-  votesThreshold: number;
+  allowed_to_vote_roles: string[];
+  awarded_role: string;
+  voting_threshold: number;
 }

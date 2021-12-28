@@ -1,6 +1,6 @@
 import { PoolClient } from 'pg'
 import Settings from './Settings'
-import pool from './pool'
+import pool from '../pool'
 
 export default class Managers {
   settings: Settings

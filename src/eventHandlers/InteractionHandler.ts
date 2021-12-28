@@ -48,11 +48,11 @@ class InteractionHandler {
   private canVote = async (): Promise<boolean | undefined> => {
     const guild = await client.guilds.fetch(this.interaction.guildId)
     const member = guild.members.cache.get(this.interaction.user.id)
-    return member?.roles.cache.some((r) => this.config.allowedRoleIds.includes(r.id))
+    return member?.roles.cache.some((r) => this.config.allowed_to_vote_roles.includes(r.id))
   }
 
   private assignRole = async (count: number, norMessage: string[]) => {
-    if (count >= this.config.votesThreshold) {
+    if (count >= this.config.voting_threshold) {
       const guild = await client.guilds.fetch(this.interaction.guildId)
       const authorLine = norMessage[0]
       const id = authorLine.slice(authorLine.indexOf('<') + 2, authorLine.indexOf('>'))
@@ -61,7 +61,7 @@ class InteractionHandler {
         await this.interaction.message.unpin()
       }
       if (member) {
-        await member.roles.add(this.config.awardedRoleId)
+        await member.roles.add(this.config.awarded_role)
       }
     }
   }

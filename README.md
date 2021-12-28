@@ -11,8 +11,8 @@ Assigns a role automatically provided enough votes
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`
 
 ### `local.env` structure
-DISCORD_TOKEN=YourBotsToken
-POSTGRES_PASSWORD=PickAnyPsqlPass
+DISCORD_TOKEN=YourBotsToken  
+POSTGRES_PASSWORD=PickAnyPsqlPass  
 DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@localhost:5447/bot
 
 ### `docker-compose.override`

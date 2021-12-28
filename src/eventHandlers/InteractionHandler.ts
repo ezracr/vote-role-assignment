@@ -1,7 +1,7 @@
 import dsc = require('discord.js')
 
 import client from '../client'
-import { Config } from './handlTypes'
+import { SettingsData } from '../db/dbTypes'
 import { genButton, updateMessageContent } from './handlUtils'
 
 const normMessage = (message: dsc.Message<boolean>): string[] => message.content.split('\n')
@@ -31,7 +31,7 @@ const extractVoters = (message: string[], type: 'like' | 'dislike'): Array<strin
 class InteractionHandler {
   private type: 'like' | 'dislike'
 
-  constructor(private config: Config, private interaction: dsc.ButtonInteraction<dsc.CacheType>) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private config: SettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 

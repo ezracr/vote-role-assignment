@@ -8,7 +8,7 @@
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "build:start": "npm run build ; npm run start:prod",
-    "lint": "kcd-scripts lint",
+    "lint": "kcd-scripts lint ./src/**/*.ts ./src/*.ts",
     "lint:staged": "lint-staged --allow-empty",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,11 +16,13 @@
   "license": "MIT",
   "dependencies": {
     "discord.js": "^13.3.1",
-    "express": "^4.17.2"
+    "express": "^4.17.2",
+    "pg": "^8.7.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
     "@types/node": "^16.11.17",
+    "@types/pg": "^8.6.3",
     "kcd-scripts": "^11.2.2",
     "lint-staged": "^12.1.4",
     "pre-commit": "^1.2.2",
@@ -29,7 +31,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "kcd-scripts lint --fix --max-warnings=0",
+      "kcd-scripts lint --fix --max-warnings=0 ./src/**/*.ts ./src/*.ts",
       "git add --force"
     ]
   },

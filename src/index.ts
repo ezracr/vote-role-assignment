@@ -4,6 +4,8 @@ import config from './config'
 import client from './client'
 import InteractionHandler from './eventHandlers/InteractionHandler'
 import MessageCreateHandler from './eventHandlers/MessageCreateHandler'
+import Managers from './db'
+import { SettingsData } from './db/dbTypes'
 
 const app = express()
 
@@ -17,11 +19,14 @@ client.on('ready', () => {
   console.log(`Ready`)
 })
 
-const getChannelConfig = (chlThId: string) => config.channelSettings.find(({ channelThreadId }) => chlThId === channelThreadId)
+const getChannelConfig = async (chlThId: string): Promise<SettingsData | undefined> => {
+  const managers = await Managers.init()
+  return managers.settings.getById(chlThId)
+}
 
 client.on('messageCreate', async (msg): Promise<void> => {
   try {
-    const chConfig = getChannelConfig(msg.channelId)
+    const chConfig = await getChannelConfig(msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg)
       const result = handler.process()
@@ -43,7 +48,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
     const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike')) {
-        const chConfig = getChannelConfig(interaction.channelId)
+        const chConfig = await getChannelConfig(interaction.channelId)
         if (chConfig) {
           const handler = new InteractionHandler(chConfig, interaction)
 

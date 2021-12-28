@@ -1,5 +1,4 @@
-export type Config = {
-  channelThreadId: string;
+export type SettingsData = {
   allowedRoleIds: string[];
   awardedRoleId: string;
   votesThreshold: number;

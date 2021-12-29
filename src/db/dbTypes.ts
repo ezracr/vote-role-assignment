@@ -4,7 +4,7 @@ export type Setting = {
 }
 
 export type SettingsData = {
-  allowed_to_vote_roles: string[];
+  allowed_to_vote_roles?: string[];
   awarded_role: string;
   voting_threshold: number;
   title: string;

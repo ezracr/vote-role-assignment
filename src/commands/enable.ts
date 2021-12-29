@@ -28,7 +28,7 @@ const getChannelName = (interaction: CommandInteraction<CacheType>): string => {
   return ''
 }
 
-export const enableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>) => {
+export const enableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
     const dbSettingsData = convertToDbType({
       optionsData: interaction.options.data,

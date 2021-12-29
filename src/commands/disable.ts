@@ -8,7 +8,7 @@ export const disableCommand = new bld.SlashCommandBuilder()
   .setName('disable')
   .setDescription('Disable the bot in this channel/thread.')
 
-export const disableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>) => {
+export const disableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
     const res = await managers.settings.deleteById(interaction.channelId)
     if (res) {

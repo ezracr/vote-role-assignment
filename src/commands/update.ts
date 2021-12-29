@@ -41,7 +41,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
   return 'Failed to update'
 }
 
-export const updateCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>) => {
+export const updateCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   const message = await handleCommand(managers, interaction)
   await interaction.reply({ content: message, ephemeral: true })
 }

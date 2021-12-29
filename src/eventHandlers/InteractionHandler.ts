@@ -63,7 +63,7 @@ class InteractionHandler {
     return true
   }
 
-  private assignRole = async (count: number, norMessage: string[]) => {
+  private assignRole = async (count: number, norMessage: string[]): Promise<void> => {
     if (count >= this.config.voting_threshold) {
       const guild = await client.guilds.fetch(this.interaction.guildId)
       const authorLine = norMessage[0]

@@ -12,7 +12,7 @@ export default class Managers {
     this.documents = new Documents(client)
   }
 
-  static async init() {
+  static async init(): Promise<Managers> {
     const client = await pool.connect()
 
     return new Managers(client)

@@ -2,6 +2,7 @@ import dsc = require('discord.js')
 
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
+import Managers from '../db/managers'
 import { genButton, updateMessageContent } from './handlUtils'
 
 const normMessage = (message: dsc.Message<boolean>): string[] => message.content.split('\n')
@@ -28,10 +29,17 @@ const extractVoters = (message: string[], type: 'like' | 'dislike'): Array<strin
   return []
 }
 
+const extractLink = (message: string[]): string | undefined => {
+  const line = message[1]
+  if (line) {
+    return line.slice(10, line.length - 1)
+  }
+}
+
 class InteractionHandler {
   private type: 'like' | 'dislike'
 
-  constructor(private config: ChSettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private config: ChSettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
@@ -61,10 +69,17 @@ class InteractionHandler {
       const authorLine = norMessage[0]
       const id = authorLine.slice(authorLine.indexOf('<') + 2, authorLine.indexOf('>'))
       const member = guild.members.cache.get(id)
+
       if (this.interaction.message.type === 'REPLY' && this.interaction.message.pinned) {
         await this.interaction.message.unpin()
       }
       if (member) {
+        const link = extractLink(norMessage)
+        if (link) {
+          await this.managers.documents.insert({
+            author_id: member.id, author_tag: member.user.tag, link, ch_sett_id: this.interaction.channelId,
+          })
+        }
         await member.roles.add(this.config.awarded_role)
       }
     }

@@ -9,3 +9,12 @@ export type ChSettingsData = {
   voting_threshold: number;
   title: string;
 }
+
+export type Document = {
+  id: string;
+  author_id: string;
+  author_tag: string;
+  link: string;
+  title: string;
+  ch_sett_id: string;
+}

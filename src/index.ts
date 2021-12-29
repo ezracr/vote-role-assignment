@@ -42,15 +42,15 @@ client.on('ready', async () => {
   }
 })
 
-const getChannelConfig = async (chlThId: string): Promise<ChSettingsData | undefined> => {
-  const managers = await Managers.init()
+const getChannelConfig = async (managers: Managers, chlThId: string): Promise<ChSettingsData | undefined> => {
   const res = await managers.settings.getById(chlThId)
   return res?.data
 }
 
 client.on('messageCreate', async (msg): Promise<void> => {
   try {
-    const chConfig = await getChannelConfig(msg.channelId)
+    const managers = await Managers.init()
+    const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg)
       const result = handler.process()
@@ -89,9 +89,10 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
       const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike')) {
-        const chConfig = await getChannelConfig(interaction.channelId)
+        const managers = await Managers.init()
+        const chConfig = await getChannelConfig(managers, interaction.channelId)
         if (chConfig) {
-          const handler = new InteractionHandler(chConfig, interaction)
+          const handler = new InteractionHandler(chConfig, interaction, managers)
 
           const result = await handler.process()
 

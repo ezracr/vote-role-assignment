@@ -21,7 +21,6 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
       optionsData: interaction.options.data,
       group: ['allowed-to-vote-role'],
     })
-    console.log(dbType)
     const res = await managers.settings.upsert(interaction.channelId, dbType as unknown as SettingsData)
     await interaction.reply({ content: res.inserted ? 'Enabled' : 'Updated', ephemeral: true })
   } catch (e: unknown) {

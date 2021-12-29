@@ -34,7 +34,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "kcd-scripts lint --fix --max-warnings=0 ./src/**/*.ts ./src/*.ts",
+      "kcd-scripts lint --fix --max-warnings=0",
       "git add --force"
     ]
   },

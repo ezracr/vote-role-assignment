@@ -7,7 +7,7 @@ import client from './client'
 import InteractionHandler from './eventHandlers/InteractionHandler'
 import MessageCreateHandler from './eventHandlers/MessageCreateHandler'
 import Managers from './db/managers'
-import { SettingsData } from './db/dbTypes'
+import { ChSettingsData } from './db/dbTypes'
 import { enableCommand, enableCommandHandler } from './commands/enable'
 import { disableCommand, disableCommandHandler } from './commands/disable'
 import { updateCommand, updateCommandHandler } from './commands/update'
@@ -42,7 +42,7 @@ client.on('ready', async () => {
   }
 })
 
-const getChannelConfig = async (chlThId: string): Promise<SettingsData | undefined> => {
+const getChannelConfig = async (chlThId: string): Promise<ChSettingsData | undefined> => {
   const managers = await Managers.init()
   const res = await managers.settings.getById(chlThId)
   return res?.data

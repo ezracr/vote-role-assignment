@@ -4,7 +4,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import Managers from '../db/managers'
 import { ReportableError } from '../db/managers/manUtils'
 
-import { SettingsData } from '../db/dbTypes'
+import { ChSettingsData } from '../db/dbTypes'
 import { convertToDbType, enableOptions } from './commUtils'
 
 export const enableCommand = new bld.SlashCommandBuilder()
@@ -37,7 +37,7 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
     if (!dbSettingsData.title) {
       dbSettingsData.title = getChannelName(interaction)
     }
-    const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as SettingsData)
+    const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as ChSettingsData)
     await interaction.reply({ content: res.inserted ? 'Enabled' : 'Updated', ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

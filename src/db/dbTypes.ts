@@ -1,9 +1,9 @@
-export type Setting = {
+export type ChSetting = {
   id: string;
-  data: SettingsData;
+  data: ChSettingsData;
 }
 
-export type SettingsData = {
+export type ChSettingsData = {
   allowed_to_vote_roles?: string[];
   awarded_role: string;
   voting_threshold: number;

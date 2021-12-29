@@ -1,12 +1,12 @@
 import { PoolClient } from 'pg'
-import Settings from './Settings'
 import pool from '../pool'
+import ChSettings from './ChSettings'
 
 export default class Managers {
-  settings: Settings
+  settings: ChSettings
 
   private constructor(client: PoolClient) {
-    this.settings = new Settings(client)
+    this.settings = new ChSettings(client)
   }
 
   static async init() {

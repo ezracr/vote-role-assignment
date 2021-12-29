@@ -4,7 +4,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import Managers from '../db/managers'
 import { ReportableError } from '../db/managers/manUtils'
 
-import { SettingsData } from '../db/dbTypes'
+import { ChSettingsData } from '../db/dbTypes'
 import { convertToDbType, enableOptions } from './commUtils'
 
 export const updateCommand = new bld.SlashCommandBuilder()
@@ -29,7 +29,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       optionsData: interaction.options.data,
       group: ['allowed_to_vote_role'],
     })
-    await managers.settings.updateAnyFieldById(interaction.channelId, dbType as unknown as SettingsData)
+    await managers.settings.updateAnyFieldById(interaction.channelId, dbType as unknown as ChSettingsData)
     return 'Updated'
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

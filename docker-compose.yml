@@ -9,6 +9,8 @@ services:
     build:
       context: .
       dockerfile: DockerfilePostgres
+    ports:
+      - "5447:5432"
     command: postgres -c shared_buffers=400MB -c work_mem=10MB
     env_file: local.env
 

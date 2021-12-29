@@ -23,10 +23,7 @@ services:
   postgres:
     restart: unless-stopped
     volumes:
-      - /home/user14/dev/ezracr/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata
-    ports:
-      - "5447:5432"
-
+      - /home/user/dev/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata    
   app:
     restart: unless-stopped
     build: .

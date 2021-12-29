@@ -6,6 +6,8 @@ Assigns a role automatically provided enough votes
 - Once `votesThreshold` is met, assigns `awardedRoleId`.
 
 ## Setup
+- On Windows some commands need adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.
+- In settings.ts you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`
 
 ### DB
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`

@@ -17,7 +17,7 @@ class Settings {
     return rows[0]
   }
 
-  async create(id: string, data: SettingsData): Promise<InsSetting>  {
+  async upsert(id: string, data: SettingsData): Promise<InsSetting> {
     try {
       const { rows } = await this.db.query<InsSetting>(`
         INSERT INTO "settings" ("id", "data") VALUES ($1, $2)
@@ -25,16 +25,27 @@ class Settings {
         RETURNING *, (xmax = 0) AS inserted
       `, [id, data])
       return rows[0]
-    } catch (e) {
+    } catch (e: unknown) {
       console.log(e)
       throw new ReportableError('Failed to save settings')
     }
   }
 
-  async deleteById(id: string): Promise<SettingsData | undefined> {
-    const { rows } = await this.db.query<SettingsData>(`
+  async deleteById(id: string): Promise<string | undefined> {
+    const { rows } = await this.db.query<Pick<Setting, 'id'>>(`
       DELETE FROM "settings" sts WHERE sts."id" = $1 RETURNING "id"
     `, [id])
+    return rows[0].id
+  }
+
+  async updateAnyFieldById(id: string, data: Partial<SettingsData>): Promise<Setting | undefined> {
+    const { rows } = await this.db.query<Setting>(`
+      UPDATE "settings" sts SET "data" = (
+        SELECT "data" FROM "settings" sts1 WHERE sts1.id = $1
+      ) || $2
+      WHERE sts."id" = $1
+      RETURNING *
+    `, [id, data])
     return rows[0]
   }
 }

@@ -10,6 +10,7 @@ import Managers from './db/managers'
 import { SettingsData } from './db/dbTypes'
 import { enableCommand, enableCommandHandler } from './commands/enable'
 import { disableCommand, disableCommandHandler } from './commands/disable'
+import { updateCommand, updateCommandHandler } from './commands/update'
 
 const app = express()
 
@@ -26,7 +27,7 @@ client.on('ready', async () => {
     if (client.user?.id) {
       await rest.put(
         dapi.Routes.applicationGuildCommands(client.user.id, config.guildId),
-        { body: [enableCommand, disableCommand] },
+        { body: [enableCommand, disableCommand, updateCommand] },
       )
     }
     console.log('Commands: ✅')
@@ -70,6 +71,9 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
           break
         case 'disable':
           await disableCommandHandler(managers, interaction)
+          break
+        case 'update':
+          await updateCommandHandler(managers, interaction)
           break
       }
     }

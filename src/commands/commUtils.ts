@@ -1,4 +1,5 @@
 import type { CommandInteractionOption, CacheType } from 'discord.js'
+import bld = require('@discordjs/builders')
 
 const normalizeKey = (name: string): string => name.replaceAll('-', '_')
 
@@ -51,4 +52,27 @@ export const convertToDbType = ({ optionsData, group }: ConvertDbTypeInput): Rec
     }
     return acc
   }, {})
+}
+
+export const enableOptions = {
+  awardedRole(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+    return option.setName('awarded-role')
+      .setDescription('Awarded role')
+      .setRequired(isRequired)
+  },
+  votingThreshold(isRequired: boolean, option: bld.SlashCommandIntegerOption): bld.SlashCommandIntegerOption {
+    return option.setName('voting-threshold')
+      .setDescription('How many votes required to award the role')
+      .setRequired(isRequired)
+  },
+  allowedToVoteRole1(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+    return option.setName('allowed-to-vote-role1')
+      .setDescription('If set, will allow only this role to vote')
+      .setRequired(isRequired)
+  },
+  allowedToVoteRole2(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+    return option.setName('allowed-to-vote-role2')
+      .setDescription('If set, will allow only this role to vote')
+      .setRequired(isRequired)
+  },
 }

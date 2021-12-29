@@ -22,7 +22,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     }
     const dbType = convertToDbType({
       optionsData: interaction.options.data,
-      group: [{ toKey: 'allowed_to_vote_roles', fromKeys: ['allowed-to-vote-role1', 'allowed-to-vote-role2'] }],
+      group: ['allowed_to_vote_role'],
     })
     await managers.settings.updateAnyFieldById(interaction.channelId, dbType as unknown as SettingsData)
     return 'Updated'

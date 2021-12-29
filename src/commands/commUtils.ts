@@ -10,31 +10,27 @@ const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | 
   return val.value
 }
 
-type GroupType = { fromKeys: string[]; toKey: string; }[]
+type GroupType = string[]
 
 type ConvertDbTypeInput = {
   optionsData: readonly CommandInteractionOption<CacheType>[];
   group?: GroupType;
 }
 
-const normalizeToDbGroup = (group?: GroupType): Record<string, string> => {
+const findDbGroupKey = (key: string, group?: GroupType): string | undefined => {
   if (group) {
-    return group.reduce<Record<string, string>>((acc, val) => {
-      val.fromKeys.forEach((fromKey) => {
-        acc[fromKey] = val.toKey
-      })
-      return acc
-    }, {})
+    const foundKey = group.find((grKey) => key.startsWith(grKey))
+    if (foundKey) {
+      return normalizeToDbKey(`${foundKey}s`)
+    }
   }
-  return {}
 }
 
 type ValType = string | number | true | (string | number | true)[]
 
 export const convertToDbType = ({ optionsData, group }: ConvertDbTypeInput): Record<string, ValType> => {
-  const normGroup = normalizeToDbGroup(group)
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
-    const groupKey = normGroup[val.name]
+    const groupKey = findDbGroupKey(val.name, group)
     const normValue = normalizeToDbValue(val)
     if (groupKey) {
       if (!acc[groupKey]) acc[groupKey] = []

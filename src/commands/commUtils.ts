@@ -1,9 +1,9 @@
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 import bld = require('@discordjs/builders')
 
-const normalizeKey = (name: string): string => name.replaceAll('-', '_')
+const normalizeToDbKey = (name: string): string => name.replaceAll('-', '_')
 
-const normalizeValue = (val: CommandInteractionOption<CacheType>): string | number | boolean | undefined => {
+const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | number | boolean | undefined => {
   if (val.type === 'ROLE') {
     return val.role!.id // eslint-disable-line @typescript-eslint/no-non-null-assertion
   }
@@ -17,7 +17,7 @@ type ConvertDbTypeInput = {
   group?: GroupType;
 }
 
-const normalizeGroup = (group?: GroupType): Record<string, string> => {
+const normalizeToDbGroup = (group?: GroupType): Record<string, string> => {
   if (group) {
     return group.reduce<Record<string, string>>((acc, val) => {
       val.fromKeys.forEach((fromKey) => {
@@ -32,10 +32,10 @@ const normalizeGroup = (group?: GroupType): Record<string, string> => {
 type ValType = string | number | true | (string | number | true)[]
 
 export const convertToDbType = ({ optionsData, group }: ConvertDbTypeInput): Record<string, ValType> => {
-  const normGroup = normalizeGroup(group)
+  const normGroup = normalizeToDbGroup(group)
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
     const groupKey = normGroup[val.name]
-    const normValue = normalizeValue(val)
+    const normValue = normalizeToDbValue(val)
     if (groupKey) {
       if (!acc[groupKey]) acc[groupKey] = []
       if (normValue) {
@@ -46,7 +46,7 @@ export const convertToDbType = ({ optionsData, group }: ConvertDbTypeInput): Rec
       }
       return acc
     }
-    const normKey = normalizeKey(val.name)
+    const normKey = normalizeToDbKey(val.name)
     if (normValue) {
       acc[normKey] = normValue
     }

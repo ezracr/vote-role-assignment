@@ -9,7 +9,7 @@ import { convertToDbType } from './commUtils'
 
 export const enableCommand = new bld.SlashCommandBuilder()
   .setName('enable')
-  .setDescription('Initialize the bot in this channel/thread.')
+  .setDescription('Initialize/update the bot in this channel/thread.')
   .addRoleOption((option) =>
     option.setName('awarded-role')
       .setDescription('Awarded role')

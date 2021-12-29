@@ -25,7 +25,7 @@ client.on('ready', async () => {
   try {
     if (client.user?.id) {
       await rest.put(
-        dapi.Routes.applicationGuildCommands(client.user.id, '922857571809894461'),
+        dapi.Routes.applicationGuildCommands(client.user.id, config.guildId),
         { body: [enableCommand, disableCommand] },
       )
     }

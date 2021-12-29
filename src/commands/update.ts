@@ -14,6 +14,10 @@ export const updateCommand = new bld.SlashCommandBuilder()
   .addIntegerOption(enableOptions.votingThreshold.bind(null, false))
   .addRoleOption(enableOptions.allowedToVoteRole1.bind(null, false))
   .addRoleOption(enableOptions.allowedToVoteRole2.bind(null, false))
+  .addStringOption((option) => option.setName('title')
+    .setDescription('The page\'s title.')
+    .setRequired(false)
+  )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {

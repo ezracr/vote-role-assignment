@@ -14,14 +14,29 @@ export const enableCommand = new bld.SlashCommandBuilder()
   .addIntegerOption(enableOptions.votingThreshold.bind(null, true))
   .addRoleOption(enableOptions.allowedToVoteRole1.bind(null, false))
   .addRoleOption(enableOptions.allowedToVoteRole2.bind(null, false))
+  .addStringOption((option) => option.setName('title')
+    .setDescription('The page\'s title will be taken from channel/thread\'s name if not set.')
+    .setRequired(false)
+  )
+
+const getChannelName = (interaction: CommandInteraction<CacheType>): string => {
+  const channel = interaction.guild?.channels.cache.get(interaction.channelId)
+  if (channel) {
+    return channel.name
+  }
+  return ''
+}
 
 export const enableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>) => {
   try {
-    const dbType = convertToDbType({
+    const dbSettingsData = convertToDbType({
       optionsData: interaction.options.data,
       group: ['allowed-to-vote-role'],
     })
-    const res = await managers.settings.upsert(interaction.channelId, dbType as unknown as SettingsData)
+    if (!dbSettingsData.title) {
+      dbSettingsData.title = getChannelName(interaction)
+    }
+    const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as SettingsData)
     await interaction.reply({ content: res.inserted ? 'Enabled' : 'Updated', ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

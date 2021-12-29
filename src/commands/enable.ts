@@ -8,6 +8,7 @@ import { SettingsData } from '../db/dbTypes'
 import { convertToDbType, enableOptions } from './commUtils'
 
 export const enableCommand = new bld.SlashCommandBuilder()
+  .setDefaultPermission(false)
   .setName('enable')
   .setDescription('Initialize/update the bot in this channel/thread.')
   .addRoleOption(enableOptions.awardedRole.bind(null, true))

@@ -5,6 +5,7 @@ import { SettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
 
 export const infoCommand = new bld.SlashCommandBuilder()
+  .setDefaultPermission(false)
   .setName('info')
   .setDescription('Show the settings of this channel/thread.')
 

@@ -26,10 +26,14 @@ const rest = new drest.REST({ version: '9' }).setToken(config.token)
 client.on('ready', async () => {
   try {
     if (client.user?.id) {
-      await rest.put(
+      const res = await rest.put(
         dapi.Routes.applicationGuildCommands(client.user.id, config.guildId),
         { body: [enableCommand, disableCommand, updateCommand, infoCommand] },
       )
+      const promCommands = (res as { id: string }[]).map((command) => client.guilds.cache.get(config.guildId)?.commands.fetch(command.id))
+      const commands = await Promise.all(promCommands)
+      const promPermSet = commands.map((command) => command?.permissions.set({ permissions: config.permissions }))
+      await Promise.all(promPermSet)
     }
     console.log('Commands: ✅')
   } catch (e: unknown) {

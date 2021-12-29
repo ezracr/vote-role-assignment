@@ -8,6 +8,7 @@ import { SettingsData } from '../db/dbTypes'
 import { convertToDbType, enableOptions } from './commUtils'
 
 export const updateCommand = new bld.SlashCommandBuilder()
+  .setDefaultPermission(false)
   .setName('update')
   .setDescription('Update individual fields of this channel/thread\'s config.')
   .addRoleOption(enableOptions.awardedRole.bind(null, false))

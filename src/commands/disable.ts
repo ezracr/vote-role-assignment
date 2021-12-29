@@ -4,6 +4,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import Managers from '../db/managers'
 
 export const disableCommand = new bld.SlashCommandBuilder()
+  .setDefaultPermission(false)
   .setName('disable')
   .setDescription('Disable the bot in this channel/thread.')
 

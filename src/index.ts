@@ -39,7 +39,8 @@ client.on('ready', async () => {
 
 const getChannelConfig = async (chlThId: string): Promise<SettingsData | undefined> => {
   const managers = await Managers.init()
-  return managers.settings.getById(chlThId)
+  const res = await managers.settings.getById(chlThId)
+  return res?.data
 }
 
 client.on('messageCreate', async (msg): Promise<void> => {

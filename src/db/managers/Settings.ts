@@ -35,7 +35,7 @@ class Settings {
     const { rows } = await this.db.query<Pick<Setting, 'id'>>(`
       DELETE FROM "settings" sts WHERE sts."id" = $1 RETURNING "id"
     `, [id])
-    return rows[0].id
+    return rows[0]?.id
   }
 
   async updateAnyFieldById(id: string, data: Partial<SettingsData>): Promise<Setting | undefined> {

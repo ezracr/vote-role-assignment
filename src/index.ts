@@ -12,10 +12,13 @@ import { enableCommand, enableCommandHandler } from './commands/enable'
 import { disableCommand, disableCommandHandler } from './commands/disable'
 import { updateCommand, updateCommandHandler } from './commands/update'
 import { infoCommand, infoCommandHandler } from './commands/info'
+import docsMiddleware from './middlewares/docsMiddleware'
 
-const app = express()
+const app = express().disable('x-powered-by')
 
-app.get('/', (req, res) => {
+docsMiddleware(app)
+
+app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   res.status(404).send('Error 404')
 })
 

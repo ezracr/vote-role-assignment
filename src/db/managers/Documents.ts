@@ -14,6 +14,16 @@ class Documents {
 
     return rows[0]
   }
+
+  async getBySettingsId(id: string): Promise<Document[] | undefined> {
+    const { rows } = await this.db.query<Document>(`
+      SELECT *
+      FROM "documents" ds
+      WHERE ds."ch_sett_id" = $1
+      ORDER BY created DESC
+    `, [id])
+    return rows
+  }
 }
 
 export default Documents

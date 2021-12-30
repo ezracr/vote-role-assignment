@@ -32,8 +32,8 @@ export class InnerMessage {
 
   toString(): string {
     return `**Author**: <@${this.authorId}>.
-   **Link**: ${this.url}.
-   ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVotersString(this.against))}`
+**Link**: ${this.url}.
+${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVotersString(this.against))}`
   }
 
   static from(message: string) {

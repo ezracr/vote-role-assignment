@@ -27,6 +27,8 @@ services:
     restart: unless-stopped
     volumes:
       - /home/user/dev/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata    
+    # ports:
+    #   - "5447:5432"
   app:
     restart: unless-stopped
     build: .
@@ -39,6 +41,7 @@ services:
   postgres:
     volumes:
       - /opt/votedocbot/db:/var/lib/postgresql/data/pgdata
+    image: registry.gitlab.com/my-corp/votedocbot/votedocbotdb:latest
 
   app:
     image: registry.gitlab.com/my-corp/votedocbot/votedocbotapp:latest

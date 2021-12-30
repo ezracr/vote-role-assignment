@@ -1,7 +1,7 @@
 import dsc = require('discord.js')
 
 import { ChSettingsData } from '../db/dbTypes'
-import { genLikeButton, genDislikeButton, genMessageContent } from './handlUtils'
+import { genLikeButton, genDislikeButton, InnerMessage } from './handlUtils'
 
 const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 
@@ -23,8 +23,8 @@ class MessageCreateHandler {
         const actionRow = new dsc.MessageActionRow({
           components: [genLikeButton(), genDislikeButton()]
         })
-        const messageContent = genMessageContent(this.msg.author, url)
-        return { messageContent, actionRow }
+        const innerMsg = new InnerMessage(this.msg.author.id, url)
+        return { messageContent: innerMsg.toString(), actionRow }
       }
     }
     return null

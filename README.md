@@ -15,7 +15,7 @@ If `pgdata` does not exists, it will be created and automatically populated with
 ### `local.env` structure
 DISCORD_TOKEN=YourBotsToken  
 POSTGRES_PASSWORD=PickAnyPsqlPass  
-DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot
+DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot  
 BASE_URL=http://your-url:your-port/voting-bot
 
 ### `docker-compose.override`

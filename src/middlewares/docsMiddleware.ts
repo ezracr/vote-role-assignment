@@ -81,7 +81,7 @@ ${docs.map((doc) => renderRow(doc))}
 
 export default function docsMiddleware(app: Application) {
   app.get('/docs/:id', async (req, res, next) => {
-    const managers = await Managers.init()
+    const managers = new Managers()
     const { id } = req.params
     if (id && id.length === 18) {
       const settings = await managers.settings.getById(id)

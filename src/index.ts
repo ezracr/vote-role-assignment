@@ -52,7 +52,7 @@ const getChannelConfig = async (managers: Managers, chlThId: string): Promise<Ch
 
 client.on('messageCreate', async (msg): Promise<void> => {
   try {
-    const managers = await Managers.init()
+    const managers = new Managers()
     const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg)
@@ -72,8 +72,8 @@ client.on('messageCreate', async (msg): Promise<void> => {
 
 client.on("interactionCreate", async (interaction): Promise<void> => {
   try {
+    const managers = new Managers()
     if (interaction.isCommand()) {
-      const managers = await Managers.init()
       switch (interaction.commandName) { // eslint-disable-line default-case
         case 'enable':
           await enableCommandHandler(managers, interaction)
@@ -92,7 +92,6 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
       const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike')) {
-        const managers = await Managers.init()
         const chConfig = await getChannelConfig(managers, interaction.channelId)
         if (chConfig) {
           const handler = new InteractionHandler(chConfig, interaction, managers)

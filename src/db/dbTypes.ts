@@ -18,3 +18,10 @@ export type Document = {
   title: string;
   ch_sett_id: string;
 }
+
+export type Vote = {
+  id: string;
+  message_id: string;
+  user_id: string;
+  user_tag: string;
+}

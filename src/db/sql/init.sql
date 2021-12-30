@@ -17,6 +17,15 @@ CREATE TABLE IF NOT EXISTS "documents"(
   UNIQUE("author_id", "link")
 );
 
+CREATE TABLE IF NOT EXISTS "votes"(
+  "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "message_id" text,
+  "user_id" text,
+  "user_tag" text,
+  "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
+  UNIQUE("message_id", "user_id")
+);
+
 ALTER TABLE documents
   ADD CONSTRAINT documents_ch_sett_id_id_fk FOREIGN KEY ("ch_sett_id")
     REFERENCES channel_settings ("id") ON UPDATE RESTRICT ON DELETE CASCADE;

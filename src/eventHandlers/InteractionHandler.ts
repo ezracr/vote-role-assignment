@@ -43,13 +43,14 @@ class InteractionHandler {
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
-  private addRemoveVote = (voters: string[]): [offset: 1 | -1, voters: string[]] => {
+  private addRemoveVote = (voters: string[], userTag?: string): [offset: 1 | -1, voters: string[]] => {
     const { user } = this.interaction
 
-    const userPos = voters.findIndex((val) => val === user.tag)
+    const userPos = voters.findIndex((val) => val === userTag)
     if (userPos === -1) {
       return [1, [...voters, user.tag]]
     }
+
     return [-1, [...voters.slice(0, userPos), ...voters.slice(userPos + 1)]]
   }
 
@@ -101,16 +102,26 @@ class InteractionHandler {
       const against = extractVoters(norMessage, 'dislike')
       const oldVoters = this.type === 'like' ? inFavor : against
 
+      const vote = await this.managers.votes.getByUserMessageId({ user_id: user.id, message_id: message.id })
+
       if (this.type === 'like' && against.includes(user.tag) || this.type === 'dislike' && inFavor.includes(user.tag)) {
-        const [offsetInFavor, inFavorNew] = this.addRemoveVote(inFavor)
-        const [offsetAgainst, againstNew] = this.addRemoveVote(against)
+        const [offsetInFavor, inFavorNew] = this.addRemoveVote(inFavor, vote?.user_tag)
+        const [offsetAgainst, againstNew] = this.addRemoveVote(against, vote?.user_tag)
+        if (user.tag !== vote?.user_tag) {
+          await this.managers.votes.updateUserTag({ user_id: user.id, message_id: msg.id, user_tag: user.tag })
+        }
         const count = changeButtonCount(actionRow, offsetInFavor, 'like')
         await this.assignRole(count ?? 0, norMessage)
         changeButtonCount(actionRow, offsetAgainst, 'dislike')
         const newMessage = updateMessageContent(norMessage, inFavorNew, againstNew)
         return { messageContent: newMessage, actionRow }
       }
-      const [offset, voters] = this.addRemoveVote(oldVoters)
+      const [offset, voters] = this.addRemoveVote(oldVoters, vote?.user_tag)
+      if (offset === -1) {
+        await this.managers.votes.deleteByUserMessageId({ user_id: user.id, message_id: message.id })
+      } else {
+        await this.managers.votes.insert({ message_id: message.id, user_id: user.id, user_tag: user.tag })
+      }
       const newMessage = updateMessageContent(norMessage, this.type === 'like' ? voters : inFavor, this.type === 'dislike' ? voters : against)
       const count = changeButtonCount(actionRow, offset, this.type)
       if (this.type === 'like') {

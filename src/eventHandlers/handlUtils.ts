@@ -1,4 +1,11 @@
 import dsc = require('discord.js')
+import client from '../client'
+
+export const fetchMember = async (guildId: string, userId: string): Promise<dsc.GuildMember | undefined> => {
+  const guild = await client.guilds.fetch(guildId) // TODO
+  const member = guild.members.cache.get(userId)
+  return member
+}
 
 export const genLikeButton = (count = 0): dsc.MessageButton => new dsc.MessageButton({
   style: 'SECONDARY',

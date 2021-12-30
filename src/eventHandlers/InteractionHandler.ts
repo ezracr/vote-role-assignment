@@ -3,7 +3,7 @@ import dsc = require('discord.js')
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { genButton, InnerMessage } from './handlUtils'
+import { genButton, InnerMessage, fetchMember } from './handlUtils'
 
 const changeButtonCount = (actionRow: dsc.MessageActionRow, offset: number, id: 'like' | 'dislike'): number | undefined => {
   const index = id === 'like' ? 0 : 1
@@ -36,8 +36,7 @@ class InteractionHandler {
   private canVote = async (): Promise<boolean | undefined> => {
     const { allowed_to_vote_roles } = this.config
     if (allowed_to_vote_roles && allowed_to_vote_roles.length > 0) {
-      const guild = await client.guilds.fetch(this.interaction.guildId)
-      const member = guild.members.cache.get(this.interaction.user.id)
+      const member = await fetchMember(this.interaction.guildId, this.interaction.user.id)
       return member?.roles.cache.some((r) => allowed_to_vote_roles.includes(r.id))
     }
     return true

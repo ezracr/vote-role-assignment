@@ -55,14 +55,16 @@ client.on('messageCreate', async (msg): Promise<void> => {
     const managers = new Managers()
     const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {
-      const handler = new MessageCreateHandler(chConfig, msg)
-      const result = handler.process()
+      const handler = new MessageCreateHandler(chConfig, msg, managers)
+      const result = await handler.process()
       if (result) {
         const botMsg = await msg.reply({
           content: result.messageContent,
-          components: [result.actionRow]
+          components: result.actionRow ? [result.actionRow] : [],
         })
-        await botMsg.pin()
+        if (result.actionRow) {
+          await botMsg.pin()
+        }
       }
     }
   } catch (e: unknown) {

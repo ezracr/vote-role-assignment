@@ -1,9 +1,12 @@
 # vote-role-assignment
 Assigns a role automatically provided enough votes
 
-- Records likes and dislikes, it's possible to undo your vote.
+- Available commands: enable, disable, update, info.
+- Records likes and dislikes, it's possible to undo your vote. But it won't cancel the awarded role if the threshold was met.
 - Allows only users with the roles to vote in `allowedRoleIds`.
-- Once `votesThreshold` is met, assigns `awardedRoleId`.
+- Once `votesThreshold` is met, assigns `awardedRoleId` and saves the document to the db.
+- If the user already has the role, then it will be immediately saved to the db.
+- The page with the documents can be accessed with the info command.
 
 ## Setup
 - On Windows some commands need adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.

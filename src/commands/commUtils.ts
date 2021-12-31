@@ -1,6 +1,8 @@
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 import bld = require('@discordjs/builders')
 
+import config from '../config'
+
 const normalizeToDbKey = (name: string): string => name.replaceAll('-', '_')
 
 const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | number | boolean | undefined => {
@@ -72,3 +74,5 @@ export const enableOptions = {
       .setRequired(isRequired)
   },
 }
+
+export const genLinkToDocPage = (channelId: string) => `${config.baseUrl}/docs/${channelId}`

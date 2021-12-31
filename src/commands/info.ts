@@ -3,7 +3,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import config from '../config'
+import { genLinkToDocPage } from './commUtils'
 
 export const infoCommand = new bld.SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -22,7 +22,7 @@ export const infoCommandHandler = async (managers: Managers, interaction: Comman
     const res = await managers.settings.getById(interaction.channelId)
     if (res) {
       await interaction.reply({
-        content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${config.baseUrl}/docs/${interaction.channelId}`,
+        content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${genLinkToDocPage(interaction.channelId)}`,
         ephemeral: true,
       })
     } else {

@@ -3,9 +3,8 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../db/managers'
 import { ReportableError } from '../db/managers/manUtils'
-
 import { ChSettingsData } from '../db/dbTypes'
-import { convertToDbType, enableOptions } from './commUtils'
+import { convertToDbType, enableOptions, genLinkToDocPage } from './commUtils'
 
 export const enableCommand = new bld.SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -38,6 +37,12 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
       dbSettingsData.title = getChannelName(interaction)
     }
     const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as ChSettingsData)
+    if (res.inserted) {
+      const newMsg = await interaction.channel?.send({
+        content: `The page with sent documents: ${genLinkToDocPage(interaction.channelId)}.`,
+      })
+      await newMsg?.pin()
+    }
     await interaction.reply({ content: res.inserted ? 'Enabled' : 'Updated', ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

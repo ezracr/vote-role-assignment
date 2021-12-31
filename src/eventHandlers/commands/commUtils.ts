@@ -1,7 +1,7 @@
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 import bld = require('@discordjs/builders')
 
-import config from '../config'
+import config from '../../config'
 
 const normalizeToDbKey = (name: string): string => name.replaceAll('-', '_')
 

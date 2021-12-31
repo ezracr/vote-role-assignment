@@ -1,9 +1,9 @@
 import bld = require('@discordjs/builders')
 import type { CommandInteraction, CacheType } from 'discord.js'
 
-import Managers from '../db/managers'
-import { ReportableError } from '../db/managers/manUtils'
-import { ChSettingsData } from '../db/dbTypes'
+import Managers from '../../db/managers'
+import { ReportableError } from '../../db/managers/manUtils'
+import { ChSettingsData } from '../../db/dbTypes'
 import { convertToDbType, enableOptions, genLinkToDocPage } from './commUtils'
 
 export const enableCommand = new bld.SlashCommandBuilder()

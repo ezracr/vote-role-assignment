@@ -1,8 +1,9 @@
 import bld = require('@discordjs/builders')
 import type { CommandInteraction, CacheType } from 'discord.js'
 
-import { ChSettingsData } from '../db/dbTypes'
-import Managers from '../db/managers'
+import { ChSettingsData } from '../../db/dbTypes'
+import Managers from '../../db/managers'
+import { convertIdToGroupTag } from '../handlUtils'
 import { genLinkToDocPage } from './commUtils'
 
 export const infoCommand = new bld.SlashCommandBuilder()
@@ -10,10 +11,22 @@ export const infoCommand = new bld.SlashCommandBuilder()
   .setName('info')
   .setDescription('Show the settings of this channel/thread.')
 
-export const prepareSettingsForDisplay = (obj: ChSettingsData): string => (
+const prepareGroupIds = (groupId: string | string[]): string => {
+  if (Array.isArray(groupId)) {
+    return groupId.map((id) => convertIdToGroupTag(id)).join(', ')
+  }
+  return convertIdToGroupTag(groupId)
+}
+
+const prepareLine = (key: string, val: string) => `  ${key}: ${val}`
+
+const prepareSettingsForDisplay = (obj: ChSettingsData): string => (
   (Object.keys(obj) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
-    return `  ${normKey}: ${JSON.stringify(obj[key])}`
+    if (key === 'allowed_to_vote_roles' || key === 'awarded_role') {
+      return prepareLine(normKey, prepareGroupIds(obj[key] as string | string[]))
+    }
+    return prepareLine(normKey, JSON.stringify(obj[key]))
   }).join('\n')
 )
 

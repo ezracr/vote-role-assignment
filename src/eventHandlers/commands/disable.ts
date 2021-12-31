@@ -1,7 +1,7 @@
 import bld = require('@discordjs/builders')
 import type { CommandInteraction, CacheType } from 'discord.js'
 
-import Managers from '../db/managers'
+import Managers from '../../db/managers'
 
 export const disableCommand = new bld.SlashCommandBuilder()
   .setDefaultPermission(false)

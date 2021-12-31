@@ -1,10 +1,10 @@
 import bld = require('@discordjs/builders')
 import type { CommandInteraction, CacheType } from 'discord.js'
 
-import Managers from '../db/managers'
-import { ReportableError } from '../db/managers/manUtils'
+import Managers from '../../db/managers'
+import { ReportableError } from '../../db/managers/manUtils'
 
-import { ChSettingsData } from '../db/dbTypes'
+import { ChSettingsData } from '../../db/dbTypes'
 import { convertToDbType, enableOptions } from './commUtils'
 
 export const updateCommand = new bld.SlashCommandBuilder()

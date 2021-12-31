@@ -28,11 +28,14 @@ const genAgainstMessage = (against = ''): string => `**Voted against**: ${agains
 
 const genVotersString = (voters: string[]): string => voters.join(', ')
 
+export const convertIdToUserTag = (userId: string): string => `<@!${userId}>`
+export const convertIdToGroupTag = (groupId: string): string => `<@&${groupId}>`
+
 export class InnerMessage {
   constructor(public authorId: string, public url: string, public inFavor: string[] = [], public against: string[] = []) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
 
   toString(): string {
-    return `**Author**: <@${this.authorId}>.
+    return `**Author**: ${convertIdToUserTag(this.authorId)}.
 **Link**: ${this.url}.
 ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVotersString(this.against))}`
   }

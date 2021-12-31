@@ -4,7 +4,7 @@ import dapi = require('discord-api-types/v9')
 
 import config from './config'
 import client from './client'
-import InteractionHandler from './eventHandlers/InteractionHandler'
+import VoteInteractionHandler from './eventHandlers/VoteInteractionHandler'
 import MessageCreateHandler from './eventHandlers/MessageCreateHandler'
 import Managers from './db/managers'
 import { ChSettingsData } from './db/dbTypes'
@@ -96,7 +96,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
       if ((customId === 'like' || customId === 'dislike')) {
         const chConfig = await getChannelConfig(managers, interaction.channelId)
         if (chConfig) {
-          const handler = new InteractionHandler(chConfig, interaction, managers)
+          const handler = new VoteInteractionHandler(chConfig, interaction, managers)
 
           const result = await handler.process()
 

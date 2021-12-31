@@ -13,26 +13,15 @@ const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, ty
   }
 }
 
-class InteractionHandler {
+class VoteInteractionHandler {
   private type: 'like' | 'dislike'
 
-  constructor(private config: ChSettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
-  private addRemoveVote = (voters: string[], userTag?: string): [offset: 1 | -1, voters: string[]] => {
-    const { user } = this.interaction
-
-    const userPos = voters.findIndex((val) => val === userTag)
-    if (userPos === -1) {
-      return [1, [...voters, user.tag]]
-    }
-
-    return [-1, [...voters.slice(0, userPos), ...voters.slice(userPos + 1)]]
-  }
-
   private canVote = async (): Promise<boolean | undefined> => {
-    const { allowed_to_vote_roles } = this.config
+    const { allowed_to_vote_roles } = this.chConfig
     if (allowed_to_vote_roles && allowed_to_vote_roles.length > 0) {
       const member = await fetchMember(this.interaction.guildId, this.interaction.user.id)
       return member?.roles.cache.some((r) => allowed_to_vote_roles.includes(r.id))
@@ -41,7 +30,7 @@ class InteractionHandler {
   }
 
   private assignRole = async (count: number, innMessage: InnerMessage): Promise<void> => {
-    if (count >= this.config.voting_threshold) {
+    if (count >= this.chConfig.voting_threshold) {
       const guild = await client.guilds.fetch(this.interaction.guildId)
       const id = innMessage.authorId
       const member = guild.members.cache.get(id)
@@ -56,7 +45,7 @@ class InteractionHandler {
             author_id: member.id, author_tag: member.user.tag, link, ch_sett_id: this.interaction.channelId,
           })
         }
-        await member.roles.add(this.config.awarded_role)
+        await member.roles.add(this.chConfig.awarded_role)
       }
     }
   }
@@ -79,11 +68,10 @@ class InteractionHandler {
         in_favor: this.type === 'like',
       })
       const votes = await this.managers.votes.getVoteCountsByMessageId(msg.id)
-      const innMessage = InnerMessage.from(message.content)
+      const innMessage = InnerMessage.from({
+        oldMessage: message.content, inFavor: votes?.in_favor, against: votes?.against,
+      })
       if (innMessage) {
-        innMessage.inFavor = votes?.in_favor ?? []
-        innMessage.against = votes?.against ?? []
-
         changeButtonCount(actionRow, votes?.in_favor_count ?? 0, 'like')
         changeButtonCount(actionRow, votes?.against_count ?? 0, 'dislike')
 
@@ -98,4 +86,4 @@ class InteractionHandler {
   }
 }
 
-export default InteractionHandler
+export default VoteInteractionHandler

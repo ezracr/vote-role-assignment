@@ -20,7 +20,7 @@ class ChSettings {
       const { rows } = await pool.query<InsSetting>(`
         INSERT INTO "channel_settings" ("id", "data") VALUES ($1, $2)
         ON CONFLICT ("id") DO UPDATE SET "data" = EXCLUDED.data
-        RETURNING *, (xmax = 0) AS inserted
+        RETURNING *, (xmax = 0) inserted
       `, [id, data])
       return rows[0]
     } catch (e: unknown) {

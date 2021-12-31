@@ -23,13 +23,13 @@ const isAlreadyAwarded = async (config: ChSettingsData, msg: dsc.Message<boolean
 }
 
 class MessageCreateHandler {
-  constructor(private config: ChSettingsData, private msg: dsc.Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private msg: dsc.Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
 
   process = async (): Promise<{ messageContent: string, actionRow?: dsc.MessageActionRow } | null> => {
     if (!this.msg.author.bot) {
       const url = extractUrl(this.msg)
       if (url) {
-        const isAwarded = await isAlreadyAwarded(this.config, this.msg)
+        const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
           await this.managers.documents.insert({
             author_id: this.msg.author.id,

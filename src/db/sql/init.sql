@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS "votes"(
   "message_id" text,
   "user_id" text,
   "user_tag" text,
+  "in_favor" boolean NOT NULL,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   UNIQUE("message_id", "user_id")
 );

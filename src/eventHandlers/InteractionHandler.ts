@@ -5,13 +5,11 @@ import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
 import { genButton, InnerMessage, fetchMember } from './handlUtils'
 
-const changeButtonCount = (actionRow: dsc.MessageActionRow, offset: number, id: 'like' | 'dislike'): number | undefined => {
-  const index = id === 'like' ? 0 : 1
+const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
+  const index = type === 'like' ? 0 : 1
   const oldButton = actionRow.components.at(index)
   if (oldButton?.type === 'BUTTON') {
-    const votes = Number.parseInt(oldButton.label ?? '0', 10) + offset
-    actionRow.spliceComponents(index, 1, genButton(id, votes))
-    return votes
+    actionRow.spliceComponents(index, 1, genButton(type, newCount))
   }
 }
 
@@ -73,40 +71,28 @@ class InteractionHandler {
     const message = msg as dsc.Message<boolean>
     const actionRow = message.components.at(0)
 
-    const innMessage = InnerMessage.from(message.content)
+    if (actionRow?.type === 'ACTION_ROW') {
+      await this.managers.votes.processVote({
+        message_id: msg.id,
+        user_id: user.id,
+        user_tag: user.tag,
+        in_favor: this.type === 'like',
+      })
+      const votes = await this.managers.votes.getVoteCountsByMessageId(msg.id)
+      const innMessage = InnerMessage.from(message.content)
+      if (innMessage) {
+        innMessage.inFavor = votes?.in_favor ?? []
+        innMessage.against = votes?.against ?? []
 
-    if (actionRow?.type === 'ACTION_ROW' && innMessage) {
-      const inFavor = innMessage.inFavor
-      const against = innMessage.against
-      const oldVoters = this.type === 'like' ? inFavor : against
+        changeButtonCount(actionRow, votes?.in_favor_count ?? 0, 'like')
+        changeButtonCount(actionRow, votes?.against_count ?? 0, 'dislike')
 
-      const vote = await this.managers.votes.getByUserMessageId({ user_id: user.id, message_id: message.id })
-
-      if (this.type === 'like' && against.includes(user.tag) || this.type === 'dislike' && inFavor.includes(user.tag)) {
-        const [offsetInFavor, inFavorNew] = this.addRemoveVote(inFavor, vote?.user_tag)
-        const [offsetAgainst, againstNew] = this.addRemoveVote(against, vote?.user_tag)
-        if (user.tag !== vote?.user_tag) {
-          await this.managers.votes.updateUserTag({ user_id: user.id, message_id: msg.id, user_tag: user.tag })
+        if (this.type === 'like') {
+          await this.assignRole(votes?.in_favor_count ?? 0, innMessage)
         }
-        const count = changeButtonCount(actionRow, offsetInFavor, 'like')
-        await this.assignRole(count ?? 0, innMessage)
-        changeButtonCount(actionRow, offsetAgainst, 'dislike')
-        innMessage.inFavor = inFavorNew
-        innMessage.against = againstNew
+
         return { messageContent: innMessage.toString(), actionRow }
       }
-      const [offset, voters] = this.addRemoveVote(oldVoters, vote?.user_tag)
-      if (offset === -1) {
-        await this.managers.votes.deleteByUserMessageId({ user_id: user.id, message_id: message.id })
-      } else {
-        await this.managers.votes.insert({ message_id: message.id, user_id: user.id, user_tag: user.tag })
-      }
-      innMessage[this.type === 'like' ? 'inFavor' : 'against'] = voters
-      const count = changeButtonCount(actionRow, offset, this.type)
-      if (this.type === 'like') {
-        await this.assignRole(count ?? 0, innMessage)
-      }
-      return { messageContent: innMessage.toString(), actionRow }
     }
     return null
   }

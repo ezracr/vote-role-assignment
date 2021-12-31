@@ -24,4 +24,5 @@ export type Vote = {
   message_id: string;
   user_id: string;
   user_tag: string;
+  in_favor: boolean;
 }

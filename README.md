@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
     volumes:
       - /home/user/dev/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata    
-    # ports:
+    # ports: # Open the ports if you want to access the DB outside of the app container, then the DB connection string will be `localhost:5447` instead of `postgres:5432`
     #   - "5447:5432"
   app:
     restart: unless-stopped

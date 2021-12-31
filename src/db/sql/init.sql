@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS "channel_settings"(
 
 CREATE TABLE IF NOT EXISTS "documents"(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-  "author_id" text COLLATE "C",
-  "author_tag" text COLLATE "C",
-  "link" text,
+  "author_id" text COLLATE "C" NOT NULL,
+  "author_tag" text COLLATE "C" NOT NULL,
+  "link" text NOT NULL,
   "title" text,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   "ch_sett_id" text COLLATE "C",
@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS "documents"(
 
 CREATE TABLE IF NOT EXISTS "votes"(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-  "message_id" text,
-  "user_id" text,
-  "user_tag" text,
+  "message_id" text COLLATE "C" NOT NULL,
+  "user_id" text COLLATE "C" NOT NULL,
+  "user_tag" text NOT NULL,
   "in_favor" boolean NOT NULL,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   UNIQUE("message_id", "user_id")

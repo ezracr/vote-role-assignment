@@ -2,7 +2,7 @@ import dsc = require('discord.js')
 import client from '../client'
 
 export const fetchMember = async (guildId: string, userId: string): Promise<dsc.GuildMember | undefined> => {
-  const guild = await client.guilds.fetch(guildId) // TODO
+  const guild = await client.guilds.fetch(guildId)
   const member = guild.members.cache.get(userId)
   return member
 }

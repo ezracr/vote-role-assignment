@@ -22,7 +22,7 @@ class VoteInteractionHandler {
 
   private canVote = async (): Promise<boolean | undefined> => {
     const { allowed_to_vote_roles } = this.chConfig
-    if (allowed_to_vote_roles && allowed_to_vote_roles.length > 0) {
+    if (allowed_to_vote_roles && allowed_to_vote_roles.length > 0 && this.interaction.guildId) {
       const member = await fetchMember(this.interaction.guildId, this.interaction.user.id)
       return member?.roles.cache.some((r) => allowed_to_vote_roles.includes(r.id))
     }
@@ -30,7 +30,7 @@ class VoteInteractionHandler {
   }
 
   private assignRole = async (count: number, innMessage: InnerMessage): Promise<void> => {
-    if (count >= this.chConfig.voting_threshold) {
+    if (count >= this.chConfig.voting_threshold && this.interaction.guildId) {
       const guild = await client.guilds.fetch(this.interaction.guildId)
       const id = innMessage.authorId
       const member = guild.members.cache.get(id)

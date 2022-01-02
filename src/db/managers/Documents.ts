@@ -24,7 +24,7 @@ class Documents {
   async getBySettingsId(id: string): Promise<Document[] | undefined> {
     const { rows } = await pool.query<Document>(`
       SELECT *
-      FROM documents ds
+      FROM documents_full ds
       WHERE ds."ch_sett_id" = $1
       ORDER BY ds."created" DESC
     `, [id])

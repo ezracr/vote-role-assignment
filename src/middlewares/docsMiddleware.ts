@@ -5,7 +5,7 @@ import { Document, ChSetting } from '../db/dbTypes'
 
 const renderRow = (doc: Document) => `
 <div class="row">
-  <div class="author first-cell">${doc.author_tag}</div>
+  <div class="author first-cell">${doc.user.tag}</div>
   <div class="link last-cell"><a href="${doc.link}">link</a></div>
 </div>
 `

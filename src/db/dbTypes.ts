@@ -10,19 +10,22 @@ export type ChSettingsData = {
   title: string;
 }
 
+export type User = {
+  id: string;
+  tag: string;
+}
+
 export type Document = {
   id: string;
-  author_id: string;
-  author_tag: string;
   link: string;
   title: string;
   ch_sett_id: string;
+  user: User;
 }
 
 export type Vote = {
   id: string;
   message_id: string;
-  user_id: string;
-  user_tag: string;
   in_favor: boolean;
+  user: User;
 }

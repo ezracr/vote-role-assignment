@@ -1,16 +1,24 @@
 import pool from '../pool'
 
 import { Document } from '../dbTypes'
+import Users from './Users'
 
 class Documents {
-  async insert(data: Pick<Document, 'author_id' | 'author_tag' | 'link' | 'ch_sett_id'>): Promise<Document | undefined> {
-    const { rows } = await pool.query<Document>(`
-      INSERT INTO "documents" ("author_id", "author_tag", "link", "ch_sett_id") VALUES ($1, $2, $3, $4)
+  users = new Users()
+
+  async insert(data: Pick<Document, 'user' | 'link' | 'ch_sett_id'>): Promise<Document | undefined> {
+    const user = await this.users.upsert(data.user)
+
+    const { rows: [doc] } = await pool.query<Document>(`
+      INSERT INTO "documents" ("user_id", "link", "ch_sett_id") VALUES ($1, $2, $3)
       ON CONFLICT DO NOTHING
       RETURNING *
-    `, [data.author_id, data.author_tag, data.link, data.ch_sett_id])
+    `, [data.user.id, data.link, data.ch_sett_id])
 
-    return rows[0]
+    if (doc && user) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+      doc.user = user
+      return doc
+    }
   }
 
   async getBySettingsId(id: string): Promise<Document[] | undefined> {

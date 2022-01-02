@@ -32,8 +32,10 @@ class MessageCreateHandler {
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
           await this.managers.documents.insert({
-            author_id: this.msg.author.id,
-            author_tag: this.msg.author.tag,
+            user: {
+              id: this.msg.author.id,
+              tag: this.msg.author.tag,
+            },
             link: url,
             ch_sett_id: this.msg.channelId,
           })

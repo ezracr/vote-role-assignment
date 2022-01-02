@@ -42,7 +42,10 @@ class VoteInteractionHandler {
         const link = innMessage.url
         if (link) {
           await this.managers.documents.insert({
-            author_id: member.id, author_tag: member.user.tag, link, ch_sett_id: this.interaction.channelId,
+            user: {
+              id: member.id, tag: member.user.tag,
+            },
+            link, ch_sett_id: this.interaction.channelId,
           })
         }
         await member.roles.add(this.chConfig.awarded_role)
@@ -63,8 +66,10 @@ class VoteInteractionHandler {
     if (actionRow?.type === 'ACTION_ROW') {
       await this.managers.votes.processVote({
         message_id: msg.id,
-        user_id: user.id,
-        user_tag: user.tag,
+        user: {
+          id: user.id,
+          tag: user.tag,
+        },
         in_favor: this.type === 'like',
       })
       const votes = await this.managers.votes.getVoteCountsByMessageId(msg.id)

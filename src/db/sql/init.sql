@@ -1,12 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS "channel_settings"(
+CREATE TABLE IF NOT EXISTS channel_settings(
   "id" text PRIMARY KEY COLLATE "C",
   "data" jsonb,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "documents"(
+CREATE TABLE IF NOT EXISTS documents(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   "user_id" text COLLATE "C" NOT NULL,
   "link" text NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "documents"(
   UNIQUE("user_id", "link")
 );
 
-CREATE TABLE IF NOT EXISTS "votes"(
+CREATE TABLE IF NOT EXISTS votes(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   "message_id" text COLLATE "C" NOT NULL,
   "user_id" text COLLATE "C" NOT NULL,

@@ -10,7 +10,7 @@ class Documents {
     const user = await this.users.upsert(data.user)
 
     const { rows: [doc] } = await pool.query<Document>(`
-      INSERT INTO "documents" ("user_id", "link", "ch_sett_id") VALUES ($1, $2, $3)
+      INSERT INTO documents ("user_id", "link", "ch_sett_id") VALUES ($1, $2, $3)
       ON CONFLICT DO NOTHING
       RETURNING *
     `, [data.user.id, data.link, data.ch_sett_id])
@@ -24,9 +24,9 @@ class Documents {
   async getBySettingsId(id: string): Promise<Document[] | undefined> {
     const { rows } = await pool.query<Document>(`
       SELECT *
-      FROM "documents" ds
+      FROM documents ds
       WHERE ds."ch_sett_id" = $1
-      ORDER BY created DESC
+      ORDER BY ds."created" DESC
     `, [id])
     return rows
   }

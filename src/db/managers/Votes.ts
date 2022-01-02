@@ -18,7 +18,7 @@ class Votes {
     const user = await this.users.upsert(data.user, client)
 
     const { rows: [vote] } = await (client ?? pool).query<Vote>(`
-      INSERT INTO "votes" ("message_id", "user_id", "in_favor") VALUES ($1, $2, $3)
+      INSERT INTO votes ("message_id", "user_id", "in_favor") VALUES ($1, $2, $3)
       ON CONFLICT ("message_id", "user_id") DO UPDATE SET "in_favor" = EXCLUDED."in_favor"
       RETURNING *
     `, [data.message_id, data.user.id, data.in_favor])
@@ -34,7 +34,7 @@ class Votes {
     try {
       await client.query('BEGIN')
       const { rows } = await client.query<Vote>(`
-        SELECT * FROM "votes" WHERE "user_id" = $1 AND "message_id" = $2 FOR UPDATE
+        SELECT * FROM votes WHERE "user_id" = $1 AND "message_id" = $2 FOR UPDATE
       `, [data.user.id, data.message_id])
       let res: Vote | undefined
       if (!rows[0] || (rows[0] && rows[0].in_favor !== data.in_favor)) {
@@ -59,7 +59,7 @@ class Votes {
         count(*) filter (where vs."in_favor" IS FALSE) against_count,
         COALESCE((ARRAY_AGG(vs."user"->>'tag') filter (where "in_favor")), '{}') in_favor,
         COALESCE((ARRAY_AGG(vs."user"->>'tag') filter (where "in_favor" IS FALSE)), '{}') against
-      FROM "votes_full" vs
+      FROM votes_full vs
       WHERE vs."message_id" = $1
       GROUP BY "message_id"
   `, [message_id])
@@ -69,7 +69,7 @@ class Votes {
 
   private async deleteByUserMessageId({ user, message_id }: Pick<Vote, 'user' | 'message_id'>, client?: PoolClient): Promise<string | undefined> {
     const { rows } = await (client ?? pool).query<Pick<Vote, 'id'>>(`
-      DELETE FROM "votes" vs WHERE vs."user_id" = $1 AND vs."message_id" = $2 RETURNING "id"
+      DELETE FROM votes vs WHERE vs."user_id" = $1 AND vs."message_id" = $2 RETURNING "id"
     `, [user.id, message_id])
     await this.users.delById({ id: user.id }, client)
     return rows[0]?.id

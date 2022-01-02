@@ -9,8 +9,10 @@ Assigns a role automatically provided enough votes
 - The page with the documents can be accessed with the info command.
 
 ## Setup
-- On Windows some commands need adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.
-- In `config.ts` you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`
+- On Windows some commands need an adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.
+- In `config.ts` you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`.
+- Docker image can be public, as environmental variables are not stored in images.
+- To fetch new images automatically on the server, you can install tools like `containrrr/watchtower`.
 
 ### DB
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`

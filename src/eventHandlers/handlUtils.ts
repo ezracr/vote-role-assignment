@@ -45,7 +45,7 @@ ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVoters
     const usrIdLine = msgSplit[0]
     const urlLine = msgSplit[1]
     if (usrIdLine && urlLine) { // && inFavorLine && againstLine
-      const id = usrIdLine.slice(usrIdLine.indexOf('<') + 2, usrIdLine.indexOf('>'))
+      const id = usrIdLine.slice(usrIdLine.indexOf('<') + 3, usrIdLine.indexOf('>'))
       const url = urlLine.slice(10, urlLine.length - 1)
       return new InnerMessage(id, url, inFavor, against)
     }

@@ -1,7 +1,7 @@
 # vote-role-assignment
 Assigns a role automatically provided enough votes
 
-- Available commands: enable, disable, update, info.
+- Available commands: enable, disable, update, info, migrate.
 - Records likes and dislikes, it's possible to undo your vote. But it won't cancel the awarded role if the threshold was met.
 - Allows only users with the roles to vote in `allowedRoleIds`.
 - Once `votesThreshold` is met, assigns `awardedRoleId` and saves the document to the db.
@@ -32,7 +32,8 @@ services:
     restart: unless-stopped
     volumes:
       - /home/user/dev/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata    
-    # ports: # Open the ports if you want to access the DB outside of the app container, then the DB connection string will be `localhost:5447` instead of `postgres:5432`
+    # ports: # Open the ports if you want to access the DB outside of the app container, 
+    #        # then the DB connection string will be `localhost:5447` instead of `postgres:5432`
     #   - "5447:5432"
   app:
     restart: unless-stopped

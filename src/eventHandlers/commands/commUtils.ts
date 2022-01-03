@@ -46,7 +46,7 @@ type ConvertDbTypeInput = {
 type ValType = string | number | true | (string | number | true)[]
 
 /**
- * Turns hyphens into underscores in object keys.
+ * Turns hyphens into underscores in object keys. Extracts role and channel ids from `optionsData` values.
  * Allows to
  * - Group several fields into one, e.g. if `group` is set to `option`,
  *   this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.

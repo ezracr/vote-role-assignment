@@ -13,12 +13,15 @@ const findDbGroupPrefix = (key: string, group: GroupType): string | undefined =>
   group.find((grKey) => key.startsWith(grKey))
 )
 
-const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdType): [name: string, isGroup: boolean] => {
+const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType): [name: string, isGroup: boolean] => {
   if (group) {
     const groupPrefix = findDbGroupPrefix(name, group)
     if (groupPrefix) {
       return [replaceHyphensInKey(`${groupPrefix}s`), true]
     }
+  }
+  if (rename?.[name]) {
+    return [replaceHyphensInKey(rename[name]), false]
   }
   if (appendId && isAppendId(name, appendId)) {
     return [replaceHyphensInKey(`${name}_id`), false]
@@ -38,11 +41,15 @@ const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | 
 
 type GroupType = string[]
 type AppendIdType = string[]
+type RenameType = Record<string, string>
+type ValueOverridesType = Record<string, ValType>
 
 type ConvertDbTypeInput = {
   optionsData: readonly CommandInteractionOption<CacheType>[];
   group?: GroupType;
   appendId?: AppendIdType;
+  rename?: RenameType;
+  valueOverrides?: ValueOverridesType;
 }
 
 type ValType = string | number | true | (string | number | true)[]
@@ -52,15 +59,22 @@ type ValType = string | number | true | (string | number | true)[]
  * Allows to
  * - Group several fields into one, e.g. if `group` is set to `option`,
  *   this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
- * - Append ids to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }
+ * - Append '_id' to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }.
+ * - Rename one key name to another.
+ * - Override value for a given key.
  *
  * @param param0
  *
  */
-export const convertToDbType = ({ optionsData, group, appendId }: ConvertDbTypeInput): Record<string, ValType> => {
+export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides }: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
-    const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId)
+    const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId, rename)
     const normValue = normalizeToDbValue(val)
+
+    if (valueOverrides?.[val.name]) {
+      acc[normKey] = valueOverrides[val.name]
+      return acc
+    }
 
     if (isGroup) {
       if (!acc[normKey]) acc[normKey] = []

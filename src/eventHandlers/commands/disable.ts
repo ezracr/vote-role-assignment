@@ -11,7 +11,7 @@ export const disableCommand = new bld.SlashCommandBuilder()
 
 export const disableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
-    const res = await managers.settings.deleteById(interaction.channelId)
+    const res = await managers.settings.deleteByChId(interaction.channelId)
     if (res) {
       await interaction.reply({ content: 'Disabled', ephemeral: true })
     } else {

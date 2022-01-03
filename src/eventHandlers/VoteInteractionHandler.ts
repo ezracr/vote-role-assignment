@@ -45,7 +45,7 @@ class VoteInteractionHandler {
             user: {
               id: member.id, tag: member.user.tag,
             },
-            link, ch_sett_id: this.interaction.channelId,
+            link, channel_id: this.interaction.channelId,
           })
         }
         await member.roles.add(this.chConfig.awarded_role)

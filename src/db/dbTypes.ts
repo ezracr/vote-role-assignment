@@ -1,5 +1,6 @@
 export type ChSetting = {
   id: string;
+  channel_id: string;
   data: ChSettingsData;
 }
 
@@ -19,8 +20,8 @@ export type Document = {
   id: string;
   link: string;
   title: string;
-  ch_sett_id: string;
   user: User;
+  ch_settings: ChSetting;
 }
 
 export type Vote = {

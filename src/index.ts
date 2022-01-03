@@ -12,6 +12,7 @@ import { enableCommand, enableCommandHandler } from './eventHandlers/commands/en
 import { disableCommand, disableCommandHandler } from './eventHandlers/commands/disable'
 import { updateCommand, updateCommandHandler } from './eventHandlers/commands/update'
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
+import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
 import docsMiddleware from './middlewares/docsMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -31,7 +32,7 @@ client.on('ready', async () => {
     if (client.user?.id) {
       const res = await rest.put(
         dapi.Routes.applicationGuildCommands(client.user.id, config.guildId),
-        { body: [enableCommand, disableCommand, updateCommand, infoCommand] },
+        { body: [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand] },
       )
       const promCommands = (res as { id: string }[]).map((command) => client.guilds.cache.get(config.guildId)?.commands.fetch(command.id))
       const commands = await Promise.all(promCommands)
@@ -46,7 +47,7 @@ client.on('ready', async () => {
 })
 
 const getChannelConfig = async (managers: Managers, chlThId: string): Promise<ChSettingsData | undefined> => {
-  const res = await managers.settings.getById(chlThId)
+  const res = await managers.settings.getByChId(chlThId)
   return res?.data
 }
 
@@ -88,6 +89,9 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
           break
         case 'info':
           await infoCommandHandler(managers, interaction)
+          break
+        case 'migrate':
+          await migrateCommandHandler(managers, interaction)
           break
       }
     }

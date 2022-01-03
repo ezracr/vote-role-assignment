@@ -32,7 +32,7 @@ const prepareSettingsForDisplay = (obj: ChSettingsData): string => (
 
 export const infoCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
-    const res = await managers.settings.getById(interaction.channelId)
+    const res = await managers.settings.getByChId(interaction.channelId)
     if (res) {
       await interaction.reply({
         content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${genLinkToDocPage(interaction.channelId)}`,

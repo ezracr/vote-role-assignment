@@ -84,8 +84,8 @@ export default function docsMiddleware(app: Application) {
     const managers = new Managers()
     const { id } = req.params
     if (id && id.length === 18) {
-      const settings = await managers.settings.getById(id)
-      const docs = await managers.documents.getBySettingsId(id)
+      const settings = await managers.settings.getByChId(id)
+      const docs = await managers.documents.getByChannelId(id)
       if (settings && docs) {
         return res.send(renderTemplate(settings, docs))
       }

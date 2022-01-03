@@ -37,7 +37,7 @@ class MessageCreateHandler {
               tag: this.msg.author.tag,
             },
             link: url,
-            ch_sett_id: this.msg.channelId,
+            channel_id: this.msg.channelId,
           })
           return { messageContent: 'Your document has been successfully saved to the vault.' }
         } else {

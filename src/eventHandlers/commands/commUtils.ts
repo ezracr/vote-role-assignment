@@ -3,48 +3,74 @@ import bld = require('@discordjs/builders')
 
 import config from '../../config'
 
-const normalizeToDbKey = (name: string): string => name.replaceAll('-', '_')
+const replaceHyphensInKey = (name: string): string => name.replaceAll('-', '_')
+
+const isAppendId = (key: string, appIdKeys: AppendIdType): boolean => (
+  appIdKeys.some((appIdKey) => key === appIdKey)
+)
+
+const findDbGroupPrefix = (key: string, group: GroupType): string | undefined => (
+  group.find((grKey) => key.startsWith(grKey))
+)
+
+const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdType): [name: string, isGroup: boolean] => {
+  if (group) {
+    const groupPrefix = findDbGroupPrefix(name, group)
+    return [replaceHyphensInKey(`${groupPrefix}s`), true]
+  }
+  if (appendId && isAppendId(name, appendId)) {
+    return [replaceHyphensInKey(`${name}_id`), false]
+  }
+  return [replaceHyphensInKey(name), false]
+}
 
 const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | number | boolean | undefined => {
   if (val.type === 'ROLE') {
     return val.role!.id // eslint-disable-line @typescript-eslint/no-non-null-assertion
   }
+  if (val.type === 'CHANNEL') {
+    return val.channel!.id // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  }
   return val.value
 }
 
 type GroupType = string[]
+type AppendIdType = string[]
 
 type ConvertDbTypeInput = {
   optionsData: readonly CommandInteractionOption<CacheType>[];
   group?: GroupType;
-}
-
-const findDbGroupKey = (key: string, group?: GroupType): string | undefined => {
-  if (group) {
-    const foundKey = group.find((grKey) => key.startsWith(grKey))
-    if (foundKey) {
-      return normalizeToDbKey(`${foundKey}s`)
-    }
-  }
+  appendId?: AppendIdType;
 }
 
 type ValType = string | number | true | (string | number | true)[]
 
-export const convertToDbType = ({ optionsData, group }: ConvertDbTypeInput): Record<string, ValType> => {
+/**
+ * Turns hyphens into underscores in object keys.
+ * Allows to
+ * - Group several fields into one, e.g. if `group` is set to `option`,
+ *   this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
+ * - Append ids to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }
+ *
+ * @param param0
+ *
+ */
+export const convertToDbType = ({ optionsData, group, appendId }: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
-    const groupKey = findDbGroupKey(val.name, group)
+    const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId)
     const normValue = normalizeToDbValue(val)
-    if (groupKey) {
-      if (!acc[groupKey]) acc[groupKey] = []
+
+    if (isGroup) {
+      if (!acc[normKey]) acc[normKey] = []
       if (normValue) {
-        const arr = acc[groupKey]
+        const arr = acc[normKey]
         if (Array.isArray(arr)) {
           arr.push(normValue)
         }
       }
       return acc
     }
-    const normKey = normalizeToDbKey(val.name)
+
     if (normValue) {
       acc[normKey] = normValue
     }

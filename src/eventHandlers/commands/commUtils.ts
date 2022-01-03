@@ -16,7 +16,9 @@ const findDbGroupPrefix = (key: string, group: GroupType): string | undefined =>
 const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdType): [name: string, isGroup: boolean] => {
   if (group) {
     const groupPrefix = findDbGroupPrefix(name, group)
-    return [replaceHyphensInKey(`${groupPrefix}s`), true]
+    if (groupPrefix) {
+      return [replaceHyphensInKey(`${groupPrefix}s`), true]
+    }
   }
   if (appendId && isAppendId(name, appendId)) {
     return [replaceHyphensInKey(`${name}_id`), false]

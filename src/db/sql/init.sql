@@ -2,8 +2,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS channel_settings(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-  "channel_id" text COLLATE "C",
-  "data" jsonb,
+  "channel_id" text COLLATE "C" NOT NULL,
+  "data" jsonb NOT NULL,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   UNIQUE("channel_id")
 );
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS documents(
   "link" text NOT NULL,
   "title" text,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
-  "ch_sett_id" uuid,
+  "ch_sett_id" uuid NOT NULL,
   UNIQUE("user_id", "link")
 );
 

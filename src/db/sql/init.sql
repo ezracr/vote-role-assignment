@@ -42,8 +42,8 @@ CREATE OR REPLACE VIEW votes_full AS
     LEFT JOIN users ON votes."user_id" = users."id";
 
 ALTER TABLE documents
-  ADD CONSTRAINT documents_ch_sett_id_id_fk FOREIGN KEY ("ch_sett_id")
-    REFERENCES channel_settings ("id") ON UPDATE RESTRICT ON DELETE CASCADE,
+  -- ADD CONSTRAINT documents_ch_sett_id_id_fk FOREIGN KEY ("ch_sett_id")
+  --   REFERENCES channel_settings ("id") ON UPDATE RESTRICT ON DELETE CASCADE,
   ADD CONSTRAINT documents_users_id_fk FOREIGN KEY ("user_id")
     REFERENCES users ("id") ON UPDATE RESTRICT ON DELETE RESTRICT;
 

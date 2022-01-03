@@ -3,12 +3,14 @@ import { Application } from 'express'
 import Managers from '../db/managers'
 import { Document, ChSetting } from '../db/dbTypes'
 
-const renderRow = (doc: Document) => `
+const renderRow = (doc: Document) => {
+  const title = doc.title.trim()
+  return `
 <div class="row">
   <div class="author first-cell">${doc.user.tag}</div>
-  <div class="link last-cell"><a href="${doc.link}">link</a></div>
-</div>
-`
+  <div class="link last-cell"><a href="${doc.link}">${title === '' ? 'link' : title}</a></div>
+</div>`
+}
 
 const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE html>
 <html lang="en">

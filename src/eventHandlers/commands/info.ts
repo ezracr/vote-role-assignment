@@ -7,7 +7,7 @@ import { convertIdToGroupTag } from '../handlUtils'
 import { genLinkToDocPage, replies } from './commUtils'
 
 export const infoCommand = new bld.SlashCommandBuilder()
-  .setDefaultPermission(false)
+  .setDefaultPermission(true)
   .setName('info')
   .setDescription('Show the settings of this channel/thread.')
 

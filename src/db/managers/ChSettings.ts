@@ -10,7 +10,7 @@ class ChSettings {
     const { rows } = await pool.query<ChSetting>(`
       SELECT sts."data"
       FROM channel_settings sts
-      WHERE sts."channel_id" = $1
+      WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
     `, [channelId])
     return rows[0]
   }
@@ -19,7 +19,7 @@ class ChSettings {
     try {
       const { rows } = await pool.query<InsSetting>(`
         INSERT INTO channel_settings ("channel_id", "data") VALUES ($1, $2)
-        ON CONFLICT ("channel_id") DO UPDATE SET "data" = EXCLUDED.data
+        ON CONFLICT ("channel_id") DO UPDATE SET "data" = EXCLUDED.data, "is_disabled" = FALSE
         RETURNING *, (xmax = 0) inserted
       `, [channelId, data])
       return rows[0]
@@ -32,17 +32,25 @@ class ChSettings {
   async updateChIdByChId(channelId: string, newChannelId: string): Promise<ChSetting | undefined> { // TODO Turn into patch and merge with `updateAnySettingsFieldByChId`
     const { rows: [row] } = await pool.query<ChSetting>(`
       UPDATE channel_settings sts SET "channel_id" = $2
-      WHERE sts."channel_id" = $1
+      WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
       RETURNING *
     `, [channelId, newChannelId])
     return row
   }
 
   async deleteByChId(channelId: string): Promise<string | undefined> {
-    const { rows } = await pool.query<Pick<ChSetting, 'id'>>(`
-      DELETE FROM channel_settings sts WHERE sts."channel_id" = $1 RETURNING "id"
-    `, [channelId])
-    return rows[0]?.id
+    try {
+      await pool.query<Pick<ChSetting, 'id'>>(`
+        DELETE FROM channel_settings sts WHERE sts."channel_id" = $1 RETURNING "id"
+      `, [channelId])
+      return channelId
+    } catch (e: unknown) {
+      await pool.query<Pick<ChSetting, 'id'>>(`
+        UPDATE channel_settings sts SET "is_disabled" = TRUE
+        WHERE sts."channel_id" = $1 RETURNING "id"
+      `, [channelId])
+      return channelId
+    }
   }
 
   async updateAnySettingsFieldByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
@@ -50,7 +58,7 @@ class ChSettings {
       UPDATE channel_settings sts SET "data" = (
         SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1
       ) || $2
-      WHERE sts."channel_id" = $1
+      WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
       RETURNING *
     `, [channelId, data])
     return rows[0]

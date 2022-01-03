@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS channel_settings(
   "channel_id" text COLLATE "C" NOT NULL,
   "data" jsonb NOT NULL,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
+  "is_disabled" boolean DEFAULT false NOT NULL,
   UNIQUE("channel_id")
 );
 

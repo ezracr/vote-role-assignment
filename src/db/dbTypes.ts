@@ -2,6 +2,7 @@ export type ChSetting = {
   id: string;
   channel_id: string;
   data: ChSettingsData;
+  is_disabled: boolean;
 }
 
 export type ChSettingsData = {

@@ -2,7 +2,7 @@ import dsc = require('discord.js')
 
 import Managers from '../db/managers'
 import { ChSettingsData } from '../db/dbTypes'
-import { genLikeButton, genDislikeButton, InnerMessage, fetchMember } from './handlUtils'
+import { genLikeButton, genDislikeButton, InnerMessage, fetchMember, fetchDocsTitle } from './handlUtils'
 
 const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 
@@ -29,6 +29,7 @@ class MessageCreateHandler {
     if (!this.msg.author.bot) {
       const url = extractUrl(this.msg)
       if (url) {
+        const title = await fetchDocsTitle(this.msg, url)
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
           await this.managers.documents.insert({
@@ -38,13 +39,14 @@ class MessageCreateHandler {
             },
             link: url,
             channel_id: this.msg.channelId,
+            title,
           })
           return { messageContent: 'Your document has been successfully saved to the vault.' }
         } else {
           const actionRow = new dsc.MessageActionRow({
             components: [genLikeButton(), genDislikeButton()]
           })
-          const innerMsg = new InnerMessage(this.msg.author.id, url)
+          const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url, title })
           return { messageContent: innerMsg.toString(), actionRow }
         }
       }

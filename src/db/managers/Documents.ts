@@ -6,15 +6,15 @@ import Users from './Users'
 class Documents {
   users = new Users()
 
-  async insert(data: Pick<Document, 'user' | 'link'> & { channel_id: ChSetting['channel_id'] }): Promise<Document | undefined> {
+  async insert(data: Pick<Document, 'user' | 'link' | 'title'> & { channel_id: ChSetting['channel_id'] }): Promise<Document | undefined> {
     const user = await this.users.upsert(data.user)
 
     const { rows: [doc] } = await pool.query<Document>(`
-      INSERT INTO documents ("user_id", "link", "ch_sett_id")
-      VALUES ($1, $2, (SELECT css."id" FROM channel_settings css WHERE css."channel_id" = $3))
+      INSERT INTO documents ("user_id", "link", "title", "ch_sett_id")
+      VALUES ($1, $2, $4, (SELECT css."id" FROM channel_settings css WHERE css."channel_id" = $3))
       ON CONFLICT DO NOTHING
       RETURNING *
-    `, [data.user.id, data.link, data.channel_id])
+    `, [data.user.id, data.link, data.channel_id, data.title])
 
     if (doc && user) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
       doc.user = user

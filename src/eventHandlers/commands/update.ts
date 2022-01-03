@@ -5,7 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 
 import { ChSettingsData } from '../../db/dbTypes'
-import { convertToDbType, enableOptions } from './commUtils'
+import { convertToDbType, enableOptions, replies } from './commUtils'
 
 export const updateCommand = new bld.SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -29,8 +29,9 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       optionsData: interaction.options.data,
       group: ['allowed_to_vote_role'],
     })
-    await managers.settings.updateAnyFieldById(interaction.channelId, dbType as unknown as ChSettingsData)
-    return 'Updated'
+    const res = await managers.settings.updateAnyFieldById(interaction.channelId, dbType as unknown as ChSettingsData)
+    if (res) return 'Updated'
+    return replies.wasNotEnabled
   } catch (e: unknown) {
     if (e instanceof ReportableError) {
       return e.message

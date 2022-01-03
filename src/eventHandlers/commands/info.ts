@@ -4,7 +4,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
 import { convertIdToGroupTag } from '../handlUtils'
-import { genLinkToDocPage } from './commUtils'
+import { genLinkToDocPage, replies } from './commUtils'
 
 export const infoCommand = new bld.SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -39,7 +39,7 @@ export const infoCommandHandler = async (managers: Managers, interaction: Comman
         ephemeral: true,
       })
     } else {
-      await interaction.reply({ content: 'Couldn\'t fetch the data', ephemeral: true })
+      await interaction.reply({ content: replies.wasNotEnabled, ephemeral: true })
     }
   } catch (e: unknown) {
     console.log(e)

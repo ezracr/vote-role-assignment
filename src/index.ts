@@ -23,7 +23,7 @@ app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-di
   res.status(404).send('Error 404')
 })
 
-app.listen(config.port, () => console.log('server started'))
+app.listen(config.port, () => console.log('Express server: ✅'))
 
 const rest = new drest.REST({ version: '9' }).setToken(config.token)
 

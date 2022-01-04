@@ -25,6 +25,7 @@ BASE_URL=http://your-url:your-port/voting-bot
 ### Docker
 - Docker image can be public, as environmental variables are not stored in images.
 - To fetch new images automatically on the server, you can install tools like `containrrr/watchtower`.
+- Build the bot before building the `app` image with `npm run build`.
 
 Useful commands:
 - `docker ps` - shows running containers

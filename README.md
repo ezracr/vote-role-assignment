@@ -51,6 +51,9 @@ version: "3.3"
 services:
   postgres:
     restart: unless-stopped
+    build:
+      context: .
+      dockerfile: DockerfilePostgres
     volumes:
       - /home/user/dev/vote-role-assignment/pgdata:/var/lib/postgresql/data/pgdata    
     # ports: # Open the ports if you want to access the DB outside of the app container, 

@@ -26,6 +26,7 @@ BASE_URL=http://your-url:your-port/voting-bot
 
 ### Docker
 Useful commands:
+- If you're using a private docker repository, then don't forget to login first, e.g.: `docker login repo.treescale.com --username myusername `.
 - `docker ps` - shows running containers
 - To build all containers: `docker-compose build`.
 - To build an individual container, e.g. to build the db container: `docker-compose build postgres`.

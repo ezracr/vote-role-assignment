@@ -1,5 +1,5 @@
 # vote-role-assignment
-Assigns a role automatically provided enough votes
+A discord bot that assigns the specified role automatically provided enough votes and saves the submitted document.
 
 - Available commands: `enable`, `disable`, `update`, `info`, `migrate`.
 - Records likes and dislikes, it's possible to undo your vote. But it won't cancel the awarded role if the threshold was met.

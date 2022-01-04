@@ -3,7 +3,8 @@ import dsc = require('discord.js')
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { genButton, InnerMessage, fetchMember } from './handlUtils'
+import { genButton, fetchMember } from './handlUtils'
+import InnerMessage from './InnerMessage'
 
 const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
   const index = type === 'like' ? 0 : 1

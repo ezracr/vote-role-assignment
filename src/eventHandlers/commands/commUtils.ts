@@ -56,15 +56,13 @@ type ValType = string | number | true | (string | number | true)[]
 
 /**
  * Turns hyphens into underscores in object keys. Extracts role and channel ids from `optionsData` values.
- * Allows to
- * - Group several fields into one, e.g. if `group` is set to `option`,
- *   this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
- * - Append '_id' to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }.
- * - Rename one key name to another.
- * - Override value for a given key.
  *
- * @param param0
- *
+ * @param optionsData Option's data from `interaction.options.data` or `interaction.options.data[ind].options` if it's a subcommand.
+ * @param group Group several fields into one, e.g. if `group` is set to `option`,
+ * this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
+ * @param appendId Append '_id' to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }.
+ * @param rename Rename one key name to another.
+ * @param valueOverrides Override value for a given key.
  */
 export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides }: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {

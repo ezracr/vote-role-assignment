@@ -2,8 +2,12 @@ import dsc = require('discord.js')
 
 import Managers from '../db/managers'
 import { ChSettingsData } from '../db/dbTypes'
-import { genLikeButton, genDislikeButton, InnerMessage, fetchMember, fetchDocsTitle } from './handlUtils'
+import { genLikeButton, genDislikeButton, fetchMember, fetchDocsTitle } from './handlUtils'
+import InnerMessage from './InnerMessage'
 
+/**
+ * Needed if you want to construct regex from a string to escape any special character
+ */
 const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 
 const extractUrl = (msg: dsc.Message<boolean>): string | null => {

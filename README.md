@@ -13,6 +13,7 @@ A discord bot that assigns the specified role automatically provided enough vote
 - In `config.ts` you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`.
 - Docker image can be public, as environmental variables are not stored in images.
 - To fetch new images automatically on the server, you can install tools like `containrrr/watchtower`.
+- Necessary bot permissions (a url can be generated in OAuth2 -> URL Generator): Scopes: `bot`, Bot permissions: `Send messages`.
 
 ### DB
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`

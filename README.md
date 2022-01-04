@@ -11,8 +11,6 @@ A discord bot that assigns the specified role automatically provided enough vote
 ## Setup
 - On Windows some commands need an adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.
 - In `config.ts` you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`.
-- Docker image can be public, as environmental variables are not stored in images.
-- To fetch new images automatically on the server, you can install tools like `containrrr/watchtower`.
 - Necessary bot permissions (a url can be generated in OAuth2 -> URL Generator): Scopes: `bot`, Bot permissions: `Send messages`.
 
 ### DB
@@ -25,6 +23,9 @@ DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot
 BASE_URL=http://your-url:your-port/voting-bot
 
 ### Docker
+- Docker image can be public, as environmental variables are not stored in images.
+- To fetch new images automatically on the server, you can install tools like `containrrr/watchtower`.
+
 Useful commands:
 - `docker ps` - shows running containers
 - To build all containers: `docker-compose build`.

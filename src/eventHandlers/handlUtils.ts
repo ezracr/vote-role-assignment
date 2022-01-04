@@ -36,6 +36,7 @@ export const genButton = (id: 'like' | 'dislike', count: number): dsc.MessageBut
 export const fetchDocsTitle = async (msg: dsc.Message<boolean>, url: string): Promise<string> => {
   const msgLoaded = await msg.channel.messages.fetch(msg.id)
   if (msgLoaded.embeds[0]?.title) {
+    console.log('embeds')
     return msgLoaded.embeds[0].title
   }
   const res = await axios.default.get(url, { timeout: 1000 })

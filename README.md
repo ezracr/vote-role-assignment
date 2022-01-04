@@ -23,7 +23,19 @@ POSTGRES_PASSWORD=PickAnyPsqlPass
 DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot  
 BASE_URL=http://your-url:your-port/voting-bot
 
-### `docker-compose.override`
+### Docker
+Useful commands:
+- `docker ps` - shows running containers
+- To build all containers: `docker-compose build`.
+- To build an individual container, e.g. to build the db container: `docker-compose build postgres`.
+- Starting all containers: `docker-compose up`, starting in the background: `docker-compose up -d`.
+- Starting an individual container `docker-compose up postgres`.
+- Stopping those that run in the background: `docker-compose down` 
+- Building and starting: `docker-compose up -d --build`.
+- To view the terminal output of a container running in the bg: `docker logs <First few characters from the container's id>`. You can find container's id with the help of `docker ps`.
+- If you want to enter a container: `docker exec it "<First few characters from the container's id>" bash`. Sometimes bash might not be installed, then try `sh`.
+
+#### `docker-compose.override`
 #### Example of `docker-compose.override` in development
 ```yml
 version: "3.3"

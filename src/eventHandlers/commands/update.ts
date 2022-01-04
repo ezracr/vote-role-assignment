@@ -37,7 +37,6 @@ export const updateCommand = new bld.SlashCommandBuilder()
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
-
     if (interaction.options.getSubcommand() === 'remove-allowed-to-vote') {
       const res = await managers.settings.updateAnySettingsFieldByChId(interaction.channelId, { allowed_to_vote_roles: [] })
       if (res) return '`allowed-to-vote-role`s have been cleared.'

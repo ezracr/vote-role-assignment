@@ -22,7 +22,7 @@ POSTGRES_PASSWORD=PickAnyPsqlPass
 DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot  
 BASE_URL=http://your-url:5000
 
-If the port is different, than you need to modify it in `docker-compose.yml` and replace `5000` in `"5000:3000"` with something else.
+If the port is different, then you need to modify it in `docker-compose.yml` and replace `5000` in `"5000:3000"` with something else.
 
 ### Docker
 - Docker image can be public, as environmental variables are not stored in images.
@@ -37,7 +37,7 @@ Useful commands:
 - Starting an individual container `docker-compose up postgres`.
 - Stopping those that run in the background: `docker-compose down` 
 - Building and starting: `docker-compose up -d --build`.
-- To view the terminal output of a container running in the bg: `docker logs <First few characters from the container's id>`. You can find container's id with the help of `docker ps`.
+- To view the terminal output of a container running in the bg: `docker logs <First few characters from the container's id>`. You can find the container's id with the help of `docker ps`.
 - If you want to enter a container: `docker exec it <First few characters from the container's id> bash`. Sometimes bash might not be installed, then try `sh`.
 - Pushing/pulling
   - Don't forget to login first, e.g.: `docker login repo.treescale.com --username myusername `. 

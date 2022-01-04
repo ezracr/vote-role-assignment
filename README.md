@@ -26,7 +26,6 @@ BASE_URL=http://your-url:your-port/voting-bot
 
 ### Docker
 Useful commands:
-- If you're using a private docker repository, then don't forget to login first, e.g.: `docker login repo.treescale.com --username myusername `.
 - `docker ps` - shows running containers
 - To build all containers: `docker-compose build`.
 - To build an individual container, e.g. to build the db container: `docker-compose build postgres`.
@@ -36,6 +35,10 @@ Useful commands:
 - Building and starting: `docker-compose up -d --build`.
 - To view the terminal output of a container running in the bg: `docker logs <First few characters from the container's id>`. You can find container's id with the help of `docker ps`.
 - If you want to enter a container: `docker exec it <First few characters from the container's id> bash`. Sometimes bash might not be installed, then try `sh`.
+- Pushing/pulling
+  - Don't forget to login first, e.g.: `docker login repo.treescale.com --username myusername `. 
+  - `docker push registry.gitlab.com/my-corp/votedocbot/votedocbotdb:latest`
+  - `docker pull registry.gitlab.com/my-corp/votedocbot/votedocbotdb:latest`
 
 #### `docker-compose.override`
 #### Example of `docker-compose.override` in development

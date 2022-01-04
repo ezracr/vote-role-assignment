@@ -20,7 +20,9 @@ If `pgdata` does not exists, it will be created and automatically populated with
 DISCORD_TOKEN=YourBotsToken  
 POSTGRES_PASSWORD=PickAnyPsqlPass  
 DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot  
-BASE_URL=http://your-url:your-port/voting-bot
+BASE_URL=http://your-url:5000/voting-bot
+
+If the port is different, than you need to modify it in `docker-compose.yml` and replace `5000` in `"5000:3000"` with something else.
 
 ### Docker
 - Docker image can be public, as environmental variables are not stored in images.

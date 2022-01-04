@@ -41,6 +41,8 @@ type InnerMessageArg = {
   against?: string[];
 }
 
+const findFirstSemicolonIndex = (txt: string) => txt.indexOf(':')
+
 export class InnerMessage {
   authorId: InnerMessageArg['authorId']
   url: InnerMessageArg['url']
@@ -70,8 +72,8 @@ ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVoters
     const urlLine = msgSplit[2]
     if (usrIdLine && urlLine) {
       const id = usrIdLine.slice(usrIdLine.indexOf('<') + 3, usrIdLine.indexOf('>'))
-      const url = urlLine.slice(10, urlLine.length - 1)
-      const title = titleLine.slice(11, titleLine.length - 1)
+      const url = urlLine.slice(findFirstSemicolonIndex(urlLine) + 2, urlLine.length - 1)
+      const title = titleLine.slice(findFirstSemicolonIndex(titleLine) + 2, titleLine.length - 1)
       return new InnerMessage({ authorId: id, url, inFavor, against, title })
     }
   }

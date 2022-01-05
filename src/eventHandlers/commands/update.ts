@@ -23,11 +23,6 @@ export const updateCommand = new bld.SlashCommandBuilder()
         .setDescription('The page\'s title.')
         .setRequired(false)
       )
-      .addBooleanOption((option) => option
-        .setName('remove-allowed-to-vote-roles')
-        .setDescription('Remove the allowed to vote roles.')
-        .setRequired(false)
-      )
   )
   .addSubcommand((subcommand) =>
     subcommand

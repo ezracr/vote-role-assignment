@@ -72,7 +72,7 @@ const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE h
 <h1>${chSettings.data.title}</h1>
 <div class="table">
 <div class="row title-row">
-  <div class="author first-cell">Autor</div>
+  <div class="author first-cell">Author</div>
   <div class="link last-cell">Document</div>
 </div>
 ${docs.map((doc) => renderRow(doc))}

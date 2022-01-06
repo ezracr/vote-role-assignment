@@ -1,18 +1,16 @@
 import wd from 'selenium-webdriver'
 
+import config from '../config'
 import { initDriver, CommUtils, SendCommandArgs } from './utils/commUtils'
 import { SelUtils } from './utils/selUtils'
 import cleanDb from './utils/cleanDb'
-import config from '../config'
 
-let driver: wd.WebDriver
-let mainUtils: CommUtils
-let selUtils: SelUtils
+let driver: wd.WebDriver, mainUtils: CommUtils, selUtils: SelUtils
 
 beforeAll(async () => {
   driver = await initDriver()
   mainUtils = new CommUtils(driver)
-  selUtils = new SelUtils(driver)
+  selUtils = new SelUtils(driver) // eslint-disable-line @typescript-eslint/no-unused-vars
   await mainUtils.login()
   await driver.sleep(200)
 }, 20000)
@@ -39,7 +37,7 @@ describe('Returns non initilized message when the bot was not enabled in a chann
   it('/disable', async () => {
     await testNonInit('disable')
   })
-  it('/update remove-allowed-to-vote ', async () => {
+  it('/update remove-allowed-to-vote', async () => {
     await testNonInit('update remove-allowed-to-vote')
   })
   it('/update set', async () => {

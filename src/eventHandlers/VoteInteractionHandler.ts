@@ -3,7 +3,7 @@ import dsc = require('discord.js')
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { genButton, fetchMember } from './handlUtils'
+import { genButton, fetchMember, fetchDocsTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
 
 const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
@@ -41,13 +41,14 @@ class VoteInteractionHandler {
       }
       if (member) {
         const link = innMessage.url
-        if (link) {
+        if (link && this.interaction.message.type === 'REPLY') {
+          const title = await fetchDocsTitle(this.interaction.message, link)
           await this.managers.documents.insert({
             user: {
               id: member.id, tag: member.user.tag,
             },
             link, channel_id: this.interaction.channelId,
-            title: innMessage.title,
+            title,
           })
         }
         await member.roles.add(this.chConfig.awarded_role)

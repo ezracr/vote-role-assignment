@@ -33,9 +33,9 @@ class MessageCreateHandler {
     if (!this.msg.author.bot) {
       const url = extractUrl(this.msg)
       if (url) {
-        const title = await fetchDocsTitle(this.msg, url)
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
+          const title = await fetchDocsTitle(this.msg, url)
           await this.managers.documents.insert({
             user: {
               id: this.msg.author.id,
@@ -50,7 +50,7 @@ class MessageCreateHandler {
           const actionRow = new dsc.MessageActionRow({
             components: [genLikeButton(), genDislikeButton()]
           })
-          const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url, title })
+          const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url })
           return { messageContent: innerMsg.toString(), actionRow }
         }
       }

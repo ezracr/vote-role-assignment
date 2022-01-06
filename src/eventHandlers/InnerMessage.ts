@@ -3,7 +3,6 @@ import { convertIdToUserTag } from './handlUtils'
 type InnerMessageArg = {
   authorId: string;
   url: string;
-  title: string;
   inFavor?: string[];
   against?: string[];
 }
@@ -20,7 +19,6 @@ const findFirstSemicolonIndex = (txt: string) => txt.indexOf(':')
 class InnerMessage {
   authorId: InnerMessageArg['authorId']
   url: InnerMessageArg['url']
-  title: InnerMessageArg['title']
   inFavor: NonNullable<InnerMessageArg['inFavor']>
   against: NonNullable<InnerMessageArg['against']>
 
@@ -29,12 +27,10 @@ class InnerMessage {
     this.url = arg.url
     this.inFavor = arg.inFavor ?? []
     this.against = arg.against ?? []
-    this.title = arg.title
   }
 
   toString(): string {
     return `**Author**: ${convertIdToUserTag(this.authorId)}.
-**Title**: ${this.title}.
 **Link**: ${this.url}.
 ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVotersString(this.against))}`
   }
@@ -48,13 +44,11 @@ ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVoters
   static from({ oldMessage, inFavor, against }: { oldMessage: string } & Pick<InnerMessageArg, 'inFavor' | 'against'>) {
     const msgSplit = oldMessage.split('\n')
     const usrIdLine = msgSplit[0]
-    const titleLine = msgSplit[1]
-    const urlLine = msgSplit[2]
+    const urlLine = msgSplit[1]
     if (usrIdLine && urlLine) {
       const id = usrIdLine.slice(usrIdLine.indexOf('<') + 3, usrIdLine.indexOf('>'))
       const url = urlLine.slice(findFirstSemicolonIndex(urlLine) + 2, urlLine.length - 1)
-      const title = titleLine.slice(findFirstSemicolonIndex(titleLine) + 2, titleLine.length - 1)
-      return new InnerMessage({ authorId: id, url, inFavor, against, title })
+      return new InnerMessage({ authorId: id, url, inFavor, against })
     }
   }
 }

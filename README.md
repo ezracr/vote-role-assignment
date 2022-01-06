@@ -12,6 +12,7 @@ A discord bot that assigns the specified role automatically provided enough vote
 - On Windows some commands need an adjustment, e.g. `build:start` needs to be modified to `npm run build & npm run start:prod`.
 - In `config.ts` you need to specify guild (server) id and which role ids can use the commands, everything else is customized in `local.env`.
 - Necessary bot permissions (a url can be generated in OAuth2 -> URL Generator): Scopes: `bot`, `applications.commands`, Bot permissions: `Send messages`, `Manage Roles`, `Manage Messages`.
+- In the roles hierarchy move the bot's role above the roles it should be able to assign.
 
 ### DB
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`

@@ -37,7 +37,7 @@ client.on('ready', async () => {
       }
       const res = await rest.put(
         Routes.applicationGuildCommands(client.user.id, config.guildId),
-        { body: [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand, cleanCommand] },
+        { body: commArr },
       )
       const promCommands = (res as { id: string }[]).map((command) => client.guilds.cache.get(config.guildId)?.commands.fetch(command.id))
       const commands = await Promise.all(promCommands)

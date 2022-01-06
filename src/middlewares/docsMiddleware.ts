@@ -34,7 +34,7 @@ const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE h
     }
 
     .table {
-      max-width: 280px;
+      max-width: 600px;
     }
 
     .row {
@@ -64,7 +64,8 @@ const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE h
     }
 
     .link {
-      flex-basis: 80px;
+      flex-basis: 150px;
+      flex-grow: 1;
     }
   </style>
 </head>
@@ -75,7 +76,7 @@ const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE h
   <div class="author first-cell">Author</div>
   <div class="link last-cell">Document</div>
 </div>
-${docs.map((doc) => renderRow(doc))}
+${docs.map((doc) => renderRow(doc)).join('')}
 </div>
 </body>
 </html>

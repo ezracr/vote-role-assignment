@@ -88,27 +88,7 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
-  // private findListItemIndex = async (items: wd.WebElement[], commName: string): Promise<number> => {
-  //   for (const [i, item] of items.entries()) {
-  //     if (commName === await item.getText()) return i
-  //   }
-  //   return -1
-  // }
-
-  // private pickItemFromList = async (txtField: wd.WebElement, value: string, offset = 0) => {
-  //   const listEl = await this.driver.wait(wd.until.elementLocated(By.css('[data-list-id=channel-autocomplete]')), 2000)
-  //   const items = await this.selUtils.findElementsByCss('[data-list-item-id]>div>div>div>div', listEl)
-  //   if (items) {
-  //     const ind = await this.findListItemIndex(items, value)
-  //     if (ind !== -1) {
-  //       await this.selUtils.arrowDown(txtField, ind + offset)
-  //       await txtField.sendKeys(Key.ENTER)
-  //     }
-  //   }
-  // }
-
   private processSendCommandOptArg = async (txtField: wd.WebElement, name: string, value: SendCommandArgsVal): Promise<void> => {
-    // await this.pickItemFromList(txtField, name, 1)
     await txtField.sendKeys(name)
     await txtField.sendKeys(Key.ENTER)
     if (typeof value === 'string') {
@@ -116,7 +96,6 @@ export class CommUtils {
     } else {
       await txtField.sendKeys(value.listItem)
       await txtField.sendKeys(Key.ENTER)
-      // await this.pickItemFromList(txtField, value.role)
     }
   }
 
@@ -129,7 +108,6 @@ export class CommUtils {
     } else {
       await txtField.sendKeys(value.listItem)
       await txtField.sendKeys(Key.ENTER)
-      // await this.pickItemFromList(txtField, value.role)
     }
   }
 

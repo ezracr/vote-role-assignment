@@ -10,11 +10,13 @@ import InnerMessage from './InnerMessage'
  */
 const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 
+const docUrlRegex = new RegExp(
+  `(?:\\s|^)((?:${escapeRegExp('https://docs.google.com/document/d/')}|${escapeRegExp('https://docs.google.com/spreadsheets/d/')})[\\S]+?)(?:\\s|$|,|\\.|;|:)`,
+  'i'
+)
+
 const extractUrl = (msg: dsc.Message<boolean>): string | null => {
-  const res = msg.content.match(new RegExp(
-    `(?:\\s|^)((?:${escapeRegExp('https://docs.google.com/document/d/')}|${escapeRegExp('https://docs.google.com/spreadsheets/d/')})[\\S]+?)(?:\\s|$|,|\\.|;|:)`,
-    'i'
-  ))
+  const res = msg.content.match(docUrlRegex)
   if (res?.[1]) {
     return res[1]
   }

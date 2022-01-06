@@ -1,4 +1,4 @@
-import bld = require('@discordjs/builders')
+import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../db/managers'
@@ -7,7 +7,7 @@ import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import { convertToDbType, enableOptions, replies } from './commUtils'
 
-export const updateCommand = new bld.SlashCommandBuilder()
+export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName('update')
   .setDescription('Update individual fields of this channel/thread\'s config.')

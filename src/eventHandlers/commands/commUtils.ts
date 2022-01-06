@@ -1,5 +1,7 @@
+import {
+  SlashCommandIntegerOption, SlashCommandRoleOption,
+} from '@discordjs/builders'
 import type { CommandInteractionOption, CacheType } from 'discord.js'
-import bld = require('@discordjs/builders')
 
 import config from '../../config'
 
@@ -93,22 +95,22 @@ export const convertToDbType = ({ optionsData, group, appendId, rename, valueOve
 }
 
 export const enableOptions = {
-  awardedRole(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+  awardedRole(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('awarded-role')
       .setDescription('Awarded role')
       .setRequired(isRequired)
   },
-  votingThreshold(isRequired: boolean, option: bld.SlashCommandIntegerOption): bld.SlashCommandIntegerOption {
+  votingThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('voting-threshold')
       .setDescription('How many votes required to award the role')
       .setRequired(isRequired)
   },
-  allowedToVoteRole1(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+  allowedToVoteRole1(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('allowed-to-vote-role1')
       .setDescription('If set, will allow only this role to vote')
       .setRequired(isRequired)
   },
-  allowedToVoteRole2(isRequired: boolean, option: bld.SlashCommandRoleOption): bld.SlashCommandRoleOption {
+  allowedToVoteRole2(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('allowed-to-vote-role2')
       .setDescription('If set, will allow only this role to vote')
       .setRequired(isRequired)

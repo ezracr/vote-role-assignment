@@ -1,4 +1,4 @@
-import pg = require('pg')
+import pg from 'pg'
 
 import config from '../config'
 

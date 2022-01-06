@@ -1,4 +1,4 @@
-import bld = require('@discordjs/builders')
+import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../../db/dbTypes'
@@ -6,7 +6,7 @@ import Managers from '../../db/managers'
 import { convertIdToGroupTag } from '../handlUtils'
 import { genLinkToDocPage, replies } from './commUtils'
 
-export const infoCommand = new bld.SlashCommandBuilder()
+export const infoCommand = new SlashCommandBuilder()
   .setDefaultPermission(true)
   .setName('info')
   .setDescription('Show the settings of this channel/thread.')

@@ -1,4 +1,4 @@
-import dsc = require('discord.js')
+import { Message, MessageActionRow, ButtonInteraction, CacheType } from 'discord.js'
 
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
@@ -6,7 +6,7 @@ import Managers from '../db/managers'
 import { genButton, fetchMember, fetchDocsTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
 
-const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
+const changeButtonCount = (actionRow: MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
   const index = type === 'like' ? 0 : 1
   const oldButton = actionRow.components.at(index)
   if (oldButton?.type === 'BUTTON') {
@@ -17,7 +17,7 @@ const changeButtonCount = (actionRow: dsc.MessageActionRow, newCount: number, ty
 class VoteInteractionHandler {
   private type: 'like' | 'dislike'
 
-  constructor(private chConfig: ChSettingsData, private interaction: dsc.ButtonInteraction<dsc.CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private interaction: ButtonInteraction<CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
@@ -56,14 +56,14 @@ class VoteInteractionHandler {
     }
   }
 
-  process = async (): Promise<{ messageContent: string, actionRow: dsc.MessageActionRow } | null> => {
+  process = async (): Promise<{ messageContent: string, actionRow: MessageActionRow } | null> => {
     // let role = guild.roles.cache.find(r => console.log(r.id, r.name))
     const isAllowedToVote = await this.canVote()
 
     if (!isAllowedToVote) return null
 
     const { message: msg, user } = this.interaction
-    const message = msg as dsc.Message<boolean>
+    const message = msg as Message<boolean>
     const actionRow = message.components.at(0)
 
     if (actionRow?.type === 'ACTION_ROW') {

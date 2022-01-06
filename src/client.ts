@@ -1,8 +1,8 @@
-import dsc = require('discord.js')
+import { Client, Intents } from 'discord.js'
 
-const client = new dsc.Client({
+const client = new Client({
   intents: [
-    dsc.Intents.FLAGS.GUILDS, dsc.Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES,
   ],
   // partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
 })

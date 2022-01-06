@@ -1,6 +1,6 @@
-import express = require('express')
-import drest = require('@discordjs/rest')
-import dapi = require('discord-api-types/v9')
+import express from 'express'
+import { REST } from '@discordjs/rest'
+import { Routes } from 'discord-api-types/v9'
 
 import config from './config'
 import client from './client'
@@ -25,13 +25,13 @@ app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-di
 
 app.listen(config.port, () => console.log('Express server: ✅'))
 
-const rest = new drest.REST({ version: '9' }).setToken(config.token)
+const rest = new REST({ version: '9' }).setToken(config.token)
 
 client.on('ready', async () => {
   try {
     if (client.user?.id) {
       const res = await rest.put(
-        dapi.Routes.applicationGuildCommands(client.user.id, config.guildId),
+        Routes.applicationGuildCommands(client.user.id, config.guildId),
         { body: [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand] },
       )
       const promCommands = (res as { id: string }[]).map((command) => client.guilds.cache.get(config.guildId)?.commands.fetch(command.id))

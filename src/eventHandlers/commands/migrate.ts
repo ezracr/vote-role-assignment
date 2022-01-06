@@ -1,4 +1,4 @@
-import bld = require('@discordjs/builders')
+import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../db/managers'
@@ -6,7 +6,7 @@ import { ReportableError } from '../../db/managers/manUtils'
 
 import { replies } from './commUtils'
 
-export const migrateCommand = new bld.SlashCommandBuilder()
+export const migrateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName('migrate')
   .setDescription('Migrate to a different channel/thread.')

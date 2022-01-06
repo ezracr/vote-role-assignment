@@ -1,4 +1,4 @@
-import dsc = require('discord.js')
+import { Message, MessageActionRow } from 'discord.js'
 
 import Managers from '../db/managers'
 import { ChSettingsData } from '../db/dbTypes'
@@ -15,7 +15,7 @@ const docUrlRegex = new RegExp(
   'i'
 )
 
-const extractUrl = (msg: dsc.Message<boolean>): string | null => {
+const extractUrl = (msg: Message<boolean>): string | null => {
   const res = msg.content.match(docUrlRegex)
   if (res?.[1]) {
     return res[1]
@@ -23,7 +23,7 @@ const extractUrl = (msg: dsc.Message<boolean>): string | null => {
   return null
 }
 
-const isAlreadyAwarded = async (config: ChSettingsData, msg: dsc.Message<boolean>): Promise<boolean> => {
+const isAlreadyAwarded = async (config: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
   if (msg.guildId) {
     const member = await fetchMember(msg.guildId, msg.author.id)
     return member?.roles.cache.some((r) => config.awarded_role === r.id) ?? false
@@ -32,9 +32,9 @@ const isAlreadyAwarded = async (config: ChSettingsData, msg: dsc.Message<boolean
 }
 
 class MessageCreateHandler {
-  constructor(private chConfig: ChSettingsData, private msg: dsc.Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
 
-  process = async (): Promise<{ messageContent: string, actionRow?: dsc.MessageActionRow } | null> => {
+  process = async (): Promise<{ messageContent: string, actionRow?: MessageActionRow } | null> => {
     if (!this.msg.author.bot) {
       const url = extractUrl(this.msg)
       if (url) {
@@ -52,7 +52,7 @@ class MessageCreateHandler {
           })
           return { messageContent: 'Your document has been successfully saved to the vault.' }
         } else {
-          const actionRow = new dsc.MessageActionRow({
+          const actionRow = new MessageActionRow({
             components: [genLikeButton(), genDislikeButton()]
           })
           const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url })

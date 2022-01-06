@@ -1,10 +1,10 @@
-import bld = require('@discordjs/builders')
+import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../db/managers'
 import { replies } from './commUtils'
 
-export const disableCommand = new bld.SlashCommandBuilder()
+export const disableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName('disable')
   .setDescription('Disable the bot in this channel/thread.')

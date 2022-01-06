@@ -22,13 +22,22 @@ class Documents {
     }
   }
 
-  async getByChannelId(id: string): Promise<Document[] | undefined> {
+  async getNumOfDocsPerChannel(chId: string): Promise<{ total: number } | undefined> {
+    const { rows: [row] } = await pool.query<{ total: number }>(`
+      SELECT count(*) total
+      FROM documents_full ds
+      WHERE ds."ch_settings"->>'channel_id' = $1
+    `, [chId])
+    return row
+  }
+
+  async getByChannelId(chId: string): Promise<Document[] | undefined> {
     const { rows } = await pool.query<Document>(`
       SELECT *
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1
       ORDER BY ds."created" DESC
-    `, [id])
+    `, [chId])
     return rows
   }
 }

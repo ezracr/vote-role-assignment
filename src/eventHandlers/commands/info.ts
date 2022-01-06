@@ -33,9 +33,10 @@ const prepareSettingsForDisplay = (obj: ChSettingsData): string => (
 export const infoCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
     const res = await managers.settings.getByChId(interaction.channelId)
+    const totalRes = await managers.documents.getNumOfDocsPerChannel(interaction.channelId)
     if (res) {
       await interaction.reply({
-        content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${genLinkToDocPage(interaction.channelId)}`,
+        content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${genLinkToDocPage(interaction.channelId)}\n**Saved documents**: ${totalRes?.total ?? 0}`,
         ephemeral: true,
       })
     } else {

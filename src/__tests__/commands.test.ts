@@ -12,7 +12,6 @@ beforeAll(async () => {
   mainUtils = new CommUtils(driver)
   selUtils = new SelUtils(driver) // eslint-disable-line @typescript-eslint/no-unused-vars
   await mainUtils.login()
-  await driver.sleep(200)
 }, 20000)
 
 beforeEach(async () => {

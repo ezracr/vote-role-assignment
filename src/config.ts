@@ -12,7 +12,7 @@ const config = {
   ],
   baseUrl: process.env.BASE_URL ?? 'http://localhost:3000',
   testing: {
-    isEnabled: process.env.NODE_ENV === 'test',
+    isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
     testChannel1Id: '923544676793999390',
     mail: process.env.TEST_MAIL,
     pass: process.env.TEST_PASS,

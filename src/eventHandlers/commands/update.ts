@@ -3,13 +3,13 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
-
 import { ChSettingsData } from '../../db/dbTypes'
-import { convertToDbType, enableOptions, replies } from './commUtils'
+import config from '../../config'
+import { convertToDbType, enableOptions } from './commUtils'
 
 export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
-  .setName('update')
+  .setName(config.commands.update.name)
   .setDescription('Update individual fields of this channel/thread\'s config.')
   .addSubcommand((subcommand) =>
     subcommand
@@ -31,15 +31,16 @@ export const updateCommand = new SlashCommandBuilder()
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
+  const { commands: { update: { messages } } } = config
   try {
     if (interaction.options.getSubcommand() === 'remove-allowed-to-vote') {
       const res = await managers.settings.updateAnySettingsFieldByChId(interaction.channelId, { allowed_to_vote_roles: [] })
       if (res) return '`allowed-to-vote-role`s have been cleared.'
-      return replies.wasNotEnabled
+      return config.messages.wasNotEnabled
     }
     const optionsData = interaction.options.data[0].options
     if (!optionsData || optionsData.length === 0) {
-      return 'At least one argument needed for this command'
+      return messages.noArgs
     }
     const dbType = convertToDbType({
       optionsData,
@@ -49,8 +50,8 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     })
 
     const res = await managers.settings.updateAnySettingsFieldByChId(interaction.channelId, dbType as unknown as ChSettingsData)
-    if (res) return 'Updated'
-    return replies.wasNotEnabled
+    if (res) return messages.done
+    return config.messages.wasNotEnabled
   } catch (e: unknown) {
     if (e instanceof ReportableError) {
       return e.message

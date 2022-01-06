@@ -4,11 +4,12 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
+import config from '../../config'
 import { convertToDbType, enableOptions, genLinkToDocPage } from './commUtils'
 
 export const enableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
-  .setName('enable')
+  .setName(config.commands.enable.name)
   .setDescription('Initialize/update the bot in this channel/thread.')
   .addRoleOption(enableOptions.awardedRole.bind(null, true))
   .addIntegerOption(enableOptions.votingThreshold.bind(null, true))
@@ -37,13 +38,15 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
       dbSettingsData.title = getChannelName(interaction)
     }
     const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as ChSettingsData)
+    const { commands: { enable: { messages } } } = config
+
     if (res.inserted) {
       const newMsg = await interaction.channel?.send({
-        content: `The page with sent documents: ${genLinkToDocPage(interaction.channelId)}.`,
+        content: messages.docLinkMsg(genLinkToDocPage(interaction.channelId)),
       })
       await newMsg?.pin()
     }
-    await interaction.reply({ content: res.inserted ? 'Enabled' : 'Updated', ephemeral: true })
+    await interaction.reply({ content: res.inserted ? messages.enabled : messages.updated, ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {
       await interaction.reply({ content: e.message, ephemeral: true })

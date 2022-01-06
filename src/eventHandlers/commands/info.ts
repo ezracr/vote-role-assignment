@@ -4,11 +4,12 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
 import { convertIdToGroupTag } from '../handlUtils'
-import { genLinkToDocPage, replies } from './commUtils'
+import config from '../../config'
+import { genLinkToDocPage } from './commUtils'
 
 export const infoCommand = new SlashCommandBuilder()
   .setDefaultPermission(true)
-  .setName('info')
+  .setName(config.commands.info.name)
   .setDescription('Show the settings of this channel/thread.')
 
 const prepareGroupIds = (groupId: string | string[]): string => {
@@ -35,12 +36,13 @@ export const infoCommandHandler = async (managers: Managers, interaction: Comman
     const res = await managers.settings.getByChId(interaction.channelId)
     const totalRes = await managers.documents.getNumOfDocsPerChannel(interaction.channelId)
     if (res) {
+      const { commands: { info: { messages } } } = config
       await interaction.reply({
-        content: `**Settings**:\n${prepareSettingsForDisplay(res.data)}\n**Link**: ${genLinkToDocPage(interaction.channelId)}\n**Saved documents**: ${totalRes?.total ?? 0}`,
+        content: messages.main(prepareSettingsForDisplay(res.data), genLinkToDocPage(interaction.channelId), totalRes?.total ?? 0),
         ephemeral: true,
       })
     } else {
-      await interaction.reply({ content: replies.wasNotEnabled, ephemeral: true })
+      await interaction.reply({ content: config.messages.wasNotEnabled, ephemeral: true })
     }
   } catch (e: unknown) {
     console.log(e)

@@ -13,6 +13,7 @@ import { disableCommand, disableCommandHandler } from './eventHandlers/commands/
 import { updateCommand, updateCommandHandler } from './eventHandlers/commands/update'
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
 import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
+import { cleanCommand, cleanCommandHandler } from './__tests__/utils/cleanCommand'
 import docsMiddleware from './middlewares/docsMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -30,9 +31,13 @@ const rest = new REST({ version: '9' }).setToken(config.token)
 client.on('ready', async () => {
   try {
     if (client.user?.id) {
+      const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand]
+      if (config.testing.isEnabled) {
+        commArr.push(cleanCommand)
+      }
       const res = await rest.put(
         Routes.applicationGuildCommands(client.user.id, config.guildId),
-        { body: [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand] },
+        { body: [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand, cleanCommand] },
       )
       const promCommands = (res as { id: string }[]).map((command) => client.guilds.cache.get(config.guildId)?.commands.fetch(command.id))
       const commands = await Promise.all(promCommands)
@@ -78,20 +83,25 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     const managers = new Managers()
     if (interaction.isCommand()) {
       switch (interaction.commandName) { // eslint-disable-line default-case
-        case 'enable':
+        case config.commands.enable.name:
           await enableCommandHandler(managers, interaction)
           break
-        case 'disable':
+        case config.commands.disable.name:
           await disableCommandHandler(managers, interaction)
           break
-        case 'update':
+        case config.commands.update.name:
           await updateCommandHandler(managers, interaction)
           break
-        case 'info':
+        case config.commands.info.name:
           await infoCommandHandler(managers, interaction)
           break
-        case 'migrate':
+        case config.commands.migrate.name:
           await migrateCommandHandler(managers, interaction)
+          break
+        case 'test-clean':
+          if (config.testing.isEnabled) {
+            await cleanCommandHandler(managers, interaction)
+          }
           break
       }
     }

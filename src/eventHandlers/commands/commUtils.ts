@@ -118,7 +118,3 @@ export const enableOptions = {
 }
 
 export const genLinkToDocPage = (channelId: string) => `${config.baseUrl}/docs/${channelId}`
-
-export const replies = {
-  wasNotEnabled: 'The bot was not enabled in this channel/thread',
-}

@@ -1,14 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import type { CommandInteraction, CacheType } from 'discord.js'
+import { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
-
-import { replies } from './commUtils'
+import config from '../../config'
 
 export const migrateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
-  .setName('migrate')
+  .setName(config.commands.migrate.name)
   .setDescription('Migrate to a different channel/thread.')
   .addChannelOption(
     (option) => option.setName('channel')
@@ -17,13 +16,14 @@ export const migrateCommand = new SlashCommandBuilder()
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
+  const { commands: { migrate: { messages } } } = config
   try {
     const inputArg = interaction.options.data[0]
 
     if (inputArg.channel) {
       const res = await managers.settings.updateChIdByChId(interaction.channelId, inputArg.channel.id)
-      if (res) return 'Done.'
-      return replies.wasNotEnabled
+      if (res) return messages.done
+      return config.messages.wasNotEnabled
     }
   } catch (e: unknown) {
     if (e instanceof ReportableError) {
@@ -32,7 +32,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       console.log(e)
     }
   }
-  return 'Failed to migrate.'
+  return messages.failed
 }
 
 export const migrateCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {

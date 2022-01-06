@@ -11,6 +11,53 @@ const config = {
     },
   ],
   baseUrl: process.env.BASE_URL ?? 'http://localhost:3000',
+  testing: {
+    isEnabled: process.env.NODE_ENV === 'test',
+    testChannel1Id: '923544676793999390',
+    mail: process.env.TEST_MAIL,
+    pass: process.env.TEST_PASS,
+    awardedRoleName1: '@T-Rex',
+    awardedRoleName2: '@U-Rex',
+  },
+  commands: {
+    enable: {
+      name: 'enable',
+      messages: {
+        enabled: 'Enabled',
+        updated: 'Updated',
+        docLinkMsg: (link: string) => `The page with sent documents: ${link}.`
+      },
+    },
+    info: {
+      name: 'info',
+      messages: {
+        main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved documents**: ${total}`,
+      },
+    },
+    disable: {
+      name: 'disable',
+      messages: {
+        done: 'Disabled.',
+      },
+    },
+    migrate: {
+      name: 'migrate',
+      messages: {
+        done: 'Done.',
+        failed: 'Failed to migrate.',
+      },
+    },
+    update: {
+      name: 'update',
+      messages: {
+        noArgs: 'At least one argument needed for this command.',
+        done: 'Updated.',
+      },
+    },
+  },
+  messages: {
+    wasNotEnabled: 'The bot was not enabled in this channel/thread',
+  },
 }
 
 export default config

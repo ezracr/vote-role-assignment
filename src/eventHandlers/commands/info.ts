@@ -3,7 +3,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
-import { convertIdToGroupTag } from '../handlUtils'
+import { convertIdToRoleTag } from '../handlUtils'
 import config from '../../config'
 import { genLinkToDocPage } from './commUtils'
 
@@ -12,24 +12,28 @@ export const infoCommand = new SlashCommandBuilder()
   .setName(config.commands.info.name)
   .setDescription('Show the settings of this channel/thread.')
 
-const prepareGroupIds = (groupId: string | string[]): string => {
+const prepareGroupIds = (groupId?: string | string[]): string => {
+  if (!groupId) return ''
   if (Array.isArray(groupId)) {
-    return groupId.map((id) => convertIdToGroupTag(id)).join(', ')
+    return groupId.map((id) => convertIdToRoleTag(id)).join(', ')
   }
-  return convertIdToGroupTag(groupId)
+  return convertIdToRoleTag(groupId)
 }
 
 const prepareLine = (key: string, val: string) => `  ${key}: ${val}`
 
-const prepareSettingsForDisplay = (obj: ChSettingsData): string => (
-  (Object.keys(obj) as (keyof ChSettingsData)[]).map((key) => {
+const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
+  const { awarded_role, title, allowed_to_vote_roles, voting_threshold } = sett
+  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold }
+
+  return (Object.keys(normSett) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
     if (key === 'allowed_to_vote_roles' || key === 'awarded_role') {
-      return prepareLine(normKey, prepareGroupIds(obj[key] as string | string[]))
+      return prepareLine(normKey, prepareGroupIds(normSett[key] ))
     }
-    return prepareLine(normKey, JSON.stringify(obj[key]))
+    return prepareLine(normKey, JSON.stringify(normSett[key]))
   }).join('\n')
-)
+}
 
 export const infoCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {

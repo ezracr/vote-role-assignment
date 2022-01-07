@@ -15,7 +15,7 @@ export const fetchMember = async (guildId: string, userId: string): Promise<Guil
 }
 
 export const convertIdToUserTag = (userId: string): string => `<@!${userId}>`
-export const convertIdToGroupTag = (groupId: string): string => `<@&${groupId}>`
+export const convertIdToRoleTag = (groupId: string): string => `<@&${groupId}>`
 
 export const genLikeButton = (count = 0): MessageButton => new MessageButton({
   style: 'SECONDARY',

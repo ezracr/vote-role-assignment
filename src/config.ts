@@ -52,6 +52,7 @@ const config = {
       messages: {
         noArgs: 'At least one argument needed for this command.',
         done: 'Updated.',
+        removedAllowedToVote: '`allowed-to-vote-role`s have been cleared.',
       },
     },
   },

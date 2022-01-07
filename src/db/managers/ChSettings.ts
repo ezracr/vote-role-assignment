@@ -43,17 +43,17 @@ class ChSettings {
       const { rows: [row] } = await pool.query<Pick<ChSetting, 'id'>>(`
         DELETE FROM channel_settings sts WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
-      return row?.id
+      return row.id
     } catch (e: unknown) {
-      await pool.query<Pick<ChSetting, 'id'>>(`
+      const { rows: [row] } = await pool.query<Pick<ChSetting, 'id'>>(`
         UPDATE channel_settings sts SET "is_disabled" = TRUE
         WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
-      return channelId
+      return row.id
     }
   }
 
-  async updateAnySettingsFieldByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
+  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`
       UPDATE channel_settings sts SET "data" = (
         SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1

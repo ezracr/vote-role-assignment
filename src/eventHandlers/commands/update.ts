@@ -34,8 +34,8 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
   const { commands: { update: { messages } } } = config
   try {
     if (interaction.options.getSubcommand() === 'remove-allowed-to-vote') {
-      const res = await managers.settings.updateAnySettingsFieldByChId(interaction.channelId, { allowed_to_vote_roles: [] })
-      if (res) return '`allowed-to-vote-role`s have been cleared.'
+      const res = await managers.settings.patchDataByChId(interaction.channelId, { allowed_to_vote_roles: [] })
+      if (res) return config.commands.update.messages.removedAllowedToVote
       return config.messages.wasNotEnabled
     }
     const optionsData = interaction.options.data[0].options
@@ -44,12 +44,10 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     }
     const dbType = convertToDbType({
       optionsData,
-      group: ['allowed_to_vote_role'],
-      rename: { 'remove-allowed-to-vote-roles': 'allowed_to_vote_roles' },
-      valueOverrides: { 'remove-allowed-to-vote-roles': [] }
+      group: ['allowed-to-vote-role'],
     })
 
-    const res = await managers.settings.updateAnySettingsFieldByChId(interaction.channelId, dbType as unknown as ChSettingsData)
+    const res = await managers.settings.patchDataByChId(interaction.channelId, dbType as unknown as ChSettingsData)
     if (res) return messages.done
     return config.messages.wasNotEnabled
   } catch (e: unknown) {

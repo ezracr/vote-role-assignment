@@ -14,6 +14,9 @@ const config = {
   testing: {
     isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
     testChannel1Id: '923544676793999390',
+    testChannel2Id: '929691426827141160',
+    testChannel1Name: 'for-testing1',
+    testChannel2Name: 'for-testing2',
     mail: process.env.TEST_MAIL,
     pass: process.env.TEST_PASS,
     awardedRoleName1: '@T-Rex',

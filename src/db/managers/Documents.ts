@@ -1,5 +1,6 @@
-import pool from '../pool'
+import { PoolClient } from 'pg'
 
+import pool from '../pool'
 import { Document, ChSetting } from '../dbTypes'
 import Users from './Users'
 
@@ -20,6 +21,15 @@ class Documents {
       doc.user = user
       return doc
     }
+  }
+
+  async updateManyChSettIdByChId(oldChId: string, newChSettId: string, client?: PoolClient): Promise<Document[] | undefined> {
+    const { rows } = await (client ?? pool).query<Document>(`
+      UPDATE documents ds SET "ch_sett_id" = $2
+      WHERE ds."ch_sett_id" = (SELECT cs1."id" FROM channel_settings cs1 WHERE "channel_id" = $1)
+      RETURNING *
+    `, [oldChId, newChSettId])
+    return rows
   }
 
   async getNumOfDocsPerChannel(chId: string): Promise<{ total: number } | undefined> {

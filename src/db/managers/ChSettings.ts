@@ -1,11 +1,15 @@
-import pool from '../pool'
+import { PoolClient } from 'pg'
 
+import pool from '../pool'
 import { ChSettingsData, ChSetting } from '../dbTypes'
 import { ReportableError } from './manUtils'
+import Documents from './Documents'
 
 type InsSetting = ChSetting & { inserted: boolean }
 
 class ChSettings {
+  documents = new Documents()
+
   async getByChId(channelId: string): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`
       SELECT sts."data"
@@ -29,8 +33,8 @@ class ChSettings {
     }
   }
 
-  async updateChIdByChId(channelId: string, newChannelId: string): Promise<ChSetting | undefined> { // TODO Turn into patch and merge with `updateAnySettingsFieldByChId`
-    const { rows: [row] } = await pool.query<ChSetting>(`
+  private async updateChIdByChId(channelId: string, newChannelId: string, client?: PoolClient): Promise<ChSetting | undefined> { // TODO Turn into patch and merge with `updateAnySettingsFieldByChId`
+    const { rows: [row] } = await (client ?? pool).query<ChSetting>(`
       UPDATE channel_settings sts SET "channel_id" = $2
       WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
       RETURNING *
@@ -38,14 +42,41 @@ class ChSettings {
     return row
   }
 
-  async deleteByChId(channelId: string): Promise<string | undefined> {
+  async mergeOneChSettingsIntoAnotherByChId(fromChId: string, intoChId: string): Promise<ChSetting | undefined> {
+    const client = await pool.connect()
+    let res: ChSetting | undefined
     try {
-      const { rows: [row] } = await pool.query<Pick<ChSetting, 'id'>>(`
+       await client.query('BEGIN')
+      const { rows: [newChSett] } = await client.query<ChSetting>(`
+        SELECT * FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
+      `, [intoChId])
+      if (newChSett) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+        await this.documents.updateManyChSettIdByChId(fromChId, newChSett.id, client)
+        await client.query('SAVEPOINT last')
+        await this.deleteByChId(fromChId, client, 'last')
+        res = await this.getByChId(intoChId)
+      } else {
+        res = await this.updateChIdByChId(fromChId, intoChId, client)
+      }
+      await client.query('COMMIT')
+      return res
+    } catch (e: unknown) {
+      console.log(e)
+      await client.query('ROLLBACK')
+    }
+  }
+
+  async deleteByChId(channelId: string, client?: PoolClient, savepoint?: string): Promise<string | undefined> {
+    try {
+      const { rows: [row] } = await (client ?? pool).query<Pick<ChSetting, 'id'>>(`
         DELETE FROM channel_settings sts WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
       return row.id
     } catch (e: unknown) {
-      const { rows: [row] } = await pool.query<Pick<ChSetting, 'id'>>(`
+      if (client && savepoint) {
+        await client.query(`ROLLBACK TO ${savepoint}`)
+      }
+      const { rows: [row] } = await (client ?? pool).query<Pick<ChSetting, 'id'>>(`
         UPDATE channel_settings sts SET "is_disabled" = TRUE
         WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])

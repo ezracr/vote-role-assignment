@@ -14,6 +14,7 @@ import { updateCommand, updateCommandHandler } from './eventHandlers/commands/up
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
 import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
 import { cleanCommand, cleanCommandHandler } from './__tests__/utils/cleanCommand'
+import { addRoleCommand, addRoleCommandHandler } from './__tests__/utils/addRoleCommand'
 import docsMiddleware from './middlewares/docsMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -33,7 +34,7 @@ client.on('ready', async () => {
     if (client.user?.id) {
       const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand]
       if (config.testing.isEnabled) {
-        commArr.push(cleanCommand)
+        commArr.push(cleanCommand, addRoleCommand)
       }
       const res = await rest.put(
         Routes.applicationGuildCommands(client.user.id, config.guildId),
@@ -101,6 +102,11 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
         case 'test-clean':
           if (config.testing.isEnabled) {
             await cleanCommandHandler(managers, interaction)
+          }
+          break
+        case 'test-add-role':
+          if (config.testing.isEnabled) {
+            await addRoleCommandHandler(managers, interaction)
           }
           break
       }

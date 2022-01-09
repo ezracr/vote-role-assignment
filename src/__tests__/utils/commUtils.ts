@@ -1,8 +1,8 @@
 import wd from 'selenium-webdriver'
 import chrome from 'selenium-webdriver/chrome'
 
-import { SelUtils } from './selUtils'
 import config from '../../config'
+import { SelUtils } from './selUtils'
 
 /* eslint-disable no-await-in-loop */
 
@@ -48,6 +48,21 @@ export class CommUtils {
   }
 
   openTestChannel1 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel1Id}`)
+  openTestChannel2 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel2Id}`)
+
+  sendEnable = (awardedRole: string, threashold: string, optArgs?: {  }): Promise<void> => (
+    this.sendCommand(config.commands.enable.name, {
+      req: [{ listItem: awardedRole }, threashold],
+      opt: optArgs,
+    })
+  )
+  sendAddRole1 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-1')
+  sendMigrate = (channelName: string): Promise<void> => (
+    this.sendCommand('migrate', {
+      req: [{ listItem: channelName }],
+    })
+  )
+  sendInfo = (): Promise<void> => this.sendCommand('info')
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 3000)
 
@@ -78,12 +93,12 @@ export class CommUtils {
     const msg = await this.findMessage(lastIndex + 1)
     try {
       const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
-      return msgBody.getText()
+      return await msgBody.getText()
     } catch (e: unknown) { } // eslint-disable-line no-empty
     return msg.getText()
   }
 
-  removeMessages = async (): Promise<void> => {
+  removeMessagesRoles = async (): Promise<void> => {
     await this.sendCommand('test-clean')
     await this.waitToFinishProcessingInteraction()
   }
@@ -111,6 +126,12 @@ export class CommUtils {
     }
   }
 
+  sendMessage = async (msg: string): Promise<void> => {
+    const txtField = await this.findTextField()
+    await txtField.sendKeys(msg)
+    await txtField.sendKeys(Key.ENTER)
+  }
+
   sendCommand = async (name: string, args?: SendCommandArgs): Promise<void> => {
     const txtField = await this.findTextField()
     await txtField.sendKeys(`/${name}`)
@@ -121,7 +142,7 @@ export class CommUtils {
         await this.processSendCommandReqArg(txtField, arg, i === args.req.length - 1)
       }
     }
-    if (args?.req && args?.opt) {
+    if (args?.req && args.opt) {
       await txtField.sendKeys(Key.TAB)
     }
     if (args?.opt) {
@@ -132,5 +153,16 @@ export class CommUtils {
     }
     await txtField.sendKeys(Key.ENTER)
     await this.waitToFinishProcessingInteraction()
+  }
+
+  expectChannelDisabled = async (): Promise<void> => {
+    await this.sendInfo()
+    await this.expectMessageContainsText(config.messages.wasNotEnabled)
+  }
+  expectInfo = async ({ numOfDocs }: { numOfDocs?: number }): Promise<void> => {
+    await this.sendInfo()
+    if (numOfDocs) {
+      await this.expectMessageContainsText(`Saved documents: ${numOfDocs}`)
+    }
   }
 }

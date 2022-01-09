@@ -2,7 +2,8 @@ import { Message, MessageActionRow } from 'discord.js'
 
 import Managers from '../db/managers'
 import { ChSettingsData } from '../db/dbTypes'
-import { genLikeButton, genDislikeButton, fetchMember, fetchDocsTitle } from './handlUtils'
+import { fetchMember } from '../discUtils'
+import { genLikeButton, genDislikeButton, fetchDocsTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
 
 /**

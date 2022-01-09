@@ -3,7 +3,8 @@ import { Message, MessageActionRow, ButtonInteraction, CacheType } from 'discord
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { genButton, fetchMember, fetchDocsTitle } from './handlUtils'
+import { fetchMember, assignRoleId } from '../discUtils'
+import { genButton, fetchDocsTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
 
 const changeButtonCount = (actionRow: MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
@@ -51,7 +52,7 @@ class VoteInteractionHandler {
             title,
           })
         }
-        await member.roles.add(this.chConfig.awarded_role)
+        await assignRoleId(guild, id, this.chConfig.awarded_role)
       }
     }
   }

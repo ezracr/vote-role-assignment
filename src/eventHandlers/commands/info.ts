@@ -3,7 +3,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
-import { convertIdToRoleTag } from '../handlUtils'
+import { convertIdToRoleTag } from '../../discUtils'
 import config from '../../config'
 import { genLinkToDocPage } from './commUtils'
 

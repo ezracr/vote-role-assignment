@@ -1,4 +1,4 @@
-import { convertIdToUserTag } from './handlUtils'
+import { convertIdToUserTag } from '../discUtils'
 
 type InnerMessageArg = {
   authorId: string;

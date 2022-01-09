@@ -3,7 +3,7 @@ import { Message, MessageActionRow, ButtonInteraction, CacheType } from 'discord
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { fetchMember, assignRoleId } from '../discUtils'
+import { fetchMember, assignRoleById } from '../discUtils'
 import { genButton, fetchDocsTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
 
@@ -52,7 +52,7 @@ class VoteInteractionHandler {
             title,
           })
         }
-        await assignRoleId(guild, id, this.chConfig.awarded_role)
+        await assignRoleById(guild, id, this.chConfig.awarded_role)
       }
     }
   }

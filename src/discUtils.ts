@@ -19,7 +19,7 @@ const fetchReturnGuild = async (guildId: string | Guild): Promise<Guild> => (
   typeof guildId === 'string' ? client.guilds.fetch(guildId) : guildId
 )
 
-export const assignRoleId = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
+export const assignRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
   const guild = await fetchReturnGuild(guildId)
   const member = guild.members.cache.get(userId)
   if (member) {
@@ -33,10 +33,26 @@ const findRoleIdByName = async (guildId: string | Guild, roleName: string): Prom
   return roleRes?.id
 }
 
-export const assignRoleName = async (guildId: string | Guild, userId: string, roleName: string): Promise<void> => {
+export const assignRoleByName = async (guildId: string | Guild, userId: string, roleName: string): Promise<void> => {
   const guild = await fetchReturnGuild(guildId)
   const roleId = await findRoleIdByName(guild, roleName)
   if (roleId) {
-    await assignRoleId(guild, userId, roleId)
+    await assignRoleById(guild, userId, roleId)
+  }
+}
+
+const removeRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
+  const guild = await fetchReturnGuild(guildId)
+  const member = guild.members.cache.get(userId)
+  if (member) {
+    await member.roles.remove(roleId)
+  }
+}
+
+export const removeRoleByName = async (guildId: string | Guild, userId: string, roleName: string): Promise<void> => {
+  const guild = await fetchReturnGuild(guildId)
+  const roleId = await findRoleIdByName(guild, roleName)
+  if (roleId) {
+    await removeRoleById(guild, userId, roleId)
   }
 }

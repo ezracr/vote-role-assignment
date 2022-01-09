@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
-import config from '../../config'
-import { assignRoleName } from '../../discUtils'
 
+import config from '../../config'
+import { assignRoleByName } from '../../discUtils'
 import Managers from '../../db/managers'
 
 export const addRoleCommand = new SlashCommandBuilder()
@@ -25,7 +25,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     const { guildId, user: { id } } = interaction
     const roleName = interaction.options.getSubcommand() === 'awarded-role-1' ? config.testing.awardedRoleName1 : config.testing.awardedRoleName2
     if (guildId) {
-      await assignRoleName(guildId, id, roleName.slice(1))
+      await assignRoleByName(guildId, id, roleName.slice(1))
       return 'Done'
     }
   } catch (e: unknown) {

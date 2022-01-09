@@ -71,10 +71,6 @@ class Votes {
     const { rows } = await (client ?? pool).query<Pick<Vote, 'id'>>(`
       DELETE FROM votes vs WHERE vs."user_id" = $1 AND vs."message_id" = $2 RETURNING "id"
     `, [user.id, message_id])
-    if (client) {
-      await client.query('SAVEPOINT del_vote')
-    }
-    await this.users.delById({ id: user.id }, client, 'del_vote')
     return rows[0]?.id
   }
 }

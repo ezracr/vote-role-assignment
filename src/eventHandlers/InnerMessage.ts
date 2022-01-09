@@ -11,7 +11,7 @@ const genInFavorMessage = (inFavor = ''): string => `**Voted in favor**: ${inFav
 const genAgainstMessage = (against = ''): string => `**Voted against**: ${against}\n`
 const genVotersString = (voters: string[]): string => voters.join(', ')
 
-const findFirstSemicolonIndex = (txt: string) => txt.indexOf(':')
+const findFirstSemicolonIndex = (txt: string): number => txt.indexOf(':')
 
 /**
  * A class that can generate a message with an author tag, title, link, and in favor and against voters.
@@ -41,7 +41,7 @@ ${genInFavorMessage(genVotersString(this.inFavor))}${genAgainstMessage(genVoters
    * @param inFavor 'in favor' array will override the one from the message string if specified.
    * @param against 'against' array will override the one from the message string if specified.
    */
-  static from({ oldMessage, inFavor, against }: { oldMessage: string } & Pick<InnerMessageArg, 'inFavor' | 'against'>) {
+  static from({ oldMessage, inFavor, against }: { oldMessage: string } & Pick<InnerMessageArg, 'inFavor' | 'against'>): InnerMessage | undefined  {
     const msgSplit = oldMessage.split('\n')
     const usrIdLine = msgSplit[0]
     const urlLine = msgSplit[1]

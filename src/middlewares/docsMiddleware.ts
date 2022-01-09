@@ -3,7 +3,7 @@ import { Application } from 'express'
 import Managers from '../db/managers'
 import { Document, ChSetting } from '../db/dbTypes'
 
-const renderRow = (doc: Document) => {
+const renderRow = (doc: Document): string => {
   const title = doc.title.trim()
   return `
 <div class="row">
@@ -12,7 +12,7 @@ const renderRow = (doc: Document) => {
 </div>`
 }
 
-const renderTemplate = (chSettings: ChSetting, docs: Document[]) => `<!DOCTYPE html>
+const renderTemplate = (chSettings: ChSetting, docs: Document[]): string => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -82,7 +82,7 @@ ${docs.map((doc) => renderRow(doc)).join('')}
 </html>
 `
 
-export default function docsMiddleware(app: Application) {
+export default function docsMiddleware(app: Application): void {
   app.get('/docs/:id', async (req, res, next) => {
     const managers = new Managers()
     const { id } = req.params

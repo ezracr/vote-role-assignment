@@ -49,7 +49,7 @@ class ChSettings {
         UPDATE channel_settings sts SET "is_disabled" = TRUE
         WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
-      return row.id
+      return row?.id // eslint-disable-line @typescript-eslint/no-unnecessary-condition
     }
   }
 

@@ -19,7 +19,7 @@ class ChSettings {
     return rows[0]
   }
 
-  async upsert(channelId: string, data: ChSettingsData): Promise<InsSetting> {
+  async upsert(channelId: string, data: ChSettingsData): Promise<InsSetting | undefined> {
     try {
       const { rows } = await pool.query<InsSetting>(`
         INSERT INTO channel_settings ("channel_id", "data") VALUES ($1, $2)
@@ -50,7 +50,7 @@ class ChSettings {
       const { rows: [newChSett] } = await client.query<ChSetting>(`
         SELECT * FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
       `, [intoChId])
-      if (newChSett) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+      if (newChSett) {
         await this.documents.updateManyChSettIdByChId(fromChId, newChSett.id, client)
         await client.query('SAVEPOINT last')
         await this.deleteByChId(fromChId, client, 'last')
@@ -71,7 +71,7 @@ class ChSettings {
       const { rows: [row] } = await (client ?? pool).query<Pick<ChSetting, 'id'>>(`
         DELETE FROM channel_settings sts WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
-      return row.id
+      return row?.id
     } catch (e: unknown) {
       if (client && savepoint) {
         await client.query(`ROLLBACK TO ${savepoint}`)
@@ -80,7 +80,7 @@ class ChSettings {
         UPDATE channel_settings sts SET "is_disabled" = TRUE
         WHERE sts."channel_id" = $1 RETURNING "id"
       `, [channelId])
-      return row?.id // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+      return row?.id
     }
   }
 

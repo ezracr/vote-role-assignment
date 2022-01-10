@@ -17,7 +17,7 @@ class Documents {
       RETURNING *
     `, [data.user.id, data.link, data.channel_id, data.title])
 
-    if (doc && user) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+    if (doc && user) {
       doc.user = user
       return doc
     }

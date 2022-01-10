@@ -40,13 +40,13 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
     const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as ChSettingsData)
     const { commands: { enable: { messages } } } = config
 
-    if (res.inserted) {
+    if (res?.inserted) {
       const newMsg = await interaction.channel?.send({
         content: messages.docLinkMsg(genLinkToDocPage(interaction.channelId)),
       })
       await newMsg?.pin()
     }
-    await interaction.reply({ content: res.inserted ? messages.enabled : messages.updated, ephemeral: true })
+    await interaction.reply({ content: res?.inserted ? messages.enabled : messages.updated, ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {
       await interaction.reply({ content: e.message, ephemeral: true })

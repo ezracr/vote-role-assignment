@@ -148,7 +148,7 @@ export class CommUtils {
     if (args?.opt) {
       const keys = Object.keys(args.opt)
       for (const key of keys) {
-        await this.processSendCommandOptArg(txtField, key, args.opt[key])
+        await this.processSendCommandOptArg(txtField, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
     }
     await txtField.sendKeys(Key.ENTER)

@@ -23,7 +23,7 @@ const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdTy
     }
   }
   if (rename?.[name]) {
-    return [replaceHyphensInKey(rename[name]), false]
+    return [replaceHyphensInKey(rename[name]!), false] // eslint-disable-line @typescript-eslint/no-non-null-assertion
   }
   if (appendId && isAppendId(name, appendId)) {
     return [replaceHyphensInKey(`${name}_id`), false]
@@ -72,7 +72,7 @@ export const convertToDbType = ({ optionsData, group, appendId, rename, valueOve
     const normValue = normalizeToDbValue(val)
 
     if (valueOverrides?.[val.name]) {
-      acc[normKey] = valueOverrides[val.name]
+      acc[normKey] = valueOverrides[val.name]! // eslint-disable-line @typescript-eslint/no-non-null-assertion
       return acc
     }
 
@@ -117,4 +117,4 @@ export const enableOptions = {
   },
 }
 
-export const genLinkToDocPage = (channelId: string) => `${config.baseUrl}/docs/${channelId}`
+export const genLinkToDocPage = (channelId: string): string => `${config.baseUrl}/docs/${channelId}`

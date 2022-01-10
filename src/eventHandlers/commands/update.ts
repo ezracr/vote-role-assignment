@@ -38,7 +38,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       if (res) return config.commands.update.messages.removedAllowedToVote
       return config.messages.wasNotEnabled
     }
-    const optionsData = interaction.options.data[0].options
+    const optionsData = interaction.options.data[0]?.options
     if (!optionsData || optionsData.length === 0) {
       return messages.noArgs
     }

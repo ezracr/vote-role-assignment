@@ -20,7 +20,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
   try {
     const inputArg = interaction.options.data[0]
 
-    if (inputArg.channel) {
+    if (inputArg?.channel) {
       const res = await managers.settings.mergeOneChSettingsIntoAnotherByChId(interaction.channelId, inputArg.channel.id)
       if (res) return messages.done
       return config.messages.wasNotEnabled

@@ -23,7 +23,7 @@ class Votes {
       RETURNING *
     `, [data.message_id, data.user.id, data.in_favor])
 
-    if (vote && user) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+    if (vote && user) {
       vote.user = user
       return vote
     }

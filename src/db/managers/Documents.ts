@@ -46,7 +46,7 @@ class Documents {
       SELECT *
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1
-      ORDER BY ds."created" DESC
+      ORDER BY ds."created" DESC, ds."id"
     `, [chId])
     return rows
   }

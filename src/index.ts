@@ -13,6 +13,7 @@ import { disableCommand, disableCommandHandler } from './eventHandlers/commands/
 import { updateCommand, updateCommandHandler } from './eventHandlers/commands/update'
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
 import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
+import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
 import { cleanCommand, cleanCommandHandler } from './__tests__/utils/cleanCommand'
 import { addRoleCommand, addRoleCommandHandler } from './__tests__/utils/addRoleCommand'
 import docsMiddleware from './middlewares/docsMiddleware'
@@ -32,7 +33,7 @@ const rest = new REST({ version: '9' }).setToken(config.token)
 client.on('ready', async () => {
   try {
     if (client.user?.id) {
-      const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand]
+      const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand, helpCommand]
       if (config.testing.isEnabled) {
         commArr.push(cleanCommand, addRoleCommand)
       }
@@ -98,6 +99,9 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
           break
         case config.commands.migrate.name:
           await migrateCommandHandler(managers, interaction)
+          break
+        case config.commands.help.name:
+          await helpCommandHandler(managers, interaction)
           break
         case 'test-clean':
           if (config.testing.isEnabled) {

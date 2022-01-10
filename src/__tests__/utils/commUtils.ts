@@ -18,7 +18,6 @@ export const initDriver = async (): Promise<wd.WebDriver> => new Builder()
 
 const messageContainer = '[data-list-id=chat-messages]'
 
-
 type SendCommandArgsVal = string | { listItem: string }
 type SendCommandOptArgs = Record<string, SendCommandArgsVal>
 type SendCommandReqArgs = SendCommandArgsVal[]
@@ -63,6 +62,7 @@ export class CommUtils {
     })
   )
   sendInfo = (): Promise<void> => this.sendCommand('info')
+  sendHelp = (): Promise<void> => this.sendCommand('help')
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 3000)
 

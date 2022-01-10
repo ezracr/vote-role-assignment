@@ -10,7 +10,7 @@ import { convertToDbType, enableOptions, genLinkToDocPage } from './commUtils'
 export const enableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.enable.name)
-  .setDescription('Initialize/update the bot in this channel/thread.')
+  .setDescription(config.commands.enable.description)
   .addRoleOption(enableOptions.awardedRole.bind(null, true))
   .addIntegerOption(enableOptions.votingThreshold.bind(null, true))
   .addRoleOption(enableOptions.allowedToVoteRole1.bind(null, false))

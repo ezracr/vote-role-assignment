@@ -7,7 +7,7 @@ import config from '../../config'
 export const disableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.disable.name)
-  .setDescription('Disable the bot in this channel/thread.')
+  .setDescription(config.commands.disable.description)
 
 export const disableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {

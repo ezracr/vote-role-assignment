@@ -96,3 +96,10 @@ describe('/migrate', () => {
     await commUtils.expectMessageContainsText(config.commands.migrate.messages.done)
   })
 })
+
+describe('/help', () => {
+  it('returns some command\'s description', async () => {
+    await commUtils.sendHelp()
+    await commUtils.expectMessageContainsText(config.commands.info.description)
+  })
+})

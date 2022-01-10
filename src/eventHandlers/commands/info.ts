@@ -10,7 +10,7 @@ import { genLinkToDocPage } from './commUtils'
 export const infoCommand = new SlashCommandBuilder()
   .setDefaultPermission(true)
   .setName(config.commands.info.name)
-  .setDescription('Show the settings of this channel/thread.')
+  .setDescription(config.commands.info.description)
 
 const prepareGroupIds = (groupId?: string | string[]): string => {
   if (!groupId) return ''
@@ -20,7 +20,7 @@ const prepareGroupIds = (groupId?: string | string[]): string => {
   return convertIdToRoleTag(groupId)
 }
 
-const prepareLine = (key: string, val: string) => `  ${key}: ${val}`
+const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`
 
 const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
   const { awarded_role, title, allowed_to_vote_roles, voting_threshold } = sett

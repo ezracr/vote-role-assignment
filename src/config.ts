@@ -25,6 +25,7 @@ const config = {
   commands: {
     enable: {
       name: 'enable',
+      description: 'Initialize/update the bot in this channel/thread.',
       messages: {
         enabled: 'Enabled',
         updated: 'Updated',
@@ -33,18 +34,21 @@ const config = {
     },
     info: {
       name: 'info',
+      description: 'Show the settings of this channel/thread.',
       messages: {
         main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved documents**: ${total}`,
       },
     },
     disable: {
       name: 'disable',
+      description: 'Disable the bot in this channel/thread.',
       messages: {
         done: 'Disabled.',
       },
     },
     migrate: {
       name: 'migrate',
+      description: 'Migrate to a different channel/thread.',
       messages: {
         done: 'Done.',
         failed: 'Failed to migrate.',
@@ -52,11 +56,16 @@ const config = {
     },
     update: {
       name: 'update',
+      description: 'Update individual fields of this channel/thread\'s config.',
       messages: {
         noArgs: 'At least one argument needed for this command.',
         done: 'Updated.',
         removedAllowedToVote: '`allowed-to-vote-role`s have been cleared.',
       },
+    },
+    help: {
+      name: 'help',
+      description: 'Show the list of commands.',
     },
   },
   messages: {

@@ -10,7 +10,7 @@ import { convertToDbType, enableOptions } from './commUtils'
 export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.update.name)
-  .setDescription('Update individual fields of this channel/thread\'s config.')
+  .setDescription(config.commands.update.description)
   .addSubcommand((subcommand) =>
     subcommand
       .setName('set')

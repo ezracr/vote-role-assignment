@@ -8,7 +8,7 @@ import config from '../../config'
 export const migrateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.migrate.name)
-  .setDescription('Migrate to a different channel/thread.')
+  .setDescription(config.commands.migrate.description)
   .addChannelOption(
     (option) => option.setName('channel')
       .setDescription('Channel/thread.')

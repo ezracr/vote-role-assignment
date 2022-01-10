@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import config from '../../config'
+import client from '../../client'
 import Managers from '../../db/managers'
 import { removeRoleByName } from '../../discUtils'
 
@@ -10,12 +11,20 @@ export const cleanCommand = new SlashCommandBuilder()
   .setDescription('Removes the last 100 messages.')
   .setName('test-clean')
 
+const removeFromChannelByChId = async (chId: string): Promise<void> => {
+  const channel = await client.channels.fetch(chId)
+  if (channel?.type === 'GUILD_TEXT') {
+    const msgs = await channel.messages.fetch({ limit: 100 })
+    await channel.bulkDelete(msgs)
+  }
+}
+
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
     const { guildId, user: { id }, channel } = interaction
-    const msgs = await channel?.messages.fetch({ limit: 100 })
-    if (guildId && msgs && channel?.type === 'GUILD_TEXT') {
-      await channel.bulkDelete(msgs)
+    if (guildId && channel?.type === 'GUILD_TEXT') {
+      await removeFromChannelByChId(config.testing.testChannel1Id)
+      await removeFromChannelByChId(config.testing.testChannel2Id)
       await removeRoleByName(guildId, id, config.testing.awardedRoleName1.slice(1))
       await removeRoleByName(guildId, id, config.testing.awardedRoleName1.slice(1))
       return 'Done'

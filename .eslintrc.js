@@ -7,5 +7,6 @@ module.exports = {
         allowExpressions: true,
       },
     ],
+    '@typescript-eslint/no-parameter-properties': 'off',
   }
 }

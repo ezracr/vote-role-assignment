@@ -18,7 +18,7 @@ const changeButtonCount = (actionRow: MessageActionRow, newCount: number, type: 
 class VoteInteractionHandler {
   private type: 'like' | 'dislike'
 
-  constructor(private chConfig: ChSettingsData, private interaction: ButtonInteraction<CacheType>, private managers: Managers) {  // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private interaction: ButtonInteraction<CacheType>, private managers: Managers) {
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
@@ -78,7 +78,7 @@ class VoteInteractionHandler {
       })
       const { in_favor, against, in_favor_count = 0, against_count = 0 } = await this.managers.votes.getVoteCountsByMessageId(msg.id) ?? {}
       const innMessage = InnerMessage.from({
-        oldMessage: message.content, inFavor: in_favor, against: against,
+        oldMessage: message.content, inFavor: in_favor, against,
       })
       if (innMessage) {
         changeButtonCount(actionRow, in_favor_count, 'like')

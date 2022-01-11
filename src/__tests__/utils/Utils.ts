@@ -1,6 +1,6 @@
 import wd from 'selenium-webdriver'
-import { CommUtils } from './commUtils'
 import chrome from 'selenium-webdriver/chrome'
+import { CommUtils } from './commUtils'
 import { SelUtils } from './selUtils'
 
 const screen = {
@@ -14,7 +14,7 @@ export const initDriver = async (): Promise<wd.WebDriver> => new Builder()
   .build()
 
 class Utils {
-  private constructor(public driver: wd.WebDriver, public comm: CommUtils, public sel: SelUtils) { // eslint-disable-line @typescript-eslint/no-parameter-properties
+  private constructor(public driver: wd.WebDriver, public comm: CommUtils, public sel: SelUtils) {
   }
 
   static async init(): Promise<Utils> {

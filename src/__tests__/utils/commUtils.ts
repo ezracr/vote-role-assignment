@@ -21,7 +21,7 @@ let isUser1LoggedIn: boolean
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
 
-  constructor(private driver: wd.WebDriver) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private driver: wd.WebDriver) { }
 
   login = async (mail?: string, pass?: string): Promise<void> => {
     if (mail && pass) {

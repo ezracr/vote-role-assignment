@@ -33,7 +33,7 @@ const isAlreadyAwarded = async (config: ChSettingsData, msg: Message<boolean>): 
 }
 
 class MessageCreateHandler {
-  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
+  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { }
 
   process = async (): Promise<{ messageContent: string, actionRow?: MessageActionRow } | null> => {
     if (!this.msg.author.bot) {

@@ -11,17 +11,6 @@ const config = {
     },
   ],
   baseUrl: process.env.BASE_URL ?? 'http://localhost:3000',
-  testing: {
-    isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
-    testChannel1Id: '923544676793999390',
-    testChannel2Id: '929691426827141160',
-    testChannel1Name: 'for-testing1',
-    testChannel2Name: 'for-testing2',
-    mail: process.env.TEST_MAIL,
-    pass: process.env.TEST_PASS,
-    awardedRoleName1: '@T-Rex',
-    awardedRoleName2: '@U-Rex',
-  },
   commands: {
     enable: {
       name: 'enable',
@@ -70,6 +59,19 @@ const config = {
   },
   messages: {
     wasNotEnabled: 'The bot was not enabled in this channel/thread',
+  },
+  testing: {
+    isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
+    testChannel1Id: '923544676793999390',
+    testChannel2Id: '929691426827141160',
+    testChannel1Name: 'for-testing1',
+    testChannel2Name: 'for-testing2',
+    mail1: process.env.TEST_MAIL1,
+    pass1: process.env.TEST_PASS1,
+    mail2: process.env.TEST_MAIL2,
+    pass2: process.env.TEST_PASS2,
+    awardedRoleName1: '@T-Rex',
+    awardedRoleName2: '@U-Rex',
   },
 }
 

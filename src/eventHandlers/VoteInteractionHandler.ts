@@ -76,16 +76,15 @@ class VoteInteractionHandler {
         },
         in_favor: this.type === 'like',
       })
-      const votes = await this.managers.votes.getVoteCountsByMessageId(msg.id)
+      const { in_favor, against, in_favor_count = 0, against_count = 0 } = await this.managers.votes.getVoteCountsByMessageId(msg.id) ?? {}
       const innMessage = InnerMessage.from({
-        oldMessage: message.content, inFavor: votes?.in_favor, against: votes?.against,
+        oldMessage: message.content, inFavor: in_favor, against: against,
       })
       if (innMessage) {
-        changeButtonCount(actionRow, votes?.in_favor_count ?? 0, 'like')
-        changeButtonCount(actionRow, votes?.against_count ?? 0, 'dislike')
-
+        changeButtonCount(actionRow, in_favor_count, 'like')
+        changeButtonCount(actionRow, against_count, 'dislike')
         if (this.type === 'like') {
-          await this.assignRole(votes?.in_favor_count ?? 0, innMessage)
+          await this.assignRole(in_favor_count - against_count, innMessage)
         }
 
         return { messageContent: innMessage.toString(), actionRow }

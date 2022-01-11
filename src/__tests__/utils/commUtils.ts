@@ -1,20 +1,9 @@
 import wd from 'selenium-webdriver'
-import chrome from 'selenium-webdriver/chrome'
-
 import config from '../../config'
 import { SelUtils } from './selUtils'
 
 /* eslint-disable no-await-in-loop */
 
-const screen = {
-  width: 1500,
-  height: 1000,
-}
-
-export const initDriver = async (): Promise<wd.WebDriver> => new Builder()
-  .forBrowser('chrome')
-  .setChromeOptions(new chrome.Options().windowSize(screen).headless())
-  .build()
 
 const messageContainer = '[data-list-id=chat-messages]'
 
@@ -27,29 +16,50 @@ export type SendCommandArgs = {
   req?: SendCommandReqArgs;
 }
 
+let isUser1LoggedIn: boolean
+
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
 
   constructor(private driver: wd.WebDriver) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
 
-  login = async (): Promise<void> => {
-    if (config.testing.mail && config.testing.pass) {
+  login = async (mail?: string, pass?: string): Promise<void> => {
+    if (mail && pass) {
       await this.driver.get('https://discord.com/login')
-      const mail = await this.selUtils.findElementByCss('input[name=email]')
-      await mail.sendKeys(config.testing.mail)
-      const pass = await this.selUtils.findElementByCss('input[name=password]')
-      await pass.sendKeys(config.testing.pass)
+      const mailEl = await this.selUtils.findElementByCss('input[name=email]')
+      await mailEl.sendKeys(mail)
+      const passEl = await this.selUtils.findElementByCss('input[name=password]')
+      await passEl.sendKeys(pass)
       const login = await this.selUtils.findElementByCss('button[type=submit]')
       await login.click()
+      await this.driver.wait(wd.until.stalenessOf(login), 3000)
     } else {
       throw new Error('Testing mail and password have not been specified.')
+    }
+  }
+
+  login1 = async (): Promise<void> => {
+    await this.login(config.testing.mail1, config.testing.pass1)
+    isUser1LoggedIn = true
+  }
+
+  login2 = async (): Promise<void> => {
+    await this.login(config.testing.mail2, config.testing.pass2)
+    isUser1LoggedIn = false
+  }
+
+  loginAnotherUser = async (): Promise<void> => {
+    if (isUser1LoggedIn) {
+      await this.login2()
+    } else {
+      await this.login1()
     }
   }
 
   openTestChannel1 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel1Id}`)
   openTestChannel2 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel2Id}`)
 
-  sendEnable = (awardedRole: string, threashold: string, optArgs?: {  }): Promise<void> => (
+  sendEnable = (awardedRole: string, threashold: string, optArgs?: {}): Promise<void> => (
     this.sendCommand(config.commands.enable.name, {
       req: [{ listItem: awardedRole }, threashold],
       opt: optArgs,
@@ -64,9 +74,15 @@ export class CommUtils {
   sendInfo = (): Promise<void> => this.sendCommand('info')
   sendHelp = (): Promise<void> => this.sendCommand('help')
 
+  sendDoc1 = (): Promise<void> => this.sendMessage('https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing')
+  sendSheet1 = (): Promise<void> => this.sendMessage('https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing')
+
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 3000)
 
-  findMessagesContainer = (): Promise<wd.WebElement> => this.selUtils.findElementByCss(messageContainer)
+  findMessagesContainer = (): Promise<wd.WebElement> => {
+    return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 3000)
+    // TODO wait for the messages to be fully populated
+  }
 
   waitToFinishProcessingInteraction = async (): Promise<void> => {
     try {
@@ -98,7 +114,7 @@ export class CommUtils {
     return msg.getText()
   }
 
-  removeMessagesRoles = async (): Promise<void> => {
+  removeMessagesAndRoles = async (): Promise<void> => {
     await this.sendCommand('test-clean')
     await this.waitToFinishProcessingInteraction()
   }
@@ -153,6 +169,51 @@ export class CommUtils {
     }
     await txtField.sendKeys(Key.ENTER)
     await this.waitToFinishProcessingInteraction()
+  }
+
+  findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
+    for (let i = 0; i < 20 * 2; i++) {
+      const msg = await this.findMessage() // TODO
+      try {
+        const header = await this.selUtils.findElementByCss(`h2`, msg)
+        if ((await header.getText()).toLowerCase().includes('bot')) {
+          return msg
+        }
+      } catch (e: unknown) { } // eslint-disable-line no-empty
+      await this.driver.sleep(50)
+    }
+    throw new Error('Can\'t find the bot\'s message.')
+  }
+
+  findLatestBotMessage = async (): Promise<wd.WebElement> => {
+    const cont = await this.findMessagesContainer()
+
+    // :nth-last-of-type(-n + 10)
+    const lastTenHeaders = await this.selUtils.findElementsByCss('li', cont)
+    for (let i = lastTenHeaders.length - 1; i >= 0; i--) {
+      const msg = lastTenHeaders[i]
+      const text = (await msg?.getText())?.toLowerCase()
+      if (msg && text && text.includes('bot') && text.includes('voted in favor')) {
+        return msg
+        // const message = await header.findElement(By.xpath('//parent::li'))
+        // if (message) {
+        //   return message
+        // }
+      }
+    }
+    throw new Error('Can\'t find the bot\'s message.')
+  }
+
+  voteInFavor = async (msg: wd.WebElement): Promise<void> => {
+    const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
+    await this.selUtils.waitUntilClickable(button)
+    await button.click()
+  }
+
+  voteAgainst = async (msg: wd.WebElement): Promise<void> => {
+    const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
+    await this.selUtils.waitUntilClickable(button)
+    await button.click()
   }
 
   expectChannelDisabled = async (): Promise<void> => {

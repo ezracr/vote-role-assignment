@@ -10,7 +10,7 @@
     "build:start": "npm run build ; npm run start:prod",
     "lint": "kcd-scripts lint ./src/**/*.ts ./src/*.ts",
     "lint:staged": "lint-staged --allow-empty",
-    "test": "kcd-scripts test --config jest/jest.config.js"
+    "test": "kcd-scripts test --config jest/jest.config.js --runInBand"
   },
   "author": "ezracr",
   "license": "MIT",

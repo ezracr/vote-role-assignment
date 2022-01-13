@@ -66,11 +66,8 @@ client.on('messageCreate', async (msg): Promise<void> => {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
       const result = await handler.process()
       if (result) {
-        const botMsg = await msg.reply({
-          content: result.messageContent,
-          components: result.actionRow ? [result.actionRow] : [],
-        })
-        if (result.actionRow) {
+        const botMsg = await msg.reply(result)
+        if (typeof result !== 'string' && (result.components?.length ?? 0) > 0) {
           await botMsg.pin()
         }
       }
@@ -125,10 +122,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
           const result = await handler.process()
 
           if (result) { // eslint-disable-line max-depth
-            await interaction.update({
-              content: result.messageContent,
-              components: [result.actionRow],
-            })
+            await interaction.update(result)
           } else {
             await interaction.update({})
           }

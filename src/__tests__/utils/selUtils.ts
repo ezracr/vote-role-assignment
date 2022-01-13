@@ -46,6 +46,11 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
     expect(await el.getText()).toContain(text)
   }
 
+  expectNotContainsText = async (cssSelectorOrEl: string | wd.WebElement, text: string): Promise<void> => {
+    const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
+    expect(await el.getText()).not.toContain(text)
+  }
+
   waitUntilClickable = async (cssSelectorOrEl: string | wd.WebElement, timeout = 100): Promise<wd.WebElement> => {
     const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
     await this.driver.wait(wd.until.elementIsVisible(el), timeout)

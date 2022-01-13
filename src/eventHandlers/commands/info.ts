@@ -6,6 +6,7 @@ import Managers from '../../db/managers'
 import { convertIdToRoleTag } from '../../discUtils'
 import config from '../../config'
 import { genLinkToDocPage } from './commUtils'
+import { stringifyTypes } from '../submissionTypes'
 
 export const infoCommand = new SlashCommandBuilder()
   .setDefaultPermission(true)
@@ -23,13 +24,16 @@ const prepareGroupIds = (groupId?: string | string[]): string => {
 const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`
 
 const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
-  const { awarded_role, title, allowed_to_vote_roles, voting_threshold } = sett
-  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold }
+  const { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types } = sett
+  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types }
 
   return (Object.keys(normSett) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
     if (key === 'allowed_to_vote_roles' || key === 'awarded_role') {
-      return prepareLine(normKey, prepareGroupIds(normSett[key] ))
+      return prepareLine(normKey, prepareGroupIds(normSett[key]))
+    }
+    if (key === 'submission_types') {
+      return prepareLine(normKey, stringifyTypes(normSett[key]))
     }
     return prepareLine(normKey, JSON.stringify(normSett[key]))
   }).join('\n')

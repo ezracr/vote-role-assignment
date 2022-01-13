@@ -13,9 +13,10 @@ CREATE TABLE IF NOT EXISTS documents(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   "user_id" text COLLATE "C" NOT NULL,
   "link" text NOT NULL,
-  "title" text NOT NULL,
+  "title" text,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   "ch_sett_id" uuid NOT NULL,
+  "submission_type" text,
   UNIQUE("user_id", "link")
 );
 

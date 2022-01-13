@@ -5,7 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
-import { convertToDbType, enableOptions } from './commUtils'
+import { convertToDbType as convertToDbObj, enableOptions } from './commUtils'
 
 export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -14,11 +14,11 @@ export const updateCommand = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName('set')
-      .setDescription('Set new values')
+      .setDescription('Set new values.')
       .addRoleOption(enableOptions.awardedRole.bind(null, false))
       .addIntegerOption(enableOptions.votingThreshold.bind(null, false))
-      .addRoleOption(enableOptions.allowedToVoteRole1.bind(null, false))
-      .addRoleOption(enableOptions.allowedToVoteRole2.bind(null, false))
+      .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
+      .addStringOption(enableOptions.submissionType.bind(null, false))
       .addStringOption((option) => option.setName('title')
         .setDescription('The page\'s title.')
         .setRequired(false)
@@ -26,29 +26,42 @@ export const updateCommand = new SlashCommandBuilder()
   )
   .addSubcommand((subcommand) =>
     subcommand
-      .setName('remove-allowed-to-vote')
-      .setDescription('Remove the allowed to vote roles.')
+      .setName('add')
+      .setDescription('Add new values to array params.')
+      .addStringOption(enableOptions.submissionType.bind(null, false))
+      .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('del')
+      .setDescription('Remove values from array params.')
+      .addStringOption(enableOptions.submissionType.bind(null, false))
+      .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   const { commands: { update: { messages } } } = config
   try {
-    if (interaction.options.getSubcommand() === 'remove-allowed-to-vote') {
-      const res = await managers.settings.patchDataByChId(interaction.channelId, { allowed_to_vote_roles: [] })
-      if (res) return config.commands.update.messages.removedAllowedToVote
-      return config.messages.wasNotEnabled
-    }
     const optionsData = interaction.options.data[0]?.options
     if (!optionsData || optionsData.length === 0) {
       return messages.noArgs
     }
-    const dbType = convertToDbType({
+    const dbObj = convertToDbObj({
       optionsData,
-      group: ['allowed-to-vote-role'],
+      toArray: ['allowed-to-vote-roles', 'submission-types']
     })
-
-    const res = await managers.settings.patchDataByChId(interaction.channelId, dbType as unknown as ChSettingsData)
-    if (res) return messages.done
+    if (interaction.options.getSubcommand() === 'add') {
+      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbObj)
+      if (res) return messages.done
+    }
+    if (interaction.options.getSubcommand() === 'del') {
+      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbObj, true)
+      if (res) return messages.done
+    }
+    if (interaction.options.getSubcommand() === 'set') {
+      const res = await managers.settings.patchDataByChId(interaction.channelId, dbObj as unknown as ChSettingsData)
+      if (res) return messages.done
+    }
     return config.messages.wasNotEnabled
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

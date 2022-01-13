@@ -7,6 +7,24 @@ import Documents from './Documents'
 
 type InsSetting = ChSetting & { inserted: boolean }
 
+type SettDataKey = keyof ChSettingsData
+
+const modifyArrVals = (oldChSettData: ChSettingsData, newChSettData: Partial<ChSettingsData>, isDel = false) => {
+  return (Object.keys(oldChSettData) as (SettDataKey)[])
+    .reduce<ChSettingsData>(<K extends SettDataKey>(acc: ChSettingsData, key: K) => {
+      const newVal = newChSettData[key]
+      const oldVal = acc[key]
+      if (oldVal && newVal && Array.isArray(newVal) && Array.isArray(oldVal)) {
+        if (!isDel) {
+          acc[key] = Array.from(new Set([...oldVal, ...newVal])) as ChSettingsData[typeof key]
+        } else {
+          acc[key] = oldVal.filter((vl: any) => !newVal.includes(vl)) as ChSettingsData[typeof key]
+        }
+      }
+      return acc
+    }, { ...oldChSettData })
+}
+
 class ChSettings {
   documents = new Documents()
 
@@ -46,7 +64,7 @@ class ChSettings {
     const client = await pool.connect()
     let res: ChSetting | undefined
     try {
-       await client.query('BEGIN')
+      await client.query('BEGIN')
       const { rows: [newChSett] } = await client.query<ChSetting>(`
         SELECT * FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
       `, [intoChId])
@@ -84,7 +102,7 @@ class ChSettings {
     }
   }
 
-  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
+  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>, client?: PoolClient): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`
       UPDATE channel_settings sts SET "data" = (
         SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1
@@ -93,6 +111,20 @@ class ChSettings {
       RETURNING *
     `, [channelId, data])
     return rows[0]
+  }
+
+  async patchDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isDel = false): Promise<ChSetting | undefined> {
+    const client = await pool.connect()
+    await client.query('BEGIN')
+    const { rows: [oldChSett] } = await client.query<ChSetting>(`
+      SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
+    `, [channelId])
+    if (oldChSett?.data) {
+      const mergedData = modifyArrVals(oldChSett?.data, data, isDel)
+      const chSettNew = this.patchDataByChId(channelId, mergedData, client)
+      await client.query('COMMIT')
+      return chSettNew
+    }
   }
 }
 

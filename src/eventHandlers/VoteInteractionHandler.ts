@@ -1,11 +1,14 @@
-import { Message, MessageActionRow, ButtonInteraction, CacheType } from 'discord.js'
+import {
+  Message, MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions,
+} from 'discord.js'
 
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
 import { fetchMember, assignRoleById } from '../discUtils'
-import { genButton, fetchDocsTitle } from './handlUtils'
+import { genButton, fetchSubmTitle } from './handlUtils'
 import InnerMessage from './InnerMessage'
+import { processUrl } from './submissionTypes'
 
 const changeButtonCount = (actionRow: MessageActionRow, newCount: number, type: 'like' | 'dislike'): void => {
   const index = type === 'like' ? 0 : 1
@@ -42,14 +45,16 @@ class VoteInteractionHandler {
       }
       if (member) {
         const link = innMessage.url
-        if (link && this.interaction.message.type === 'REPLY') {
-          const title = await fetchDocsTitle(this.interaction.message, link)
+        const { type } = processUrl(new URL(link)) ?? {}
+        if (link && type && this.interaction.message.type === 'REPLY') {
+          const title = await fetchSubmTitle(this.interaction.message, type, link)
           await this.managers.documents.insert({
             user: {
               id: member.id, tag: member.user.tag,
             },
             link, channel_id: this.interaction.channelId,
             title,
+            submission_type: type,
           })
         }
         await assignRoleById(guild, id, this.chConfig.awarded_role)
@@ -57,7 +62,7 @@ class VoteInteractionHandler {
     }
   }
 
-  process = async (): Promise<{ messageContent: string, actionRow: MessageActionRow } | null> => {
+  process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null> => {
     // let role = guild.roles.cache.find(r => console.log(r.id, r.name))
     const isAllowedToVote = await this.canVote()
 
@@ -87,7 +92,7 @@ class VoteInteractionHandler {
           await this.assignRole(in_favor_count - against_count, innMessage)
         }
 
-        return { messageContent: innMessage.toString(), actionRow }
+        return { content: innMessage.toString(), components: [actionRow] }
       }
     }
     return null

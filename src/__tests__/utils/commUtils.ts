@@ -1,13 +1,15 @@
 import wd from 'selenium-webdriver'
 import config from '../../config'
+import { SubmissionTypeTitles } from '../../eventHandlers/submissionTypes'
 import { SelUtils } from './selUtils'
+
 
 /* eslint-disable no-await-in-loop */
 
-
 const messageContainer = '[data-list-id=chat-messages]'
 
-type SendCommandArgsVal = string | { listItem: string }
+type SendCommandArgsValListItem = { listItem: string }
+type SendCommandArgsVal = string | SendCommandArgsValListItem
 type SendCommandOptArgs = Record<string, SendCommandArgsVal>
 type SendCommandReqArgs = SendCommandArgsVal[]
 
@@ -17,6 +19,20 @@ export type SendCommandArgs = {
 }
 
 let isUser1LoggedIn: boolean
+
+type SendUpdateArgs = { 'submission-types'?: SubmissionTypeTitles }
+
+const convertToOptArg = (listItems: string[], input?: Record<string, string>): SendCommandOptArgs | undefined => (
+  input
+    ? Object.keys(input).reduce<SendCommandOptArgs>((acc, key) => {
+      const val = input[key]
+      if (val && listItems.includes(key)) {
+        acc[key] = { listItem: val }
+      }
+      return acc
+    }, {})
+    : undefined
+)
 
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
@@ -59,12 +75,22 @@ export class CommUtils {
   openTestChannel1 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel1Id}`)
   openTestChannel2 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel2Id}`)
 
-  sendEnable = (awardedRole: string, threashold: string, optArgs?: {}): Promise<void> => (
+  sendEnable = (awardedRole: string, threashold: string, optArgs?: SendUpdateArgs): Promise<void> => (
     this.sendCommand(config.commands.enable.name, {
       req: [{ listItem: awardedRole }, threashold],
-      opt: optArgs,
+      opt: convertToOptArg(['submission-types'], optArgs),
     })
   )
+
+  private sendUpdate = (subCommand: 'set' | 'add' | 'del', optArgs: SendUpdateArgs): Promise<void> => (
+    this.sendCommand(`${config.commands.update.name} ${subCommand}`, {
+      opt: convertToOptArg(['submission-types'], optArgs),
+    })
+  )
+  sendUpdateAdd = (optArgs: SendUpdateArgs): Promise<void> => (
+    this.sendUpdate('add', optArgs)
+  )
+
   sendAddRole1 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-1')
   sendMigrate = (channelName: string): Promise<void> => (
     this.sendCommand('migrate', {
@@ -74,8 +100,16 @@ export class CommUtils {
   sendInfo = (): Promise<void> => this.sendCommand('info')
   sendHelp = (): Promise<void> => this.sendCommand('help')
 
-  sendDoc1 = (): Promise<void> => this.sendMessage('https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing')
-  sendSheet1 = (): Promise<void> => this.sendMessage('https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing')
+  doc1Url = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing'
+  sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
+  tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
+  ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
+
+  sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
+  sendSheet1 = (): Promise<void> => this.sendMessage(this.sheet1Url)
+  sendTweet1 = (): Promise<void> => this.sendMessage(this.tweet1Url)
+  sendYtvideo1 = (): Promise<void> => this.sendMessage(this.ytvideo1Url)
+  // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 3000)
 
@@ -83,6 +117,9 @@ export class CommUtils {
     return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 3000)
     // TODO wait for the messages to be fully populated
   }
+  findMessageBody = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('div>div:nth-of-type(2)', msg)
+  )
 
   waitToFinishProcessingInteraction = async (): Promise<void> => {
     try {
@@ -185,6 +222,10 @@ export class CommUtils {
     throw new Error('Can\'t find the bot\'s message.')
   }
 
+  findAboutToAppearBotMessageBody = async (): Promise<wd.WebElement> => (
+    this.findMessageBody(await this.findAboutToAppearBotMessage())
+  )
+
   findLatestBotMessage = async (): Promise<wd.WebElement> => {
     const cont = await this.findMessagesContainer()
 
@@ -223,7 +264,16 @@ export class CommUtils {
   expectInfo = async ({ numOfDocs }: { numOfDocs?: number }): Promise<void> => {
     await this.sendInfo()
     if (numOfDocs) {
-      await this.expectMessageContainsText(`Saved documents: ${numOfDocs}`)
+      await this.expectMessageContainsText(`Saved submissions: ${numOfDocs}`)
     }
+  }
+  expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectContainsText(msg, 'Voted in favor')
+  }
+  expectMessageToBeSubmissionRejection = async (msg: wd.WebElement, submTypes?: SubmissionTypeTitles[]): Promise<void> => {
+    await this.selUtils.expectContainsText(msg, config.messages.messageCreateHandler.wrongUrl(submTypes?.join(', ') ?? ''))
+  }
+  expectMessageToNotBeSubmissionRejection = async (msg: wd.WebElement, submTypes?: SubmissionTypeTitles[]): Promise<void> => {
+    await this.selUtils.expectNotContainsText(msg, config.messages.messageCreateHandler.wrongUrl(submTypes?.join(', ') ?? ''))
   }
 }

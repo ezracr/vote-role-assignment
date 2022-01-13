@@ -18,14 +18,14 @@ const config = {
       messages: {
         enabled: 'Enabled',
         updated: 'Updated',
-        docLinkMsg: (link: string) => `The page with sent documents: ${link}.`
+        docLinkMsg: (link: string) => `The page with submissions: ${link}.`
       },
     },
     info: {
       name: 'info',
       description: 'Show the settings of this channel/thread.',
       messages: {
-        main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved documents**: ${total}`,
+        main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}`,
       },
     },
     disable: {
@@ -59,6 +59,10 @@ const config = {
   },
   messages: {
     wasNotEnabled: 'The bot was not enabled in this channel/thread',
+    messageCreateHandler: {
+      saved: 'Your submission has been successfully saved to the vault.',
+      wrongUrl: (allowedTypes: string) => `Couldn't find a correct link in your message. Allowed types for submission: ${allowedTypes}.`,
+    },
   },
   testing: {
     isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',

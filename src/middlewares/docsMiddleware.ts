@@ -4,11 +4,11 @@ import Managers from '../db/managers'
 import { Document, ChSetting } from '../db/dbTypes'
 
 const renderRow = (doc: Document): string => {
-  const title = doc.title.trim()
+  const title = doc.title?.trim()
   return `
 <div class="row">
   <div class="author first-cell">${doc.user.tag}</div>
-  <div class="link last-cell"><a href="${doc.link}">${title === '' ? 'link' : title}</a></div>
+  <div class="link last-cell"><a href="${doc.link}">${title ? title : doc.link}</a></div>
 </div>`
 }
 

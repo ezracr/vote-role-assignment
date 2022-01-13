@@ -1,4 +1,5 @@
 import config from '../config'
+import { typeToTitleRecord } from '../eventHandlers/submissionTypes'
 import { SendCommandArgs } from './utils/commUtils'
 import cleanDb from './utils/dbUtils'
 import Utils from './utils/Utils'
@@ -13,6 +14,10 @@ beforeAll(async () => {
 beforeEach(async () => {
   await cleanDb()
   await utils.comm.openTestChannel1()
+})
+
+afterEach(async () => {
+  await utils.comm.removeMessagesAndRoles()
 })
 
 afterAll(async () => {
@@ -36,9 +41,6 @@ describe('Returns non initilized message when the bot was not enabled in a chann
   it('/disable', async () => {
     await testNonInit('disable')
   })
-  it('/update remove-allowed-to-vote', async () => {
-    await testNonInit('update remove-allowed-to-vote')
-  })
   it('/update set', async () => {
     await testNonInit('update set', {
       opt: { 'voting-threshold': '1' },
@@ -52,10 +54,6 @@ const enableRole1 = async (): Promise<void> => {
 }
 
 describe('/enable', () => {
-  afterEach(async () => {
-    await utils.comm.removeMessagesAndRoles()
-  })
-
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
     await utils.comm.sendEnable(awardedRoleName1, '10')
     await utils.comm.expectPinNotification()
@@ -71,11 +69,7 @@ describe('/enable', () => {
 })
 
 describe('/migrate', () => {
-  afterEach(async () => {
-    await utils.comm.removeMessagesAndRoles()
-  })
-
-  it('Allows to migrate documents to a non-initialized channel', async () => {
+  it('Allows to migrate submissions to a non-initialized channel', async () => {
     await utils.comm.sendEnable(awardedRoleName1, '10')
     await utils.comm.sendAddRole1()
     await utils.comm.sendDoc1()
@@ -85,7 +79,7 @@ describe('/migrate', () => {
     await utils.comm.expectInfo({ numOfDocs: 1 })
   })
 
-  it('Allows to migrate documents to already enabled channel', async () => {
+  it('Allows to migrate submissions to already enabled channel', async () => {
     await utils.comm.sendEnable(awardedRoleName1, '10')
     await utils.comm.sendAddRole1()
     await utils.comm.sendDoc1()
@@ -105,10 +99,6 @@ describe('/help', () => {
 })
 
 describe('Voting', () => {
-  afterEach(async () => {
-    await utils.comm.removeMessagesAndRoles()
-  })
-
   it('Assigns the role when the threshold higher than in favor - against vote count', async () => {
     await utils.comm.sendEnable(awardedRoleName1, '1')
     await utils.comm.sendDoc1()
@@ -122,5 +112,57 @@ describe('Voting', () => {
     await utils.comm.voteInFavor(msg1)
     await utils.comm.sendInfo()
     await utils.comm.expectInfo({ numOfDocs: 0 })
+  })
+})
+
+describe('Submission', () => {
+  it('Only allowed types are accepted', async () => {
+    await utils.comm.sendEnable(awardedRoleName1, '1', { 'submission-types': typeToTitleRecord.gdoc })
+    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.tweet })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectMessageToBeVotingMessage(msgEl)
+    await utils.comm.sendTweet1()
+    const msg1El = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectMessageToBeVotingMessage(msg1El)
+    await utils.comm.sendSheet1()
+    const msg3El = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectMessageToBeSubmissionRejection(msg3El, [typeToTitleRecord.gdoc, typeToTitleRecord.tweet])
+  })
+
+  it('Normalizes link', async () => {
+    await utils.comm.sendEnable(awardedRoleName1, '1', { 'submission-types': typeToTitleRecord.gdoc })
+    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.gsheet })
+    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.tweet })
+    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.ytvideo })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
+    await utils.sel.expectContainsText(msgEl, utils.comm.doc1Url.slice(0, -12))
+    await utils.comm.sendSheet1()
+    const msg1El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
+    await utils.sel.expectContainsText(msg1El, utils.comm.sheet1Url.slice(0, -12))
+    await utils.comm.sendTweet1()
+    const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msg2El, utils.comm.tweet1Url)
+    await utils.sel.expectContainsText(msg2El, utils.comm.tweet1Url.slice(0, -12))
+    await utils.comm.sendYtvideo1()
+    const msg3El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msg3El, utils.comm.tweet1Url)
+    await utils.sel.expectContainsText(msg3El, utils.comm.ytvideo1Url.slice(0, -17))
+  })
+
+  it('If not set, allows any type to be sent', async () => {
+    await utils.comm.sendEnable(awardedRoleName1, '1')
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.expectMessageToBeVotingMessage(msgEl)
+    await utils.comm.sendSheet1()
+    const msg1El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.expectMessageToBeVotingMessage(msg1El)
+    await utils.comm.sendTweet1()
+    const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.expectMessageToBeVotingMessage(msg2El)
   })
 })

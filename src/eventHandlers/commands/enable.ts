@@ -13,8 +13,8 @@ export const enableCommand = new SlashCommandBuilder()
   .setDescription(config.commands.enable.description)
   .addRoleOption(enableOptions.awardedRole.bind(null, true))
   .addIntegerOption(enableOptions.votingThreshold.bind(null, true))
-  .addRoleOption(enableOptions.allowedToVoteRole1.bind(null, false))
-  .addRoleOption(enableOptions.allowedToVoteRole2.bind(null, false))
+  .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
+  .addStringOption(enableOptions.submissionType.bind(null, false))
   .addStringOption((option) => option.setName('title')
     .setDescription('The page\'s title will be taken from channel/thread\'s name if not set.')
     .setRequired(false)
@@ -32,7 +32,7 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
   try {
     const dbSettingsData = convertToDbType({
       optionsData: interaction.options.data,
-      group: ['allowed-to-vote-role'],
+      toArray: ['allowed-to-vote-roles', 'submission-types'],
     })
     if (!dbSettingsData.title) {
       dbSettingsData.title = getChannelName(interaction)

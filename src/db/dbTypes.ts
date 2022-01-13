@@ -5,11 +5,14 @@ export type ChSetting = {
   is_disabled: boolean;
 }
 
+export type SubmissionType = 'gsheet' | 'gdoc' | 'tweet' | 'ytvideo'
+
 export type ChSettingsData = {
   allowed_to_vote_roles?: string[];
   awarded_role: string;
   voting_threshold: number;
   title: string;
+  submission_types?: SubmissionType[];
 }
 
 export type User = {
@@ -20,9 +23,10 @@ export type User = {
 export type Document = {
   id: string;
   link: string;
-  title: string;
+  title: string | null;
   user: User;
   ch_settings: ChSetting;
+  submission_type: SubmissionType;
 }
 
 export type Vote = {

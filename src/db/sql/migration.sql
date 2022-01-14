@@ -13,3 +13,9 @@ CREATE OR REPLACE VIEW votes_full AS
   FROM votes
     LEFT JOIN users ON votes."user_id" = users."id";
 UPDATE votes SET "is_approval" = FALSE;
+DROP VIEW documents;
+CREATE OR REPLACE VIEW documents_full AS
+  SELECT documents.*, row_to_json(users.*) "user", row_to_json(css.*) "ch_settings"
+  FROM documents
+    LEFT JOIN users ON documents."user_id" = users."id"
+    LEFT JOIN channel_settings css ON documents."ch_sett_id" = css."id";

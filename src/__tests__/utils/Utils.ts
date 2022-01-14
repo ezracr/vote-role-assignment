@@ -5,25 +5,31 @@ import { SelUtils } from './selUtils'
 
 const screen = {
   width: 1500,
-  height: 1000,
+  height: 1500,
 }
 
-export const initDriver = async (): Promise<wd.WebDriver> => new Builder()
-  .forBrowser('chrome')
-  .setChromeOptions(new chrome.Options().windowSize(screen).headless())
-  .build()
+export const initDriver = async (isNotHeadless = false): Promise<wd.WebDriver> => {
+  const options = new chrome.Options().windowSize(screen)
+  if (!isNotHeadless) {
+    options.headless()
+  }
+  return new Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(options)
+    .build()
+}
 
 class Utils {
-  private constructor(public driver: wd.WebDriver, public comm: CommUtils, public sel: SelUtils) {
+  private constructor(public driver: wd.WebDriver, public comm: CommUtils, public sel: SelUtils, private isNotHeadless: boolean) {
   }
 
-  static async init(): Promise<Utils> {
-    const driver = await initDriver()
-    return new Utils(driver, new CommUtils(driver), new SelUtils(driver))
+  static async init(isNotHeadless = false): Promise<Utils> {
+    const driver = await initDriver(isNotHeadless)
+    return new Utils(driver, new CommUtils(driver), new SelUtils(driver), isNotHeadless)
   }
 
   async reInit(): Promise<void> {
-    this.driver = await initDriver()
+    this.driver = await initDriver(this.isNotHeadless)
     this.comm = new CommUtils(this.driver)
     this.sel = new SelUtils(this.driver)
   }

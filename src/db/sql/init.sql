@@ -25,8 +25,9 @@ CREATE TABLE IF NOT EXISTS votes(
   "message_id" text COLLATE "C" NOT NULL,
   "user_id" text COLLATE "C" NOT NULL,
   "in_favor" boolean NOT NULL,
+  "is_approval" boolean DEFAULT false,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
-  UNIQUE("message_id", "user_id")
+  UNIQUE("message_id", "user_id", "is_approval")
 );
 
 CREATE TABLE IF NOT EXISTS users(

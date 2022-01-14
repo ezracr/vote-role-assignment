@@ -70,12 +70,16 @@ const config = {
     testChannel2Id: '929691426827141160',
     testChannel1Name: 'for-testing1',
     testChannel2Name: 'for-testing2',
+    userTag1: process.env.TEST_USER_TAG1 ?? 'User1 tag should be specified',
+    userName1: process.env.TEST_USER_NAME1,
     mail1: process.env.TEST_MAIL1,
     pass1: process.env.TEST_PASS1,
     mail2: process.env.TEST_MAIL2,
     pass2: process.env.TEST_PASS2,
-    awardedRoleName1: '@T-Rex',
-    awardedRoleName2: '@U-Rex',
+    userTag2: process.env.TEST_USER_TAG2 ?? 'User2 tag should be specified',
+    userName2: process.env.TEST_USER_NAME2,
+    roleName1: '@T-Rex',
+    roleName2: '@U-Rex',
   },
 }
 

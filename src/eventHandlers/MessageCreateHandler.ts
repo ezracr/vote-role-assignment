@@ -5,8 +5,10 @@ import Managers from '../db/managers'
 import { ChSettingsData, SubmissionType } from '../db/dbTypes'
 import { fetchMember } from '../discUtils'
 import config from '../config'
-import { genLikeButton, genDislikeButton, fetchSubmTitle } from './handlUtils'
-import InnerMessage from './InnerMessage'
+import {
+  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
+} from './handlUtils'
+import VotingMessage from './VotingMessage'
 import { allTypes, processUrl, stringifyTypes } from './submissionTypes'
 
 const isAllowedSubmType = (chData: ChSettingsData, type?: SubmissionType): boolean => {
@@ -64,10 +66,17 @@ class MessageCreateHandler {
           })
           return { content: config.messages.messageCreateHandler.saved }
         } else {
+          const isAppr = isApprovable(this.chConfig)
           const actionRow = new MessageActionRow({
-            components: [genLikeButton(), genDislikeButton()]
+            components: [
+              genLikeButton(),
+              genDislikeButton(),
+              ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0), genDismissButton()] : []),
+            ]
           })
-          const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url: prUrl.url })
+          const innerMsg = new VotingMessage({
+            authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
+          })
           return { content: innerMsg.toString(), components: [actionRow] }
         }
       }

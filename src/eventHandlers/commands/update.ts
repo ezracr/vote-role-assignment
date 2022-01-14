@@ -19,6 +19,9 @@ export const updateCommand = new SlashCommandBuilder()
       .addIntegerOption(enableOptions.votingThreshold.bind(null, false))
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addStringOption(enableOptions.submissionType.bind(null, false))
+      .addIntegerOption(enableOptions.approvalThreshold.bind(null, false))
+      .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
+      .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
       .addStringOption((option) => option.setName('title')
         .setDescription('The page\'s title.')
         .setRequired(false)
@@ -30,6 +33,8 @@ export const updateCommand = new SlashCommandBuilder()
       .setDescription('Add new values to array params.')
       .addStringOption(enableOptions.submissionType.bind(null, false))
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
+      .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
+      .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -37,6 +42,8 @@ export const updateCommand = new SlashCommandBuilder()
       .setDescription('Remove values from array params.')
       .addStringOption(enableOptions.submissionType.bind(null, false))
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
+      .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
+      .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
@@ -48,7 +55,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     }
     const dbObj = convertToDbObj({
       optionsData,
-      toArray: ['allowed-to-vote-roles', 'submission-types']
+      toArray: ['allowed-to-vote-roles', 'submission-types', 'approver_roles', 'approver_users'],
     })
     if (interaction.options.getSubcommand() === 'add') {
       const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbObj)

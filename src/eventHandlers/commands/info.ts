@@ -3,7 +3,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
-import { convertIdToRoleTag } from '../../discUtils'
+import { convertIdToRoleTag, convertIdToUserTag } from '../../discUtils'
 import config from '../../config'
 import { genLinkToDocPage } from './commUtils'
 import { stringifyTypes } from '../submissionTypes'
@@ -20,22 +20,32 @@ const prepareGroupIds = (groupId?: string | string[]): string => {
   }
   return convertIdToRoleTag(groupId)
 }
+const prepareUserIds = (userId?: string | string[]): string => {
+  if (!userId) return ''
+  if (Array.isArray(userId)) {
+    return userId.map((id) => convertIdToUserTag(id)).join(', ')
+  }
+  return convertIdToUserTag(userId)
+}
 
 const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`
 
 const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
-  const { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types } = sett
-  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types }
+  const { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types, approval_threshold, approver_roles, approver_users } = sett
+  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types, approval_threshold, approver_roles, approver_users }
 
   return (Object.keys(normSett) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
-    if (key === 'allowed_to_vote_roles' || key === 'awarded_role') {
+    if (key === 'allowed_to_vote_roles' || key === 'awarded_role' || key === 'approver_roles') {
       return prepareLine(normKey, prepareGroupIds(normSett[key]))
+    }
+    if (key === 'approver_users') {
+      return prepareLine(normKey, prepareUserIds(normSett[key]))
     }
     if (key === 'submission_types') {
       return prepareLine(normKey, stringifyTypes(normSett[key]))
     }
-    return prepareLine(normKey, JSON.stringify(normSett[key]))
+    return prepareLine(normKey, normSett[key] ? JSON.stringify(normSett[key]) : '')
   }).join('\n')
 }
 

@@ -1,5 +1,5 @@
 import {
-  SlashCommandIntegerOption, SlashCommandRoleOption, SlashCommandStringOption,
+  SlashCommandIntegerOption, SlashCommandRoleOption, SlashCommandStringOption, SlashCommandUserOption,
 } from '@discordjs/builders'
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 
@@ -125,6 +125,21 @@ export const enableOptions = {
       .addChoice('Google Doc', 'gdoc')
       .addChoice('Tweet', 'tweet')
       .addChoice('YouTube video', 'ytvideo')
+      .setRequired(isRequired)
+  },
+  approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
+    return option.setName('approval-threshold')
+      .setDescription('How many approvals required to award the role')
+      .setRequired(isRequired)
+  },
+  allowedToApproveRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
+    return option.setName('approver-roles')
+      .setDescription('If set, will allow only this role to approve')
+      .setRequired(isRequired)
+  },
+  allowedToApproveUsers(isRequired: boolean, option: SlashCommandUserOption): SlashCommandUserOption {
+    return option.setName('approver-users')
+      .setDescription('If set, will allow only users picked to vote')
       .setRequired(isRequired)
   },
 }

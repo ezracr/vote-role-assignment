@@ -10,15 +10,15 @@ type InsSetting = ChSetting & { inserted: boolean }
 type SettDataKey = keyof ChSettingsData
 
 const modifyArrVals = (oldChSettData: ChSettingsData, newChSettData: Partial<ChSettingsData>, isDel = false) => {
-  return (Object.keys(oldChSettData) as (SettDataKey)[])
+  return (Array.from(new Set([...Object.keys(oldChSettData), ...Object.keys(newChSettData)])) as (SettDataKey)[])
     .reduce<ChSettingsData>(<K extends SettDataKey>(acc: ChSettingsData, key: K) => {
       const newVal = newChSettData[key]
       const oldVal = acc[key]
-      if (oldVal && newVal && Array.isArray(newVal) && Array.isArray(oldVal)) {
+      if (newVal && Array.isArray(newVal)) {
         if (!isDel) {
-          acc[key] = Array.from(new Set([...oldVal, ...newVal])) as ChSettingsData[typeof key]
+          acc[key] = Array.from(new Set([...(oldVal ?? [] as any), ...newVal])) as ChSettingsData[typeof key]
         } else {
-          acc[key] = oldVal.filter((vl: any) => !newVal.includes(vl)) as ChSettingsData[typeof key]
+          acc[key] = (oldVal ?? [] as any).filter((vl: any) => !newVal.includes(vl)) as ChSettingsData[typeof key]
         }
       }
       return acc

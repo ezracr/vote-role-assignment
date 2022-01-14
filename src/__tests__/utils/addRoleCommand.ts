@@ -23,7 +23,7 @@ export const addRoleCommand = new SlashCommandBuilder()
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
     const { guildId, user: { id } } = interaction
-    const roleName = interaction.options.getSubcommand() === 'awarded-role-1' ? config.testing.awardedRoleName1 : config.testing.awardedRoleName2
+    const roleName = interaction.options.getSubcommand() === 'awarded-role-1' ? config.testing.roleName1 : config.testing.roleName2
     if (guildId) {
       await assignRoleByName(guildId, id, roleName.slice(1))
       return 'Done'

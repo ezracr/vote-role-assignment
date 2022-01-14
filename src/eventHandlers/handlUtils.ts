@@ -1,7 +1,7 @@
 import { Message, MessageButton } from 'discord.js'
 import axios from 'axios'
 
-import { SubmissionType } from '../db/dbTypes'
+import { ChSettingsData, SubmissionType } from '../db/dbTypes'
 
 export const genLikeButton = (count = 0): MessageButton => new MessageButton({
   style: 'SECONDARY',
@@ -17,7 +17,22 @@ export const genDislikeButton = (count = 0): MessageButton => new MessageButton(
   emoji: '❌',
 })
 
-export const genButton = (id: 'like' | 'dislike', count: number): MessageButton => id === 'like' ? genLikeButton(count) : genDislikeButton(count)
+export const genApproveButton = (totalCount = 0, count = 0): MessageButton => new MessageButton({
+  style: 'SECONDARY',
+  customId: 'approve',
+  label: `Approve (${totalCount > 0 ? `${count}/${totalCount}` : count})`,
+  // emoji: '🔥',
+})
+
+export const genDismissButton = (): MessageButton => new MessageButton({
+  style: 'SECONDARY',
+  customId: 'dismiss',
+  label: `Dismiss`,
+})
+
+export const isApprovable = (chSettData: ChSettingsData): boolean => (
+  (chSettData.approver_roles?.length ?? 0) > 0 || (chSettData.approver_users?.length ?? 0) > 0
+)
 
 /**
  * Non published documents (File->Publish to the web) will have '- Google Docs/Sheets' attached in <title>.

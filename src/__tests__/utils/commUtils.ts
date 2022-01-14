@@ -20,14 +20,24 @@ export type SendCommandArgs = {
 
 let isUser1LoggedIn: boolean
 
-type SendUpdateArgs = { 'submission-types'?: SubmissionTypeTitles }
+type AddRemoveArgs = {
+  'submission-types'?: SubmissionTypeTitles, 'approver-roles'?: string, 'approver-users'?: string,
+}
+type SetArgs = { 'voting-threshold'?: string; 'approval-threshold'?: string } & AddRemoveArgs
+type EnableOptionalArgs = SetArgs
 
-const convertToOptArg = (listItems: string[], input?: Record<string, string>): SendCommandOptArgs | undefined => (
+const lsItems = ['submission-types', 'approver-roles', 'approver-users']
+
+const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs | undefined => (
   input
     ? Object.keys(input).reduce<SendCommandOptArgs>((acc, key) => {
       const val = input[key]
-      if (val && listItems.includes(key)) {
-        acc[key] = { listItem: val }
+      if (val) {
+        if (lsItems.includes(key)) {
+          acc[key] = { listItem: val }
+        } else {
+          acc[key] = val
+        }
       }
       return acc
     }, {})
@@ -75,23 +85,24 @@ export class CommUtils {
   openTestChannel1 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel1Id}`)
   openTestChannel2 = (): Promise<void> => this.driver.get(`https://discord.com/channels/${config.guildId}/${config.testing.testChannel2Id}`)
 
-  sendEnable = (awardedRole: string, threashold: string, optArgs?: SendUpdateArgs): Promise<void> => (
+  sendEnable = (awardedRole: string, optArgs?: EnableOptionalArgs): Promise<void> => (
     this.sendCommand(config.commands.enable.name, {
-      req: [{ listItem: awardedRole }, threashold],
-      opt: convertToOptArg(['submission-types'], optArgs),
+      req: [{ listItem: awardedRole }],
+      opt: transformToListArg(optArgs),
     })
   )
 
-  private sendUpdate = (subCommand: 'set' | 'add' | 'del', optArgs: SendUpdateArgs): Promise<void> => (
+  private sendUpdate = (subCommand: 'set' | 'add' | 'del', optArgs: AddRemoveArgs): Promise<void> => (
     this.sendCommand(`${config.commands.update.name} ${subCommand}`, {
-      opt: convertToOptArg(['submission-types'], optArgs),
+      opt: transformToListArg(optArgs),
     })
   )
-  sendUpdateAdd = (optArgs: SendUpdateArgs): Promise<void> => (
+  sendUpdateAdd = (optArgs: AddRemoveArgs): Promise<void> => (
     this.sendUpdate('add', optArgs)
   )
 
   sendAddRole1 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-1')
+  sendAddRole2 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-2')
   sendMigrate = (channelName: string): Promise<void> => (
     this.sendCommand('migrate', {
       req: [{ listItem: channelName }],
@@ -104,6 +115,8 @@ export class CommUtils {
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
   ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
+  userTagAt1 = `@${config.testing.userTag1}`
+  userTagAt2 = `@${config.testing.userTag2}`
 
   sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
   sendSheet1 = (): Promise<void> => this.sendMessage(this.sheet1Url)
@@ -132,18 +145,31 @@ export class CommUtils {
     return this.selUtils.findElementByCss(`${messageContainer} li:nth-last-of-type(${lastIndex})`)
   }
 
-  expectMessageContainsText = async (text: string, lastIndex = 0): Promise<void> => {
-    const msg = await this.findMessageText(lastIndex)
-    expect(msg).toContain(text)
+  expectMessageContainsText = async (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => {
+    const msgTxt = await this.findMessageText(lastIndex)
+    expect(msgTxt).toContain(text)
   }
+
+  expectMessageNotContainsText = async (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => {
+    const msgText = await this.findMessageText(lastIndex)
+    expect(msgText).not.toContain(text)
+  }
+
+  expectApprovedByToNotContain = (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => (
+    this.expectMessageNotContainsText(`Approved by: ${text}`, lastIndex)
+  )
+
+  expectApprovedByToContain = (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => (
+    this.expectMessageContainsText(`Approved by: ${text}`, lastIndex)
+  )
 
   expectPinNotification = async (lastIndex = 1): Promise<void> => {
     const msg = await this.findMessage(lastIndex)
     await this.selUtils.expectContainsText(msg, 'pinned')
   }
 
-  findMessageText = async (lastIndex = 0): Promise<string> => {
-    const msg = await this.findMessage(lastIndex + 1)
+  findMessageText = async (lastIndex: number | wd.WebElement = 0 ): Promise<string> => {
+    const msg = typeof lastIndex === 'number' ? await this.findMessage(lastIndex + 1) : lastIndex
     try {
       const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
       return await msgBody.getText()
@@ -156,11 +182,14 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
-  private processSendCommandOptArg = async (txtField: wd.WebElement, name: string, value: SendCommandArgsVal): Promise<void> => {
+  private processSendCommandOptArg = async (txtField: wd.WebElement, name: string, value: SendCommandArgsVal, shouldUseTab: boolean): Promise<void> => {
     await txtField.sendKeys(name)
     await txtField.sendKeys(Key.ENTER)
     if (typeof value === 'string') {
       await txtField.sendKeys(value)
+      if (shouldUseTab) {
+        await txtField.sendKeys(Key.TAB)
+      }
     } else {
       await txtField.sendKeys(value.listItem)
       await txtField.sendKeys(Key.ENTER)
@@ -195,13 +224,11 @@ export class CommUtils {
         await this.processSendCommandReqArg(txtField, arg, i === args.req.length - 1)
       }
     }
-    if (args?.req && args.opt) {
-      await txtField.sendKeys(Key.TAB)
-    }
+    const hasRequired = Boolean(args?.req && args.opt)
     if (args?.opt) {
       const keys = Object.keys(args.opt)
       for (const key of keys) {
-        await this.processSendCommandOptArg(txtField, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await this.processSendCommandOptArg(txtField, key, args.opt[key]!, hasRequired) // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
     }
     await txtField.sendKeys(Key.ENTER)
@@ -245,16 +272,32 @@ export class CommUtils {
     throw new Error('Can\'t find the bot\'s message.')
   }
 
-  voteInFavor = async (msg: wd.WebElement): Promise<void> => {
+  clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
-    await this.selUtils.waitUntilClickable(button)
+    await this.selUtils.waitUntilClickable(button) // TODO Unnecessary?
     await button.click()
+    await this.waitToFinishProcessingInteraction()
   }
 
-  voteAgainst = async (msg: wd.WebElement): Promise<void> => {
+  clickApprove = async (msg: wd.WebElement): Promise<void> => {
+    const button = await this.selUtils.findElementByCss('button:nth-of-type(3)', msg)
+    await this.selUtils.waitUntilClickable(button)
+    await button.click()
+    await this.waitToFinishProcessingInteraction()
+  }
+
+  clickDismiss = async (msg: wd.WebElement): Promise<void> => {
+    const button = await this.selUtils.findElementByCss('button:nth-of-type(4)', msg)
+    await this.selUtils.waitUntilClickable(button)
+    await button.click()
+    await this.waitToFinishProcessingInteraction()
+  }
+
+  clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
     await this.selUtils.waitUntilClickable(button)
     await button.click()
+    await this.waitToFinishProcessingInteraction()
   }
 
   expectChannelDisabled = async (): Promise<void> => {

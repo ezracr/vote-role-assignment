@@ -114,7 +114,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     }
     if (interaction.isButton()) {
       const { customId } = interaction
-      if ((customId === 'like' || customId === 'dislike')) {
+      if ((customId === 'like' || customId === 'dislike' || customId === 'approve' || customId === 'dismiss')) {
         const chConfig = await getChannelConfig(managers, interaction.channelId)
         if (chConfig) {
           const handler = new VoteInteractionHandler(chConfig, interaction, managers)

@@ -25,8 +25,8 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (guildId && channel?.type === 'GUILD_TEXT') {
       await removeFromChannelByChId(config.testing.testChannel1Id)
       await removeFromChannelByChId(config.testing.testChannel2Id)
-      await removeRoleByName(guildId, id, config.testing.awardedRoleName1.slice(1))
-      await removeRoleByName(guildId, id, config.testing.awardedRoleName1.slice(1))
+      await removeRoleByName(guildId, id, config.testing.roleName1.slice(1))
+      await removeRoleByName(guildId, id, config.testing.roleName2.slice(1))
       return 'Done'
     }
   } catch (e: unknown) {

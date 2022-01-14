@@ -17,6 +17,21 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
     return normContext.findElements(By.css(cssSelector))
   }
 
+  isDisplayed = async (el: wd.WebElement): Promise<boolean> => {
+    try {
+      return await el.isDisplayed()
+    } catch (e) { }
+    return false;
+  }
+
+  expectIsDisplayed = async (el: wd.WebElement): Promise<void> => (
+    expect(await this.isDisplayed(el)).toBe(true)
+  )
+
+  expectNotDisplayed = async (el: wd.WebElement): Promise<void> => (
+    expect(await this.isDisplayed(el)).toBe(false)
+  )
+
   doesExists = async (cssSelector: string, context?: string | wd.WebElement): Promise<boolean> => {
     try {
       await this.findElementByCss(cssSelector, context)

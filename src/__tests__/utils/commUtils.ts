@@ -101,8 +101,9 @@ export class CommUtils {
     this.sendUpdate('add', optArgs)
   )
 
-  sendAddRole1 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-1')
-  sendAddRole2 = (): Promise<void> => this.sendCommand('test-add-role awarded-role-2')
+  sendAddRole1 = (): Promise<void> => this.sendCommand('test add-role-1')
+  sendAddRole2 = (): Promise<void> => this.sendCommand('test add-role-2')
+  sendTestStats = (): Promise<void> => this.sendCommand('test stats')
   sendMigrate = (channelName: string): Promise<void> => (
     this.sendCommand('migrate', {
       req: [{ listItem: channelName }],
@@ -178,7 +179,7 @@ export class CommUtils {
   }
 
   removeMessagesAndRoles = async (): Promise<void> => {
-    await this.sendCommand('test-clean')
+    await this.sendCommand('test clean')
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -304,10 +305,18 @@ export class CommUtils {
     await this.sendInfo()
     await this.expectMessageContainsText(config.messages.wasNotEnabled)
   }
-  expectInfo = async ({ numOfDocs }: { numOfDocs?: number }): Promise<void> => {
+  expectInfo = async ({ numOfDocs, numOfCandidates }: { numOfDocs?: number, numOfCandidates?: number }): Promise<void> => {
     await this.sendInfo()
     if (numOfDocs) {
       await this.expectMessageContainsText(`Saved submissions: ${numOfDocs}`)
+    }
+    if (numOfCandidates) {
+      await this.expectMessageContainsText(`Candidates: ${numOfCandidates}`)
+    }
+  }
+  expectTestStats = async({ numOfPins }: { numOfPins?: number }): Promise<void> => {
+    if (numOfPins) {
+      await this.expectMessageContainsText(`"pinned-count":${numOfPins}`)
     }
   }
   expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {

@@ -17,8 +17,12 @@ CREATE TABLE IF NOT EXISTS documents(
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   "ch_sett_id" uuid NOT NULL,
   "submission_type" text,
-  UNIQUE("user_id", "link")
+  "is_candidate" boolean DEFAULT false,
+  "message_id" text COLLATE "C",
+  UNIQUE("link")
 );
+
+CREATE INDEX CONCURRENTLY documents_message_id_index ON documents ("message_id");
 
 CREATE TABLE IF NOT EXISTS votes(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,

@@ -52,11 +52,12 @@ const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
 export const infoCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
     const res = await managers.settings.getByChId(interaction.channelId)
-    const totalRes = await managers.documents.getNumOfDocsPerChannel(interaction.channelId)
+    const totalRes = await managers.documents.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: false })
+    const totalCand = await managers.documents.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: true })
     if (res) {
       const { commands: { info: { messages } } } = config
       await interaction.reply({
-        content: messages.main(prepareSettingsForDisplay(res.data), genLinkToDocPage(interaction.channelId), totalRes?.total ?? 0),
+        content: messages.main(prepareSettingsForDisplay(res.data), genLinkToDocPage(interaction.channelId), totalRes?.total ?? 0, totalCand?.total ?? 0),
         ephemeral: true,
       })
     } else {

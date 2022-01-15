@@ -30,6 +30,8 @@ export type Document = {
   user: User;
   ch_settings: ChSetting;
   submission_type: SubmissionType;
+  is_candidate: boolean;
+  message_id: string | null;
 }
 
 export type Vote = {

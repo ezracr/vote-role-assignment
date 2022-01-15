@@ -1,4 +1,4 @@
-import { GuildMember, Guild } from 'discord.js'
+import { GuildMember, Guild, Message } from 'discord.js'
 import client from './client'
 
 /**
@@ -55,4 +55,16 @@ export const removeRoleByName = async (guildId: string | Guild, userId: string, 
   if (roleId) {
     await removeRoleById(guild, userId, roleId)
   }
+}
+
+export const unpinMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
+  const msg = await currMsg.channel.messages.fetch(msgId)
+  if (msg.pinned) {
+    await msg.unpin()
+  }
+}
+
+export const removeMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
+  const msg = await currMsg.channel.messages.fetch(msgId)
+  await msg.delete()
 }

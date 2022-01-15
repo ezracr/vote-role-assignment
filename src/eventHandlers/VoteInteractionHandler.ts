@@ -65,13 +65,10 @@ class VoteInteractionHandler {
         const { type } = processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
           const title = await fetchSubmTitle(this.interaction.message, type, link)
-          await this.managers.documents.insert({
-            user: {
-              id: member.id, tag: member.user.tag,
-            },
-            link, channel_id: this.interaction.channelId,
+          await this.managers.documents.updateTitleIsCandidate({
+            message_id: this.interaction.message.id,
             title,
-            submission_type: type,
+            is_candidate: false,
           })
         }
         await assignRoleById(guild, id, this.chConfig.awarded_role)
@@ -89,6 +86,7 @@ class VoteInteractionHandler {
     if (this.type === 'dismiss' && isAllowedToApprove) {
       if (msg.type === 'REPLY' && msg.deletable) {
         await msg.delete()
+        await this.managers.documents.deleteByMessageId({ message_id: msg.id })
       }
       return null
     }

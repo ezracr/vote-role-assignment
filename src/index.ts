@@ -14,8 +14,7 @@ import { updateCommand, updateCommandHandler } from './eventHandlers/commands/up
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
 import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
 import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
-import { cleanCommand, cleanCommandHandler } from './__tests__/utils/cleanCommand'
-import { addRoleCommand, addRoleCommandHandler } from './__tests__/utils/addRoleCommand'
+import { testCommand, testCommandHandler } from './__tests__/utils/commands/test'
 import docsMiddleware from './middlewares/docsMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -35,7 +34,7 @@ client.on('ready', async () => {
     if (client.user?.id) {
       const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand, helpCommand]
       if (config.testing.isEnabled) {
-        commArr.push(cleanCommand, addRoleCommand)
+        commArr.push(testCommand)
       }
       const res = await rest.put(
         Routes.applicationGuildCommands(client.user.id, config.guildId),
@@ -64,13 +63,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
     const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
-      const result = await handler.process()
-      if (result) {
-        const botMsg = await msg.reply(result)
-        if (typeof result !== 'string' && (result.components?.length ?? 0) > 0) {
-          await botMsg.pin()
-        }
-      }
+      await handler.process()
     }
   } catch (e: unknown) {
     console.log(e)
@@ -100,14 +93,9 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
         case config.commands.help.name:
           await helpCommandHandler(managers, interaction)
           break
-        case 'test-clean':
+        case 'test':
           if (config.testing.isEnabled) {
-            await cleanCommandHandler(managers, interaction)
-          }
-          break
-        case 'test-add-role':
-          if (config.testing.isEnabled) {
-            await addRoleCommandHandler(managers, interaction)
+            await testCommandHandler(managers, interaction)
           }
           break
       }

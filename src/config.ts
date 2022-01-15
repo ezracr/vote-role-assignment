@@ -25,7 +25,7 @@ const config = {
       name: 'info',
       description: 'Show the settings of this channel/thread.',
       messages: {
-        main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}`,
+        main: (settings: string, link: string, total: number, totalCand: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}\n**Candidates**: ${totalCand}`,
       },
     },
     disable: {

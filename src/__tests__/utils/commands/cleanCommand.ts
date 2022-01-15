@@ -1,15 +1,9 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import type { CommandInteraction, CacheType } from 'discord.js'
 
-import config from '../../config'
-import client from '../../client'
-import Managers from '../../db/managers'
-import { removeRoleByName } from '../../discUtils'
-
-export const cleanCommand = new SlashCommandBuilder()
-  .setDefaultPermission(false)
-  .setDescription('Removes the last 100 messages.')
-  .setName('test-clean')
+import config from '../../../config'
+import client from '../../../client'
+import Managers from '../../../db/managers'
+import { removeRoleByName } from '../../../discUtils'
 
 const removeFromChannelByChId = async (chId: string): Promise<void> => {
   const channel = await client.channels.fetch(chId)
@@ -19,7 +13,7 @@ const removeFromChannelByChId = async (chId: string): Promise<void> => {
   }
 }
 
-const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
+export const handleCleanCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
     const { guildId, user: { id }, channel } = interaction
     if (guildId && channel?.type === 'GUILD_TEXT') {
@@ -33,9 +27,4 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     console.log(e)
   }
   return 'Failed'
-}
-
-export const cleanCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
-  const message = await handleCommand(managers, interaction)
-  await interaction.reply({ content: message, ephemeral: true })
 }

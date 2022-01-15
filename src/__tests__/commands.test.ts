@@ -243,4 +243,27 @@ describe('Submission', () => {
     const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
     await utils.comm.expectMessageToBeVotingMessage(msg2El)
   })
+
+  it('Does not store duplicated links and duplicated pins', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendDoc1()
+    await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.sendDoc1()
+    await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.expectInfo({ numOfCandidates: 1 })
+    await utils.comm.sendTestStats()
+    await utils.comm.expectTestStats({ numOfPins: 2 })
+  })
+
+  it('Unpins user\'s message when the role was awarded for another submission', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendDoc1()
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendAddRole1()
+    await utils.comm.sendDoc1()
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
+    await utils.comm.sendTestStats()
+    await utils.comm.expectTestStats({ numOfPins: 1 })
+  })
 })

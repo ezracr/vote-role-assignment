@@ -1,5 +1,5 @@
 import {
-  SlashCommandIntegerOption, SlashCommandRoleOption,
+  SlashCommandIntegerOption, SlashCommandRoleOption, SlashCommandStringOption, SlashCommandUserOption,
 } from '@discordjs/builders'
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 
@@ -23,7 +23,7 @@ const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdTy
     }
   }
   if (rename?.[name]) {
-    return [replaceHyphensInKey(rename[name]), false]
+    return [replaceHyphensInKey(rename[name]!), false] // eslint-disable-line @typescript-eslint/no-non-null-assertion
   }
   if (appendId && isAppendId(name, appendId)) {
     return [replaceHyphensInKey(`${name}_id`), false]
@@ -45,6 +45,7 @@ type GroupType = string[]
 type AppendIdType = string[]
 type RenameType = Record<string, string>
 type ValueOverridesType = Record<string, ValType>
+type ToArray = string[]
 
 type ConvertDbTypeInput = {
   optionsData: readonly CommandInteractionOption<CacheType>[];
@@ -52,9 +53,11 @@ type ConvertDbTypeInput = {
   appendId?: AppendIdType;
   rename?: RenameType;
   valueOverrides?: ValueOverridesType;
+  toArray?: ToArray;
 }
 
 type ValType = string | number | true | (string | number | true)[]
+export type ConvertToDbTypeRet = Record<string, ValType>
 
 /**
  * Turns hyphens into underscores in object keys. Extracts role and channel ids from `optionsData` values.
@@ -66,13 +69,18 @@ type ValType = string | number | true | (string | number | true)[]
  * @param rename Rename one key name to another.
  * @param valueOverrides Override value for a given key.
  */
-export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides }: ConvertDbTypeInput): Record<string, ValType> => {
+export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides, toArray }: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
     const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId, rename)
     const normValue = normalizeToDbValue(val)
 
     if (valueOverrides?.[val.name]) {
-      acc[normKey] = valueOverrides[val.name]
+      acc[normKey] = valueOverrides[val.name]! // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      return acc
+    }
+
+    if (toArray && toArray.includes(val.name)) {
+      acc[normKey] = [normValue as any]
       return acc
     }
 
@@ -105,16 +113,35 @@ export const enableOptions = {
       .setDescription('How many votes required to award the role')
       .setRequired(isRequired)
   },
-  allowedToVoteRole1(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
-    return option.setName('allowed-to-vote-role1')
+  allowedToVoteRole(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
+    return option.setName('allowed-to-vote-roles')
       .setDescription('If set, will allow only this role to vote')
       .setRequired(isRequired)
   },
-  allowedToVoteRole2(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
-    return option.setName('allowed-to-vote-role2')
-      .setDescription('If set, will allow only this role to vote')
+  submissionType(isRequired: boolean, option: SlashCommandStringOption): SlashCommandStringOption {
+    return option.setName('submission-types')
+      .setDescription('Set or override allowed type to submit')
+      .addChoice('Google Sheet', 'gsheet')
+      .addChoice('Google Doc', 'gdoc')
+      .addChoice('Tweet', 'tweet')
+      .addChoice('YouTube video', 'ytvideo')
+      .setRequired(isRequired)
+  },
+  approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
+    return option.setName('approval-threshold')
+      .setDescription('How many approvals required to award the role')
+      .setRequired(isRequired)
+  },
+  allowedToApproveRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
+    return option.setName('approver-roles')
+      .setDescription('If set, will allow only this role to approve')
+      .setRequired(isRequired)
+  },
+  allowedToApproveUsers(isRequired: boolean, option: SlashCommandUserOption): SlashCommandUserOption {
+    return option.setName('approver-users')
+      .setDescription('If set, will allow only users picked to vote')
       .setRequired(isRequired)
   },
 }
 
-export const genLinkToDocPage = (channelId: string) => `${config.baseUrl}/docs/${channelId}`
+export const genLinkToDocPage = (channelId: string): string => `${config.baseUrl}/docs/${channelId}`

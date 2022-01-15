@@ -13,19 +13,25 @@ CREATE TABLE IF NOT EXISTS documents(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   "user_id" text COLLATE "C" NOT NULL,
   "link" text NOT NULL,
-  "title" text NOT NULL,
+  "title" text,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   "ch_sett_id" uuid NOT NULL,
-  UNIQUE("user_id", "link")
+  "submission_type" text,
+  "is_candidate" boolean DEFAULT false,
+  "message_id" text COLLATE "C",
+  UNIQUE("link")
 );
+
+CREATE INDEX CONCURRENTLY documents_message_id_index ON documents ("message_id");
 
 CREATE TABLE IF NOT EXISTS votes(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   "message_id" text COLLATE "C" NOT NULL,
   "user_id" text COLLATE "C" NOT NULL,
   "in_favor" boolean NOT NULL,
+  "is_approval" boolean DEFAULT false,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
-  UNIQUE("message_id", "user_id")
+  UNIQUE("message_id", "user_id", "is_approval")
 );
 
 CREATE TABLE IF NOT EXISTS users(

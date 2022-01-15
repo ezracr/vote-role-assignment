@@ -1,66 +1,121 @@
-import { Message, MessageActionRow } from 'discord.js'
+import { Message, MessageActionRow, ReplyMessageOptions } from 'discord.js'
+import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
-import { ChSettingsData } from '../db/dbTypes'
-import { genLikeButton, genDislikeButton, fetchMember, fetchDocsTitle } from './handlUtils'
-import InnerMessage from './InnerMessage'
+import { ChSettingsData, SubmissionType, Document } from '../db/dbTypes'
+import { fetchMember, unpinMessageByMessageId } from '../discUtils'
+import config from '../config'
+import {
+  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
+} from './handlUtils'
+import VotingMessage from './VotingMessage'
+import { allTypes, processUrl, stringifyTypes } from './submissionTypes'
 
-/**
- * Needed if you want to construct regex from a string to escape any special character
- */
-const escapeRegExp = (text = ''): string => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-
-const docUrlRegex = new RegExp(
-  `(?:\\s|^)((?:${escapeRegExp('https://docs.google.com/document/d/')}|${escapeRegExp('https://docs.google.com/spreadsheets/d/')})[\\S]+?)(?:\\s|$|,|\\.|;|:)`,
-  'i'
-)
-
-const extractUrl = (msg: Message<boolean>): string | null => {
-  const res = msg.content.match(docUrlRegex)
-  if (res?.[1]) {
-    return res[1]
-  }
-  return null
+const isAllowedSubmType = (chData: ChSettingsData, type?: SubmissionType): boolean => {
+  const { submission_types } = chData
+  return Boolean(!submission_types || submission_types.length === 0 || (type && submission_types.includes(type)))
 }
 
-const isAlreadyAwarded = async (config: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
+const extractUrl = (chConfig: ChSettingsData, msg: Message<boolean>): { urlCount: number, typeUrl?: ReturnType<typeof processUrl> } => {
+  const matches = msg.content.match(parseUrls()) ?? []
+
+  for (const match of matches) {
+    const urlType = processUrl(new URL(match))
+    if (urlType && isAllowedSubmType(chConfig, urlType.type)) {
+      return { typeUrl: urlType, urlCount: matches.length }
+    }
+  }
+
+  return { urlCount: matches.length }
+}
+
+const isAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
   if (msg.guildId) {
     const member = await fetchMember(msg.guildId, msg.author.id)
-    return member?.roles.cache.some((r) => config.awarded_role === r.id) ?? false
+    return member?.roles.cache.some((r) => chData.awarded_role === r.id) ?? false
   }
   return false
 }
 
-class MessageCreateHandler {
-  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { } // eslint-disable-line @typescript-eslint/no-parameter-properties
+const stringifyAllowedTypes = (allowedTypes?: SubmissionType[]): string => {
+  if (allowedTypes && allowedTypes.length > 0) {
+    return stringifyTypes(allowedTypes)
+  }
+  return stringifyTypes(allTypes)
+}
 
-  process = async (): Promise<{ messageContent: string, actionRow?: MessageActionRow } | null> => {
+type InputEntry = Pick<Parameters<Managers['documents']['insert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
+
+class MessageCreateHandler {
+  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { }
+
+  private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: InputEntry }> => {
     if (!this.msg.author.bot) {
-      const url = extractUrl(this.msg)
-      if (url) {
+      const { typeUrl: prUrl, urlCount } = extractUrl(this.chConfig, this.msg)
+      if (prUrl?.type && prUrl.url) {
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
-          const title = await fetchDocsTitle(this.msg, url)
-          await this.managers.documents.insert({
-            user: {
-              id: this.msg.author.id,
-              tag: this.msg.author.tag,
-            },
-            link: url,
-            channel_id: this.msg.channelId,
-            title,
-          })
-          return { messageContent: 'Your document has been successfully saved to the vault.' }
+          const title = await fetchSubmTitle(this.msg, prUrl.type, prUrl.url)
+          const inputEntry = { title, submission_type: prUrl.type, link: prUrl.url, is_candidate: false, message_id: this.msg.id }
+          return { newMsg: { content: config.messages.messageCreateHandler.saved }, entry: inputEntry }
         } else {
+          const inputDoc = { title: null, submission_type: prUrl.type, link: prUrl.url, is_candidate: true, message_id: this.msg.id }
+          const isAppr = isApprovable(this.chConfig)
           const actionRow = new MessageActionRow({
-            components: [genLikeButton(), genDislikeButton()]
+            components: [
+              genLikeButton(),
+              genDislikeButton(),
+              ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0), genDismissButton()] : []),
+            ]
           })
-          const innerMsg = new InnerMessage({ authorId: this.msg.author.id, url })
-          return { messageContent: innerMsg.toString(), actionRow }
+          const innerMsg = new VotingMessage({
+            authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
+          })
+          return { newMsg: { content: innerMsg.toString(), components: [actionRow] }, entry: inputDoc }
+        }
+      }
+      if (urlCount > 0) {
+        return {
+          newMsg: {
+            content: config.messages.messageCreateHandler.wrongUrl(stringifyAllowedTypes(this.chConfig.submission_types)),
+          }
         }
       }
     }
-    return null
+    return { newMsg: null }
+  }
+
+  process = async (): Promise<void> => {
+    const { newMsg, entry } = await this.genMessage()
+    if (newMsg) {
+      const botMsg = await this.msg.reply(newMsg)
+      if (typeof newMsg !== 'string' && (newMsg.components?.length ?? 0) > 0) {
+        await botMsg.pin()
+      }
+      if (entry) {
+        await this.addToDocuments({ ...entry, message_id: botMsg.id })
+      }
+    }
+  }
+
+  addToDocuments = async (inputDoc: InputEntry): Promise<(Document & { old_message_id: string | undefined }) | undefined> => {
+    const doc = await this.managers.documents.insert({
+      user: {
+        id: this.msg.author.id,
+        tag: this.msg.author.tag,
+      },
+      link: inputDoc.link,
+      channel_id: this.msg.channelId,
+      title: inputDoc.title,
+      submission_type: inputDoc.submission_type,
+      is_candidate: inputDoc.is_candidate,
+      message_id: inputDoc.message_id,
+    })
+    if (doc?.old_message_id && doc.message_id !== doc.old_message_id) {
+      // await removeMessageByMessageId(this.msg, doc.old_message_id)
+      await unpinMessageByMessageId(this.msg, doc.old_message_id)
+    }
+    return doc
   }
 }
 

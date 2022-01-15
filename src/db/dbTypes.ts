@@ -5,11 +5,17 @@ export type ChSetting = {
   is_disabled: boolean;
 }
 
+export type SubmissionType = 'gsheet' | 'gdoc' | 'tweet' | 'ytvideo'
+
 export type ChSettingsData = {
   allowed_to_vote_roles?: string[];
   awarded_role: string;
-  voting_threshold: number;
+  voting_threshold?: number;
   title: string;
+  submission_types?: SubmissionType[];
+  approver_roles?: string[];
+  approver_users?: string[];
+  approval_threshold?: number;
 }
 
 export type User = {
@@ -20,9 +26,12 @@ export type User = {
 export type Document = {
   id: string;
   link: string;
-  title: string;
+  title: string | null;
   user: User;
   ch_settings: ChSetting;
+  submission_type: SubmissionType;
+  is_candidate: boolean;
+  message_id: string | null;
 }
 
 export type Vote = {
@@ -30,4 +39,5 @@ export type Vote = {
   message_id: string;
   in_favor: boolean;
   user: User;
+  is_approval?: boolean;
 }

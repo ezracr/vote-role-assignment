@@ -13,7 +13,8 @@ import { disableCommand, disableCommandHandler } from './eventHandlers/commands/
 import { updateCommand, updateCommandHandler } from './eventHandlers/commands/update'
 import { infoCommand, infoCommandHandler } from './eventHandlers/commands/info'
 import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/migrate'
-import { cleanCommand, cleanCommandHandler } from './__tests__/utils/cleanCommand'
+import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
+import { testCommand, testCommandHandler } from './__tests__/utils/commands/test'
 import docsMiddleware from './middlewares/docsMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -31,9 +32,9 @@ const rest = new REST({ version: '9' }).setToken(config.token)
 client.on('ready', async () => {
   try {
     if (client.user?.id) {
-      const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand]
+      const commArr = [enableCommand, disableCommand, updateCommand, infoCommand, migrateCommand, helpCommand]
       if (config.testing.isEnabled) {
-        commArr.push(cleanCommand)
+        commArr.push(testCommand)
       }
       const res = await rest.put(
         Routes.applicationGuildCommands(client.user.id, config.guildId),
@@ -62,16 +63,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
     const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
-      const result = await handler.process()
-      if (result) {
-        const botMsg = await msg.reply({
-          content: result.messageContent,
-          components: result.actionRow ? [result.actionRow] : [],
-        })
-        if (result.actionRow) {
-          await botMsg.pin()
-        }
-      }
+      await handler.process()
     }
   } catch (e: unknown) {
     console.log(e)
@@ -98,16 +90,19 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
         case config.commands.migrate.name:
           await migrateCommandHandler(managers, interaction)
           break
-        case 'test-clean':
+        case config.commands.help.name:
+          await helpCommandHandler(managers, interaction)
+          break
+        case 'test':
           if (config.testing.isEnabled) {
-            await cleanCommandHandler(managers, interaction)
+            await testCommandHandler(managers, interaction)
           }
           break
       }
     }
     if (interaction.isButton()) {
       const { customId } = interaction
-      if ((customId === 'like' || customId === 'dislike')) {
+      if ((customId === 'like' || customId === 'dislike' || customId === 'approve' || customId === 'dismiss')) {
         const chConfig = await getChannelConfig(managers, interaction.channelId)
         if (chConfig) {
           const handler = new VoteInteractionHandler(chConfig, interaction, managers)
@@ -115,10 +110,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
           const result = await handler.process()
 
           if (result) { // eslint-disable-line max-depth
-            await interaction.update({
-              content: result.messageContent,
-              components: [result.actionRow],
-            })
+            await interaction.update(result)
           } else {
             await interaction.update({})
           }

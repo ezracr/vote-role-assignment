@@ -8,7 +8,7 @@ import config from '../../config'
 export const migrateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.migrate.name)
-  .setDescription('Migrate to a different channel/thread.')
+  .setDescription(config.commands.migrate.description)
   .addChannelOption(
     (option) => option.setName('channel')
       .setDescription('Channel/thread.')
@@ -20,8 +20,8 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
   try {
     const inputArg = interaction.options.data[0]
 
-    if (inputArg.channel) {
-      const res = await managers.settings.updateChIdByChId(interaction.channelId, inputArg.channel.id)
+    if (inputArg?.channel) {
+      const res = await managers.settings.mergeOneChSettingsIntoAnotherByChId(interaction.channelId, inputArg.channel.id)
       if (res) return messages.done
       return config.messages.wasNotEnabled
     }

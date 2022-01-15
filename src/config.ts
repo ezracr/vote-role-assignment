@@ -11,37 +11,33 @@ const config = {
     },
   ],
   baseUrl: process.env.BASE_URL ?? 'http://localhost:3000',
-  testing: {
-    isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
-    testChannel1Id: '923544676793999390',
-    mail: process.env.TEST_MAIL,
-    pass: process.env.TEST_PASS,
-    awardedRoleName1: '@T-Rex',
-    awardedRoleName2: '@U-Rex',
-  },
   commands: {
     enable: {
       name: 'enable',
+      description: 'Initialize/update the bot in this channel/thread.',
       messages: {
         enabled: 'Enabled',
         updated: 'Updated',
-        docLinkMsg: (link: string) => `The page with sent documents: ${link}.`
+        docLinkMsg: (link: string) => `The page with submissions: ${link}.`
       },
     },
     info: {
       name: 'info',
+      description: 'Show the settings of this channel/thread.',
       messages: {
-        main: (settings: string, link: string, total: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved documents**: ${total}`,
+        main: (settings: string, link: string, total: number, totalCand: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}\n**Candidates**: ${totalCand}`,
       },
     },
     disable: {
       name: 'disable',
+      description: 'Disable the bot in this channel/thread.',
       messages: {
         done: 'Disabled.',
       },
     },
     migrate: {
       name: 'migrate',
+      description: 'Migrate to a different channel/thread.',
       messages: {
         done: 'Done.',
         failed: 'Failed to migrate.',
@@ -49,15 +45,41 @@ const config = {
     },
     update: {
       name: 'update',
+      description: 'Update individual fields of this channel/thread\'s config.',
       messages: {
         noArgs: 'At least one argument needed for this command.',
         done: 'Updated.',
         removedAllowedToVote: '`allowed-to-vote-role`s have been cleared.',
       },
     },
+    help: {
+      name: 'help',
+      description: 'Show the list of commands.',
+    },
   },
   messages: {
     wasNotEnabled: 'The bot was not enabled in this channel/thread',
+    messageCreateHandler: {
+      saved: 'Your submission has been successfully saved to the vault.',
+      wrongUrl: (allowedTypes: string) => `Couldn't find a correct link in your message. Allowed types for submission: ${allowedTypes}.`,
+    },
+  },
+  testing: {
+    isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
+    testChannel1Id: '923544676793999390',
+    testChannel2Id: '929691426827141160',
+    testChannel1Name: 'for-testing1',
+    testChannel2Name: 'for-testing2',
+    userTag1: process.env.TEST_USER_TAG1 ?? 'User1 tag should be specified',
+    userName1: process.env.TEST_USER_NAME1,
+    mail1: process.env.TEST_MAIL1,
+    pass1: process.env.TEST_PASS1,
+    mail2: process.env.TEST_MAIL2,
+    pass2: process.env.TEST_PASS2,
+    userTag2: process.env.TEST_USER_TAG2 ?? 'User2 tag should be specified',
+    userName2: process.env.TEST_USER_NAME2,
+    roleName1: '@T-Rex',
+    roleName2: '@U-Rex',
   },
 }
 

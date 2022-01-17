@@ -65,6 +65,12 @@ describe('/enable', () => {
     await utils.comm.sendEnable(roleName2, { 'voting-threshold': '10' })
     await utils.comm.expectMessageContainsText(commands.enable.messages.updated)
   })
+
+  it('Removes "pinned a message" messages', async () => {
+    await utils.comm.sendEnable(roleName1)
+    const msg = await utils.comm.findMessage()
+    await utils.sel.expectNotContainsText(msg, 'pinned')
+  })
 })
 
 describe('submission-threshold', () => {

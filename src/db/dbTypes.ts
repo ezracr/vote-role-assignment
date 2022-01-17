@@ -16,6 +16,7 @@ export type ChSettingsData = {
   approver_roles?: string[];
   approver_users?: string[];
   approval_threshold?: number;
+  submission_threshold?: number;
 }
 
 export type User = {
@@ -23,7 +24,7 @@ export type User = {
   tag: string;
 }
 
-export type Document = {
+export type Submission = {
   id: string;
   link: string;
   title: string | null;

@@ -5,8 +5,8 @@ import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
 import { convertIdToRoleTag, convertIdToUserTag } from '../../discUtils'
 import config from '../../config'
-import { genLinkToDocPage } from './commUtils'
 import { stringifyTypes } from '../submissionTypes'
+import { genLinkToDocPage } from './commUtils'
 
 export const infoCommand = new SlashCommandBuilder()
   .setDefaultPermission(true)
@@ -31,21 +31,18 @@ const prepareUserIds = (userId?: string | string[]): string => {
 const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`
 
 const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
-  const { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types, approval_threshold, approver_roles, approver_users } = sett
-  const normSett = { awarded_role, title, allowed_to_vote_roles, voting_threshold, submission_types, approval_threshold, approver_roles, approver_users }
-
-  return (Object.keys(normSett) as (keyof ChSettingsData)[]).map((key) => {
+  return (Object.keys(sett) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
     if (key === 'allowed_to_vote_roles' || key === 'awarded_role' || key === 'approver_roles') {
-      return prepareLine(normKey, prepareGroupIds(normSett[key]))
+      return prepareLine(normKey, prepareGroupIds(sett[key]))
     }
     if (key === 'approver_users') {
-      return prepareLine(normKey, prepareUserIds(normSett[key]))
+      return prepareLine(normKey, prepareUserIds(sett[key]))
     }
     if (key === 'submission_types') {
-      return prepareLine(normKey, stringifyTypes(normSett[key]))
+      return prepareLine(normKey, stringifyTypes(sett[key]))
     }
-    return prepareLine(normKey, normSett[key] ? JSON.stringify(normSett[key]) : '')
+    return prepareLine(normKey, sett[key] ? JSON.stringify(sett[key]) : '')
   }).join('\n')
 }
 

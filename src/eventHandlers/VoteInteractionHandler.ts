@@ -49,10 +49,23 @@ class VoteInteractionHandler {
     return true
   }
 
-  private assignRole = async (voteNum: number, apprNum: number, innMessage: VotingMessage): Promise<void> => {
-    const isAppr = isApprovable(this.chConfig)
+  private isGraterThanVotThreshold = (votes: number): boolean => votes >= (this.chConfig.voting_threshold ?? 0)
 
-    if (voteNum >= (this.chConfig.voting_threshold ?? 0) && (apprNum >= (this.chConfig.approval_threshold ?? 0) || !isAppr) && this.interaction.guildId) {
+  private isGraterThanApprThreshold = (approvals: number): boolean => (
+    approvals >= (this.chConfig.approval_threshold ?? 0) || !isApprovable(this.chConfig)
+  )
+
+  private isEnoughSubmissions = async (): Promise<boolean> => {
+    const threshold = this.chConfig.submission_threshold ?? 0
+    if (threshold > 0) {
+      const totalRes = await this.managers.documents.getNumOfDocsPerUserId({ user_id: this.interaction.user.id, is_candidate: false })
+      return (totalRes?.total ?? 0) >= threshold
+    }
+    return true
+  }
+
+  private assignRole = async (voteNum: number, apprNum: number, innMessage: VotingMessage): Promise<void> => {
+    if (this.isGraterThanVotThreshold(voteNum) && this.isGraterThanApprThreshold(apprNum) && this.interaction.guildId) {
       const guild = await client.guilds.fetch(this.interaction.guildId)
       const id = innMessage.authorId
       const member = guild.members.cache.get(id)
@@ -71,7 +84,10 @@ class VoteInteractionHandler {
             is_candidate: false,
           })
         }
-        await assignRoleById(guild, id, this.chConfig.awarded_role)
+        const isEnoughSubmissions = await this.isEnoughSubmissions()
+        if (isEnoughSubmissions) {
+          await assignRoleById(guild, id, this.chConfig.awarded_role)
+        }
       }
     }
   }

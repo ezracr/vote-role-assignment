@@ -1,12 +1,17 @@
 import type { CommandInteraction, CacheType } from 'discord.js'
 
 import Managers from '../../../db/managers'
+import { fetchMember } from '../../../discUtils'
 
 const fetchStats = async (interaction: CommandInteraction<CacheType>) => {
   const { channel } = interaction
-  const [pinned] = await Promise.all([channel?.messages.fetchPinned()])
+  const [pinned, member] = await Promise.all([
+    channel?.messages.fetchPinned(), fetchMember(interaction.guildId!, interaction.user.id),
+  ])
+
   return {
-    'pinned-count': pinned?.size ?? 0,
+    'numOfPins': pinned?.size ?? 0,
+    'roles': member?.roles.cache.map((role) => role.name) ?? []
   }
 }
 

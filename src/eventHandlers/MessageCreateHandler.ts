@@ -2,7 +2,7 @@ import { Message, MessageActionRow, ReplyMessageOptions } from 'discord.js'
 import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
-import { ChSettingsData, SubmissionType, Document } from '../db/dbTypes'
+import { ChSettingsData, SubmissionType, Submission } from '../db/dbTypes'
 import { fetchMember, unpinMessageByMessageId } from '../discUtils'
 import config from '../config'
 import {
@@ -98,7 +98,7 @@ class MessageCreateHandler {
     }
   }
 
-  addToDocuments = async (inputDoc: InputEntry): Promise<(Document & { old_message_id: string | undefined }) | undefined> => {
+  addToDocuments = async (inputDoc: InputEntry): Promise<(Submission & { old_message_id: string | undefined }) | undefined> => {
     const doc = await this.managers.documents.insert({
       user: {
         id: this.msg.author.id,

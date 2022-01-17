@@ -1,9 +1,9 @@
 import ChSettings from './ChSettings'
-import Documents from './Documents'
+import Submissions from './Submissions'
 import Votes from './Votes'
 
 export default class Managers {
   settings: ChSettings = new ChSettings()
-  documents: Documents = new Documents()
+  documents: Submissions = new Submissions()
   votes: Votes = new Votes()
 }

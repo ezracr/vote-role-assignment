@@ -3,7 +3,7 @@ import { PoolClient } from 'pg'
 import pool from '../pool'
 import { ChSettingsData, ChSetting } from '../dbTypes'
 import { ReportableError } from './manUtils'
-import Documents from './Documents'
+import Submissions from './Submissions'
 
 type InsSetting = ChSetting & { inserted: boolean }
 
@@ -26,7 +26,7 @@ const modifyArrVals = (oldChSettData: ChSettingsData, newChSettData: Partial<ChS
 }
 
 class ChSettings {
-  documents = new Documents()
+  documents = new Submissions()
 
   async getByChId(channelId: string): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`

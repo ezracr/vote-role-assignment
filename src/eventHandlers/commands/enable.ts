@@ -5,7 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
-import { convertToDbType, enableOptions, genLinkToDocPage } from './commUtils'
+import { enableOptions, genLinkToDocPage, convertEnableToDbType } from './commUtils'
 
 export const enableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -18,6 +18,7 @@ export const enableCommand = new SlashCommandBuilder()
   .addIntegerOption(enableOptions.approvalThreshold.bind(null, false))
   .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
   .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
+  .addIntegerOption(enableOptions.submissionThreshold.bind(null, false))
   .addStringOption((option) => option.setName('title')
     .setDescription('The page\'s title will be taken from channel/thread\'s name if not set.')
     .setRequired(false)
@@ -33,14 +34,11 @@ const getChannelName = (interaction: CommandInteraction<CacheType>): string => {
 
 export const enableCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
-    const dbSettingsData = convertToDbType({
-      optionsData: interaction.options.data,
-      toArray: ['allowed-to-vote-roles', 'submission-types', 'approver_roles', 'approver_users'],
-    })
-    if (!dbSettingsData.title) {
-      dbSettingsData.title = getChannelName(interaction)
+    const dbSettData = convertEnableToDbType(interaction.options.data)
+    if (!dbSettData.title) {
+      dbSettData.title = getChannelName(interaction)
     }
-    const res = await managers.settings.upsert(interaction.channelId, dbSettingsData as unknown as ChSettingsData)
+    const res = await managers.settings.upsert(interaction.channelId, dbSettData as unknown as ChSettingsData)
     const { commands: { enable: { messages } } } = config
 
     if (res?.inserted) {

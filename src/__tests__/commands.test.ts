@@ -46,11 +46,6 @@ describe('Returns non initilized message when the bot was not enabled in a chann
   })
 })
 
-const enableRole1 = async (): Promise<void> => {
-  await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
-  await utils.comm.waitToFinishProcessingInteraction()
-}
-
 describe('/enable', () => {
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '10' })
@@ -61,7 +56,7 @@ describe('/enable', () => {
   })
 
   it('Updates the settings when called again', async () => {
-    await enableRole1()
+    await utils.comm.sendEnable(roleName2, { 'voting-threshold': '1' })
     await utils.comm.sendEnable(roleName2, { 'voting-threshold': '10' })
     await utils.comm.expectMessageContainsText(commands.enable.messages.updated)
   })

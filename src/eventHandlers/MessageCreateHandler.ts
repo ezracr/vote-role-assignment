@@ -2,7 +2,7 @@ import { Message, MessageActionRow, ReplyMessageOptions } from 'discord.js'
 import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
-import { ChSettingsData, SubmissionType, Document } from '../db/dbTypes'
+import { ChSettingsData, SubmissionType, Submission } from '../db/dbTypes'
 import { fetchMember, unpinMessageByMessageId } from '../discUtils'
 import config from '../config'
 import {
@@ -49,17 +49,17 @@ type InputEntry = Pick<Parameters<Managers['documents']['insert']>[0], 'link' | 
 class MessageCreateHandler {
   constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { }
 
-  private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: InputEntry }> => {
+  private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {
     if (!this.msg.author.bot) {
       const { typeUrl: prUrl, urlCount } = extractUrl(this.chConfig, this.msg)
       if (prUrl?.type && prUrl.url) {
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
           const title = await fetchSubmTitle(this.msg, prUrl.type, prUrl.url)
-          const inputEntry = { title, submission_type: prUrl.type, link: prUrl.url, is_candidate: false, message_id: this.msg.id }
+          const inputEntry = { title, submission_type: prUrl.type, link: prUrl.url, is_candidate: false }
           return { newMsg: { content: config.messages.messageCreateHandler.saved }, entry: inputEntry }
         } else {
-          const inputDoc = { title: null, submission_type: prUrl.type, link: prUrl.url, is_candidate: true, message_id: this.msg.id }
+          const inputDoc = { title: null, submission_type: prUrl.type, link: prUrl.url, is_candidate: true }
           const isAppr = isApprovable(this.chConfig)
           const actionRow = new MessageActionRow({
             components: [
@@ -98,7 +98,7 @@ class MessageCreateHandler {
     }
   }
 
-  addToDocuments = async (inputDoc: InputEntry): Promise<(Document & { old_message_id: string | undefined }) | undefined> => {
+  addToDocuments = async (inputDoc: InputEntry): Promise<Submission | undefined> => {
     const doc = await this.managers.documents.insert({
       user: {
         id: this.msg.author.id,

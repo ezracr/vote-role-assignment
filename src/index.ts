@@ -59,6 +59,9 @@ const getChannelConfig = async (managers: Managers, chlThId: string): Promise<Ch
 
 client.on('messageCreate', async (msg): Promise<void> => {
   try {
+    if (msg.type === 'CHANNEL_PINNED_MESSAGE' && msg.author.bot) {
+      await msg.delete()
+    }
     const managers = new Managers()
     const chConfig = await getChannelConfig(managers, msg.channelId)
     if (chConfig) {

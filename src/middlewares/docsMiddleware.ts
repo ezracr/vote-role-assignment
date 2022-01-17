@@ -1,10 +1,10 @@
 import { Application } from 'express'
 
 import Managers from '../db/managers'
-import { Document, ChSetting } from '../db/dbTypes'
+import { Submission, ChSetting } from '../db/dbTypes'
 import config from '../config'
 
-const renderRow = (chId: string, sumb: Document, isVoteShown = false): string => {
+const renderRow = (chId: string, sumb: Submission, isVoteShown = false): string => {
   const title = sumb.title?.trim()
   return `
 <div class="row">
@@ -14,7 +14,7 @@ const renderRow = (chId: string, sumb: Document, isVoteShown = false): string =>
 </div>`
 }
 
-const renderRows = (chId: string, title: string, docs: Document[], isVoteShown = false): string => `
+const renderRows = (chId: string, title: string, docs: Submission[], isVoteShown = false): string => `
 <section>
   <h2>${title}</h2>
   <div class="table">
@@ -28,7 +28,7 @@ const renderRows = (chId: string, title: string, docs: Document[], isVoteShown =
 </section>
 `
 
-const renderTemplate = (chId: string, chSettings: ChSetting, approved: Document[], candidates?: Document[]): string => `<!DOCTYPE html>
+const renderTemplate = (chId: string, chSettings: ChSetting, approved: Submission[], candidates?: Submission[]): string => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">

@@ -1,4 +1,5 @@
 import type { CommandInteraction, CacheType } from 'discord.js'
+import cleanDb from '../dbUtils'
 
 import config from '../../../config'
 import client from '../../../client'
@@ -17,10 +18,13 @@ export const handleCleanCommand = async (managers: Managers, interaction: Comman
   try {
     const { guildId, user: { id }, channel } = interaction
     if (guildId && channel?.type === 'GUILD_TEXT') {
-      await removeFromChannelByChId(config.testing.testChannel1Id)
-      await removeFromChannelByChId(config.testing.testChannel2Id)
-      await removeRoleByName(guildId, id, config.testing.roleName1.slice(1))
-      await removeRoleByName(guildId, id, config.testing.roleName2.slice(1))
+      await Promise.all([
+        removeFromChannelByChId(config.testing.testChannel1Id),
+        removeFromChannelByChId(config.testing.testChannel2Id),
+        removeRoleByName(guildId, id, config.testing.roleName1.slice(1)),
+        removeRoleByName(guildId, id, config.testing.roleName2.slice(1)),
+        cleanDb(),
+      ])
       return 'Done'
     }
   } catch (e: unknown) {

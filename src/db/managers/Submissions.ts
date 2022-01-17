@@ -1,15 +1,15 @@
 import { PoolClient } from 'pg'
 
 import pool from '../pool'
-import { Document, ChSetting } from '../dbTypes'
+import { Submission, ChSetting } from '../dbTypes'
 import Users from './Users'
 
-type MessageIdReq = { message_id: NonNullable<Document['message_id']> }
+type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
-type InsertInput = Pick<Document, 'user' | 'link' | 'title' | 'submission_type' | 'is_candidate'> & MessageIdReq & { channel_id: ChSetting['channel_id'] }
-type InsertOuput = Document & { old_message_id: string | undefined }
+type InsertInput = Pick<Submission, 'user' | 'link' | 'title' | 'submission_type' | 'is_candidate'> & MessageIdReq & { channel_id: ChSetting['channel_id'] }
+type InsertOuput = Submission & { old_message_id: string | undefined }
 
-class Documents {
+class Submissions {
   users = new Users()
 
   async insert(data: InsertInput): Promise<InsertOuput | undefined> {
@@ -29,8 +29,8 @@ class Documents {
     }
   }
 
-  async updateTitleIsCandidate(data: Pick<Document, 'title' | 'is_candidate'> & MessageIdReq): Promise<Document | undefined> { // todo patch
-    const { rows: [row] } = await pool.query<Document>(`
+  async updateTitleIsCandidate(data: Pick<Submission, 'title' | 'is_candidate'> & MessageIdReq): Promise<Submission | undefined> { // todo patch
+    const { rows: [row] } = await pool.query<Submission>(`
       UPDATE documents ds SET "title" = $2, "is_candidate" = $3
       WHERE ds."message_id" = $1
       RETURNING *
@@ -38,8 +38,8 @@ class Documents {
     return row
   }
 
-  async updateManyChSettIdByChId(oldChId: string, newChSettId: string, client?: PoolClient): Promise<Document[] | undefined> {
-    const { rows } = await (client ?? pool).query<Document>(`
+  async updateManyChSettIdByChId(oldChId: string, newChSettId: string, client?: PoolClient): Promise<Submission[] | undefined> {
+    const { rows } = await (client ?? pool).query<Submission>(`
       UPDATE documents ds SET "ch_sett_id" = $2
       WHERE ds."ch_sett_id" = (SELECT cs1."id" FROM channel_settings cs1 WHERE "channel_id" = $1)
       RETURNING *
@@ -47,7 +47,7 @@ class Documents {
     return rows
   }
 
-  async getNumOfDocsPerChannel(input: { channel_id: ChSetting['channel_id'] } & Pick<Document, 'is_candidate'>): Promise<{ total: number } | undefined> {
+  async getNumOfDocsPerChannel(input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>): Promise<{ total: number } | undefined> {
     const { rows: [row] } = await pool.query<{ total: number }>(`
       SELECT count(*) total
       FROM documents_full ds
@@ -56,8 +56,17 @@ class Documents {
     return row
   }
 
-  async getByChannelId(input: Pick<Document, 'is_candidate'> & { channel_id: ChSetting['channel_id'] }): Promise<Document[] | undefined> {
-    const { rows } = await pool.query<Document>(`
+  async getNumOfDocsPerUserId(input: { user_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>): Promise<{ total: number } | undefined> {
+    const { rows: [row] } = await pool.query<{ total: number }>(`
+      SELECT count(*) total
+      FROM documents_full ds
+      WHERE ds."user_id" = $1 AND ds."is_candidate" = $2
+    `, [input.user_id, input.is_candidate ?? false])
+    return row
+  }
+
+  async getByChannelId(input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] }): Promise<Submission[] | undefined> {
+    const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
@@ -67,11 +76,11 @@ class Documents {
   }
 
   async deleteByMessageId({ message_id }: MessageIdReq): Promise<string | undefined> {
-    const { rows: [row] } = await pool.query<Pick<Document, 'id'>>(`
+    const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
       DELETE FROM documents ds WHERE ds."message_id" = $1 RETURNING "id"
     `, [message_id])
     return row?.id
   }
 }
 
-export default Documents
+export default Submissions

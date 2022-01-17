@@ -5,7 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
-import { convertToDbType as convertToDbObj, enableOptions } from './commUtils'
+import { enableOptions, convertEnableToDbType as convertEnableDataToDbSettData } from './commUtils'
 
 export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -22,6 +22,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addIntegerOption(enableOptions.approvalThreshold.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
+      .addIntegerOption(enableOptions.submissionThreshold.bind(null, false))
       .addStringOption((option) => option.setName('title')
         .setDescription('The page\'s title.')
         .setRequired(false)
@@ -53,20 +54,17 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (!optionsData || optionsData.length === 0) {
       return messages.noArgs
     }
-    const dbObj = convertToDbObj({
-      optionsData,
-      toArray: ['allowed-to-vote-roles', 'submission-types', 'approver_roles', 'approver_users'],
-    })
+    const dbSettData = convertEnableDataToDbSettData(optionsData)
     if (interaction.options.getSubcommand() === 'add') {
-      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbObj)
+      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData)
       if (res) return messages.done
     }
     if (interaction.options.getSubcommand() === 'del') {
-      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbObj, true)
+      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData, true)
       if (res) return messages.done
     }
     if (interaction.options.getSubcommand() === 'set') {
-      const res = await managers.settings.patchDataByChId(interaction.channelId, dbObj as unknown as ChSettingsData)
+      const res = await managers.settings.patchDataByChId(interaction.channelId, dbSettData as unknown as ChSettingsData)
       if (res) return messages.done
     }
     return config.messages.wasNotEnabled

@@ -23,8 +23,14 @@ let isUser1LoggedIn: boolean
 type AddRemoveArgs = {
   'submission-types'?: SubmissionTypeTitles, 'approver-roles'?: string, 'approver-users'?: string,
 }
-type SetArgs = { 'voting-threshold'?: string; 'approval-threshold'?: string } & AddRemoveArgs
+type SetArgs = {
+  'voting-threshold'?: string;
+  'approval-threshold'?: string;
+  'submission-threshold'?: string;
+} & AddRemoveArgs
 type EnableOptionalArgs = SetArgs
+
+type TestStatsArg = { numOfPins?: number, roles?: string[] }
 
 const lsItems = ['submission-types', 'approver-roles', 'approver-users']
 
@@ -44,6 +50,8 @@ const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs 
     : undefined
 )
 
+const msgContainer = 'div>div:nth-of-type(2)'
+
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
 
@@ -58,7 +66,7 @@ export class CommUtils {
       await passEl.sendKeys(pass)
       const login = await this.selUtils.findElementByCss('button[type=submit]')
       await login.click()
-      await this.driver.wait(wd.until.stalenessOf(login), 3000)
+      await this.driver.wait(wd.until.stalenessOf(login), 5000)
     } else {
       throw new Error('Testing mail and password have not been specified.')
     }
@@ -125,14 +133,18 @@ export class CommUtils {
   sendYtvideo1 = (): Promise<void> => this.sendMessage(this.ytvideo1Url)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
 
-  findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 3000)
+  findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)
 
   findMessagesContainer = (): Promise<wd.WebElement> => {
-    return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 3000)
+    return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 5000)
     // TODO wait for the messages to be fully populated
   }
-  findMessageBody = (msg: wd.WebElement): Promise<wd.WebElement> => (
-    this.selUtils.findElementByCss('div>div:nth-of-type(2)', msg)
+  findReplyMessageContainer = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss(msgContainer, msg)
+  )
+
+  findMessageWithTitleBody = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss(`h2+div`, msg)
   )
 
   waitToFinishProcessingInteraction = async (): Promise<void> => {
@@ -164,12 +176,7 @@ export class CommUtils {
     this.expectMessageContainsText(`Approved by: ${text}`, lastIndex)
   )
 
-  expectPinNotification = async (lastIndex = 1): Promise<void> => {
-    const msg = await this.findMessage(lastIndex)
-    await this.selUtils.expectContainsText(msg, 'pinned')
-  }
-
-  findMessageText = async (lastIndex: number | wd.WebElement = 0 ): Promise<string> => {
+  findMessageText = async (lastIndex: number | wd.WebElement = 0): Promise<string> => {
     const msg = typeof lastIndex === 'number' ? await this.findMessage(lastIndex + 1) : lastIndex
     try {
       const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
@@ -251,7 +258,7 @@ export class CommUtils {
   }
 
   findAboutToAppearBotMessageBody = async (): Promise<wd.WebElement> => (
-    this.findMessageBody(await this.findAboutToAppearBotMessage())
+    this.findReplyMessageContainer(await this.findAboutToAppearBotMessage())
   )
 
   findLatestBotMessage = async (): Promise<wd.WebElement> => {
@@ -314,11 +321,35 @@ export class CommUtils {
       await this.expectMessageContainsText(`Candidates: ${numOfCandidates}`)
     }
   }
-  expectTestStats = async({ numOfPins }: { numOfPins?: number }): Promise<void> => {
+
+
+  private parseTestStats = async (): Promise<any> => {
+    const msg = await this.findMessage()
+    const body = await this.findMessageWithTitleBody(msg)
+    const text = await body.getText()
+    return JSON.parse(text)
+  }
+
+  expectTestStats = async ({ numOfPins, roles }: TestStatsArg): Promise<void> => {
+    const stats = await this.parseTestStats()
     if (numOfPins) {
-      await this.expectMessageContainsText(`"pinned-count":${numOfPins}`)
+      expect(stats.numOfPins).toEqual(numOfPins)
+    }
+    if (roles) {
+      expect(stats.roles).toEqual(expect.arrayContaining(roles))
     }
   }
+
+  expectTestStatsNot = async ({ numOfPins, roles }: TestStatsArg): Promise<void> => {
+    const stats = await this.parseTestStats()
+    if (numOfPins) {
+      expect(stats.numOfPins).not.toEqual(numOfPins)
+    }
+    if (roles) {
+      expect(stats.roles).toEqual(expect.not.arrayContaining(roles))
+    }
+  }
+
   expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {
     await this.selUtils.expectContainsText(msg, 'Voted in favor')
   }

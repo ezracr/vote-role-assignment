@@ -1,7 +1,6 @@
 import config from '../config'
 import { typeToTitleRecord } from '../eventHandlers/submissionTypes'
 import { SendCommandArgs } from './utils/commUtils'
-import cleanDb from './utils/dbUtils'
 import Utils from './utils/Utils'
 
 let utils: Utils
@@ -9,10 +8,9 @@ let utils: Utils
 beforeAll(async () => {
   utils = await Utils.init()
   await utils.comm.login1()
-}, 20000)
+})
 
 beforeEach(async () => {
-  await cleanDb()
   await utils.comm.openTestChannel1()
 })
 
@@ -48,23 +46,42 @@ describe('Returns non initilized message when the bot was not enabled in a chann
   })
 })
 
-const enableRole1 = async (): Promise<void> => {
-  await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
-  await utils.comm.waitToFinishProcessingInteraction()
-}
-
 describe('/enable', () => {
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '10' })
-    await utils.comm.expectPinNotification()
+    await utils.comm.sendTestStats()
+    await utils.comm.expectTestStats({ numOfPins: 1 })
     await utils.comm.expectMessageContainsText(`/docs/${testChannel1Id}`, 1)
     await utils.comm.expectMessageContainsText(commands.enable.messages.enabled, 2)
   })
 
   it('Updates the settings when called again', async () => {
-    await enableRole1()
+    await utils.comm.sendEnable(roleName2, { 'voting-threshold': '1' })
     await utils.comm.sendEnable(roleName2, { 'voting-threshold': '10' })
     await utils.comm.expectMessageContainsText(commands.enable.messages.updated)
+  })
+
+  it('Removes "pinned a message" messages', async () => {
+    await utils.comm.sendEnable(roleName1)
+    const msg = await utils.comm.findMessage()
+    await utils.sel.expectNotContainsText(msg, 'pinned')
+  })
+})
+
+describe('submission-threshold', () => {
+  it('Assings the role only when enough documents were sent', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submission-threshold': '2' })
+    await utils.comm.sendDoc1()
+    const msg = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msg)
+    await utils.comm.sendTestStats()
+    await utils.comm.expectTestStatsNot({ roles: [roleName1.slice(1)] })
+    await utils.comm.sendSheet1()
+    const msg1 = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msg1)
+    await utils.comm.expectInfo({ numOfDocs: 2 })
+    await utils.comm.sendTestStats()
+    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] })
   })
 })
 
@@ -92,7 +109,7 @@ describe('/migrate', () => {
 })
 
 describe('/help', () => {
-  it('returns some command\'s description', async () => {
+  it('Returns command descriptions', async () => {
     await utils.comm.sendHelp()
     await utils.comm.expectMessageContainsText(commands.info.description)
   })

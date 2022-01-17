@@ -67,6 +67,7 @@ export type ConvertToDbTypeRet = Record<string, ValType>
  * this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
  * @param appendId Append '_id' to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }.
  * @param rename Rename one key name to another.
+ * @param toArray Convert values of given keys to an array.
  * @param valueOverrides Override value for a given key.
  */
 export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides, toArray }: ConvertDbTypeInput): Record<string, ValType> => {
@@ -111,6 +112,7 @@ export const enableOptions = {
   votingThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('voting-threshold')
       .setDescription('How many votes required to award the role')
+      .setMinValue(1)
       .setRequired(isRequired)
   },
   allowedToVoteRole(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
@@ -130,6 +132,7 @@ export const enableOptions = {
   approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('approval-threshold')
       .setDescription('How many approvals required to award the role')
+      .setMinValue(1)
       .setRequired(isRequired)
   },
   allowedToApproveRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
@@ -142,6 +145,19 @@ export const enableOptions = {
       .setDescription('If set, will allow only users picked to vote')
       .setRequired(isRequired)
   },
+  submissionThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
+    return option.setName('submission-threshold')
+      .setDescription('Number of submissions required to award the role')
+      .setMinValue(1)
+      .setRequired(isRequired)
+  },
 }
+
+export const convertEnableToDbType = (optionsData: readonly CommandInteractionOption<CacheType>[]) => (
+  convertToDbType({
+    optionsData,
+    toArray: ['allowed-to-vote-roles', 'submission-types', 'approver-roles', 'approver-users'],
+  })
+)
 
 export const genLinkToDocPage = (channelId: string): string => `${config.baseUrl}/docs/${channelId}`

@@ -1,13 +1,19 @@
-FROM node:16-alpine
-
-RUN npm install pm2 -g
-
+FROM node:16-alpine as compiler
 WORKDIR /app
+COPY package*.json tsconfig.json ./
+COPY /src ./src
+COPY /jest ./jest
+RUN npm ci
+RUN npm run build
 
-COPY package.json package-lock.json ./
+FROM node:16-alpine as remover
+WORKDIR /app
+COPY --from=compiler /app/package*.json ./
+COPY --from=compiler /app/dist ./dist
+RUN npm ci --production
 
-RUN npm install --production
-
-COPY ./dist ./dist
-
-CMD [ "pm2-docker", "./dist" ]
+FROM gcr.io/distroless/nodejs:16
+WORKDIR /app
+COPY --from=remover /app ./
+USER 1000
+CMD [ "./dist" ]

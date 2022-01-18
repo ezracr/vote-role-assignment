@@ -10,7 +10,7 @@ const renderRow = (chId: string, sumb: Submission, isVoteShown = false): string 
 <div class="row">
   <div class="link text-overflow first-cell"><a href="${sumb.link}">${title ? title : sumb.link}</a></div>
   <div class="author text-overflow last-cell">${sumb.user.tag}</div>
-  ${isVoteShown ? `<div class="message last-cell">${sumb.message_id && `<a href="https://discord.com/channels/${config.guildId}/${chId}/${sumb.message_id}">message</a>`}</div>` : ''}
+  ${isVoteShown ? `<div class="message last-cell">${sumb.message_id ? `<a href="https://discord.com/channels/${config.guildId}/${chId}/${sumb.message_id}">message</a>` : ''}</div>` : ''}
 </div>`
 }
 

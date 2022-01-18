@@ -9,6 +9,12 @@ UPDATE documents SET "is_candidate" = FALSE;
 ALTER TABLE documents ADD COLUMN "message_id" text COLLATE "C";
 CREATE INDEX CONCURRENTLY documents_message_id_index ON documents ("message_id");
 ALTER TABLE documents DROP CONSTRAINT documents_user_id_link_key;
+DELETE FROM documents
+WHERE id IN
+  (SELECT id FROM
+    (SELECT id, ROW_NUMBER() OVER(PARTITION BY link ORDER BY  id) AS row_num FROM documents) t
+    WHERE t.row_num > 1
+  );
 ALTER TABLE documents ADD CONSTRAINT documents_link_key UNIQUE("link");
 -- Distinquish regular votes from approvals
 ALTER TABLE votes ADD COLUMN is_approval boolean DEFAULT false;

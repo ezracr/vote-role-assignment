@@ -50,21 +50,25 @@ const normTitle = (type: SubmissionType, title?: string): string | null => {
  * If the embeds are empty, then proceeds to fetch the page and parse the `<title>` tag.
  */
 export const fetchSubmTitle = async (msg: Message<boolean>, type: SubmissionType, url: string): Promise<string | null> => {
-  if (type === 'tweet') return null
-  if (type === 'gsheet' || type === 'gdoc') {
-    const msgLoaded = await msg.channel.messages.fetch(msg.id)
-    if (msgLoaded.embeds[0]?.title) {
-      return msgLoaded.embeds[0].title
+  try {
+    if (type === 'tweet') return null
+    if (type === 'gsheet' || type === 'gdoc') {
+      const msgLoaded = await msg.channel.messages.fetch(msg.id)
+      if (msgLoaded.embeds[0]?.title) {
+        return msgLoaded.embeds[0].title
+      }
+      const res = await axios.get(url, { timeout: 1000 })
+      if (typeof res.data === 'string') {
+        const matched = res.data.match(/<title>([^<]*)<\/title>/i)
+        return normTitle(type, matched?.[1])
+      }
     }
-    const res = await axios.get(url, { timeout: 1000 })
-    if (typeof res.data === 'string') {
-      const matched = res.data.match(/<title>([^<]*)<\/title>/i)
-      return normTitle(type, matched?.[1])
+    if (type === 'ytvideo') {
+      const res = await axios.get(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}`, { timeout: 1000 })
+      return res.data.title ?? null // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     }
-  }
-  if (type === 'ytvideo') {
-    const res = await axios.get(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}`, { timeout: 1000 })
-    return res.data.title ?? null // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+  } catch (e: unknown) {
+    console.log(e)
   }
   return null
 }

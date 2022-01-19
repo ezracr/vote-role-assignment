@@ -3,7 +3,7 @@ import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
 import { ChSettingsData, SubmissionType, Submission } from '../db/dbTypes'
-import { fetchMember, unpinMessageByMessageId } from '../discUtils'
+import { fetchMember, unpinMessageByMessageId, pinMessage } from '../discUtils'
 import config from '../config'
 import {
   genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
@@ -90,7 +90,7 @@ class MessageCreateHandler {
     if (newMsg) {
       const botMsg = await this.msg.reply(newMsg)
       if (typeof newMsg !== 'string' && (newMsg.components?.length ?? 0) > 0) {
-        await botMsg.pin()
+        await pinMessage(botMsg)
       }
       if (entry) {
         await this.addToDocuments({ ...entry, message_id: botMsg.id })

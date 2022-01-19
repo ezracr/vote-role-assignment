@@ -20,10 +20,14 @@ const fetchReturnGuild = async (guildId: string | Guild): Promise<Guild> => (
 )
 
 export const assignRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
-  const guild = await fetchReturnGuild(guildId)
-  const member = guild.members.cache.get(userId)
-  if (member) {
-    await member.roles.add(roleId)
+  try {
+    const guild = await fetchReturnGuild(guildId)
+    const member = guild.members.cache.get(userId)
+    if (member) {
+      await member.roles.add(roleId)
+    }
+  } catch (e: unknown) {
+    console.log(e)
   }
 }
 
@@ -34,10 +38,14 @@ const findRoleIdByName = async (guildId: string | Guild, roleName: string): Prom
 }
 
 export const assignRoleByName = async (guildId: string | Guild, userId: string, roleName: string): Promise<void> => {
-  const guild = await fetchReturnGuild(guildId)
-  const roleId = await findRoleIdByName(guild, roleName)
-  if (roleId) {
-    await assignRoleById(guild, userId, roleId)
+  try {
+    const guild = await fetchReturnGuild(guildId)
+    const roleId = await findRoleIdByName(guild, roleName)
+    if (roleId) {
+      await assignRoleById(guild, userId, roleId)
+    }
+  } catch (e: unknown) {
+    console.log(e)
   }
 }
 
@@ -58,13 +66,25 @@ export const removeRoleByName = async (guildId: string | Guild, userId: string, 
 }
 
 export const unpinMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
-  const msg = await currMsg.channel.messages.fetch(msgId)
-  if (msg.pinned) {
-    await msg.unpin()
+  try {
+    const msg = await currMsg.channel.messages.fetch(msgId)
+    if (msg.pinned) {
+      await msg.unpin()
+    }
+  } catch (e: unknown) {
+    console.log(e)
   }
 }
 
 export const removeMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
   const msg = await currMsg.channel.messages.fetch(msgId)
   await msg.delete()
+}
+
+export const pinMessage = async (msg?: Message<boolean>): Promise<void> => {
+  try {
+    await msg?.pin()
+  } catch (e: unknown) {
+    console.log(e)
+  }
 }

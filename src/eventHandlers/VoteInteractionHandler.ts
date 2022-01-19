@@ -93,61 +93,64 @@ class VoteInteractionHandler {
   }
 
   process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null> => { // eslint-disable-line complexity
-    // let role = guild.roles.cache.find(r => console.log(r.id, r.name))
-    const { message: msg, user, guildId } = this.interaction
+    try {
+      const { message: msg, user, guildId } = this.interaction
 
-    const member = guildId ? await fetchMember(guildId, user.id) : undefined
-    const isAllowedToApprove = this.canApprove(member)
+      const member = guildId ? await fetchMember(guildId, user.id) : undefined
+      const isAllowedToApprove = this.canApprove(member)
 
-    if (this.type === 'dismiss' && isAllowedToApprove) {
-      if (msg.type === 'REPLY' && msg.deletable) {
-        await msg.delete()
-        await this.managers.documents.deleteByMessageId({ message_id: msg.id })
-      }
-      return null
-    }
-
-    const isAllowedToVote = this.canVote(member)
-
-    if (
-      ((this.type === 'like' || this.type === 'dislike') && !isAllowedToVote)
-      || ((this.type === 'approve') && !isAllowedToApprove)
-    ) return null
-
-    const message = msg as Message<boolean>
-    const actionRow = message.components.at(0)
-
-    if (actionRow?.type === 'ACTION_ROW') {
-      await this.managers.votes.processVote({
-        message_id: msg.id,
-        user: {
-          id: user.id,
-          tag: user.tag,
-        },
-        in_favor: this.type === 'like' || this.type === 'approve',
-        is_approval: this.type === 'approve',
-      })
-      const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
-      const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
-
-      const isAppr = isApprovable(this.chConfig)
-      const innMessage = VotingMessage.from({
-        oldMessage: message.content, inFavor: vts?.in_favor, against: vts?.against, inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined
-      })
-      if (innMessage) {
-        const newActionRow = new MessageActionRow({
-          components: [
-            genLikeButton(vts?.in_favor_count ?? 0),
-            genDislikeButton(vts?.against_count ?? 0),
-            ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0, apprs?.in_favor_count ?? 0), genDismissButton()] : []),
-          ]
-        })
-        if (this.type === 'like' || this.type === 'approve') {
-          await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
+      if (this.type === 'dismiss' && isAllowedToApprove) {
+        if (msg.type === 'REPLY' && msg.deletable) {
+          await msg.delete()
+          await this.managers.documents.deleteByMessageId({ message_id: msg.id })
         }
-
-        return { content: innMessage.toString(), components: [newActionRow] }
+        return null
       }
+
+      const isAllowedToVote = this.canVote(member)
+
+      if (
+        ((this.type === 'like' || this.type === 'dislike') && !isAllowedToVote)
+        || ((this.type === 'approve') && !isAllowedToApprove)
+      ) return null
+
+      const message = msg as Message<boolean>
+      const actionRow = message.components.at(0)
+
+      if (actionRow?.type === 'ACTION_ROW') {
+        await this.managers.votes.processVote({
+          message_id: msg.id,
+          user: {
+            id: user.id,
+            tag: user.tag,
+          },
+          in_favor: this.type === 'like' || this.type === 'approve',
+          is_approval: this.type === 'approve',
+        })
+        const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
+        const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
+
+        const isAppr = isApprovable(this.chConfig)
+        const innMessage = VotingMessage.from({
+          oldMessage: message.content, inFavor: vts?.in_favor, against: vts?.against, inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined
+        })
+        if (innMessage) {
+          const newActionRow = new MessageActionRow({
+            components: [
+              genLikeButton(vts?.in_favor_count ?? 0),
+              genDislikeButton(vts?.against_count ?? 0),
+              ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0, apprs?.in_favor_count ?? 0), genDismissButton()] : []),
+            ]
+          })
+          if (this.type === 'like' || this.type === 'approve') {
+            await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
+          }
+
+          return { content: innMessage.toString(), components: [newActionRow] }
+        }
+      }
+    } catch (e: unknown) {
+      console.log(e)
     }
     return null
   }

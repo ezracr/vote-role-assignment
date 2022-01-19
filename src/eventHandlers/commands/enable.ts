@@ -5,6 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
+import { pinMessage } from '../../discUtils'
 import { enableOptions, genLinkToDocPage, convertEnableToDbType } from './commUtils'
 
 export const enableCommand = new SlashCommandBuilder()
@@ -45,7 +46,7 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
       const newMsg = await interaction.channel?.send({
         content: messages.docLinkMsg(genLinkToDocPage(interaction.channelId)),
       })
-      await newMsg?.pin()
+      await pinMessage(newMsg)
     }
     await interaction.reply({ content: res?.inserted ? messages.enabled : messages.updated, ephemeral: true })
   } catch (e: unknown) {

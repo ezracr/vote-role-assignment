@@ -6,7 +6,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init()
+  utils = await Utils.init(true)
   await utils.comm.login1()
 })
 
@@ -234,10 +234,18 @@ describe('Submission', () => {
     const msgEl = await utils.comm.findAboutToAppearBotMessageBody()
     await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
     await utils.sel.expectContainsText(msgEl, utils.comm.doc1Url.slice(0, -12))
+    await utils.comm.sendDocPub1()
+    const msg4El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msg4El, utils.comm.docPub1Url)
+    await utils.sel.expectContainsText(msg4El, utils.comm.docPub1Url.slice(0, -1))
     await utils.comm.sendSheet1()
     const msg1El = await utils.comm.findAboutToAppearBotMessageBody()
     await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
     await utils.sel.expectContainsText(msg1El, utils.comm.sheet1Url.slice(0, -12))
+    await utils.comm.sendSheetPub1()
+    const msg5El = await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.sel.expectNotContainsText(msg5El, utils.comm.sheetPub1Url)
+    await utils.sel.expectContainsText(msg5El, utils.comm.sheetPub1Url.slice(0, -1))
     await utils.comm.sendTweet1()
     const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
     await utils.sel.expectNotContainsText(msg2El, utils.comm.tweet1Url)

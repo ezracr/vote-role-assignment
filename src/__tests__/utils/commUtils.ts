@@ -121,14 +121,18 @@ export class CommUtils {
   sendHelp = (): Promise<void> => this.sendCommand('help')
 
   doc1Url = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing'
+  docPub1Url = 'https://docs.google.com/document/d/e/2PACX-1vTV7TGOMu2p8UP9VNAt2PEK3qUuNpXFStfS_yZ-s9GdqMhpat0ybx_kBQtWdDW76uMRJ7xzA7DSs0tW/pub#'
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
+  sheetPub1Url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml#'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
   ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
   userTagAt1 = `@${config.testing.userTag1}`
   userTagAt2 = `@${config.testing.userTag2}`
 
   sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
+  sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
   sendSheet1 = (): Promise<void> => this.sendMessage(this.sheet1Url)
+  sendSheetPub1 = (): Promise<void> => this.sendMessage(this.sheetPub1Url)
   sendTweet1 = (): Promise<void> => this.sendMessage(this.tweet1Url)
   sendYtvideo1 = (): Promise<void> => this.sendMessage(this.ytvideo1Url)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')

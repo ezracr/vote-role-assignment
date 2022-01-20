@@ -11,7 +11,7 @@ import {
   genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
-import { allTypes, processUrl, stringifyTypes } from './submissionTypes'
+import { processUrl } from './submissionTypes'
 
 const isAllowedSubmType = (chData: ChSettingsData, type?: SubmissionType): boolean => {
   const { submission_types } = chData
@@ -45,13 +45,6 @@ const canSubmit = async (chData: ChSettingsData, msg: Message<boolean>): Promise
   return true
 }
 
-const stringifyAllowedTypes = (allowedTypes?: SubmissionType[]): string => {
-  if (allowedTypes && allowedTypes.length > 0) {
-    return stringifyTypes(allowedTypes)
-  }
-  return stringifyTypes(allTypes)
-}
-
 type InputEntry = Pick<Parameters<Managers['documents']['insert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
 
 class MessageCreateHandler {
@@ -63,7 +56,7 @@ class MessageCreateHandler {
       if (!canUserSubmit) { // TODO merge with `prUrl?.type && prUrl.url`
         return { newMsg: null }
       }
-      const { typeUrl: prUrl, urlCount } = extractUrl(this.chConfig, this.msg)
+      const { typeUrl: prUrl } = extractUrl(this.chConfig, this.msg)
       if (prUrl?.type && prUrl.url) {
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
         if (isAwarded) {
@@ -92,13 +85,6 @@ class MessageCreateHandler {
               components: [actionRow],
               embeds: [innerMsg.toEmbed()],
             }, entry: inputDoc
-          }
-        }
-      }
-      if (urlCount > 0) {
-        return {
-          newMsg: {
-            content: config.messages.messageCreateHandler.wrongUrl(stringifyAllowedTypes(this.chConfig.submission_types)),
           }
         }
       }

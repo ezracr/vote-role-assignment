@@ -4,6 +4,7 @@ import { ChSettingsData } from '../db/dbTypes'
 import { convertIdToUserTag, convertIdsToUserTags, convertIdsToRoleTags } from '../discUtils'
 import config from '../config'
 import { genLinkToDocPage } from './commands/commUtils'
+import { stringifyTypes } from './submissionTypes'
 
 type VotingMessageArg = {
   authorId: string;
@@ -59,7 +60,7 @@ class VotingMessage {
   )
 
   toEmbed(): MessageEmbedOptions {
-    const { allowed_to_vote_roles, submitter_roles, title } = this.chSettData
+    const { allowed_to_vote_roles, submitter_roles, title, submission_types } = this.chSettData
     return {
       color: this.color,
       title: this.url,
@@ -89,13 +90,18 @@ class VotingMessage {
           inline: true,
         },
         ...(((allowed_to_vote_roles?.length ?? 0) > 0) ? [{
-          name: 'Allowed to vote',
+          name: 'Voters',
           value: convertIdsToRoleTags(allowed_to_vote_roles!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
           inline: true,
         }] : []),
         ...(((submitter_roles?.length ?? 0) > 0) ? [{
-          name: 'Allowed to submit',
+          name: 'Submitters',
           value: convertIdsToRoleTags(submitter_roles!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          inline: true,
+        }] : []),
+        ...(((submission_types?.length ?? 0) > 0) ? [{
+          name: 'Submissions',
+          value: stringifyTypes(submission_types),
           inline: true,
         }] : []),
         {

@@ -397,10 +397,4 @@ export class CommUtils {
   expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {
     await this.selUtils.expectContainsText(msg, 'Voted in favor')
   }
-  expectMessageToBeSubmissionRejection = async (msg: wd.WebElement, submTypes?: SubmissionTypeTitles[]): Promise<void> => {
-    await this.selUtils.expectContainsText(msg, config.messages.messageCreateHandler.wrongUrl(submTypes?.join(', ') ?? ''))
-  }
-  expectMessageToNotBeSubmissionRejection = async (msg: wd.WebElement, submTypes?: SubmissionTypeTitles[]): Promise<void> => {
-    await this.selUtils.expectNotContainsText(msg, config.messages.messageCreateHandler.wrongUrl(submTypes?.join(', ') ?? ''))
-  }
 }

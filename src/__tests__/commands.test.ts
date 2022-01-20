@@ -266,8 +266,7 @@ describe('Submission types', () => {
     const msg1El = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectMessageToBeVotingMessage(msg1El)
     await utils.comm.sendSheet1()
-    const msg3El = await utils.comm.findAboutToAppearBotMessage()
-    await utils.comm.expectMessageToBeSubmissionRejection(msg3El, [typeToTitleRecord.gdoc, typeToTitleRecord.tweet])
+    await expect(utils.comm.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
   })
 
   it('Normalizes link', async () => {

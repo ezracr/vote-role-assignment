@@ -61,7 +61,6 @@ const config = {
     wasNotEnabled: 'The bot was not enabled in this channel/thread',
     messageCreateHandler: {
       saved: 'Your submission has been successfully saved to the vault.',
-      wrongUrl: (allowedTypes: string) => `Couldn't find a correct link in your message. Allowed types for submission: ${allowedTypes}.`,
     },
     votingMessage: {
       footer: {

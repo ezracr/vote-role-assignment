@@ -96,7 +96,7 @@ class VoteInteractionHandler {
 
   process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null> => { // eslint-disable-line complexity
     try {
-      const { message: msg, user } = this.interaction
+      const { message: msg, user, channelId } = this.interaction
 
       const isAllowedToApprove = await this.canApprove()
 
@@ -130,11 +130,13 @@ class VoteInteractionHandler {
         const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
         const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
         const isAppr = isApprovable(this.chConfig)
-        const innMessage = VotingMessage.from({
+        const innMessage = VotingMessage.fromEmbed({
           oldEmbed: message.embeds[0],
           inFavor: vts?.in_favor,
           against: vts?.against,
           inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
+          chSettData: this.chConfig,
+          channelId,
         })
         if (innMessage) {
           const newActionRow = new MessageActionRow({

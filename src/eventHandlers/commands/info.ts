@@ -3,7 +3,7 @@ import type { CommandInteraction, CacheType } from 'discord.js'
 
 import { ChSettingsData } from '../../db/dbTypes'
 import Managers from '../../db/managers'
-import { convertIdToRoleTag, convertIdToUserTag } from '../../discUtils'
+import { convertIdsToUserTags, convertIdsToRoleTags } from '../../discUtils'
 import config from '../../config'
 import { stringifyTypes } from '../submissionTypes'
 import { genLinkToDocPage } from './commUtils'
@@ -15,17 +15,12 @@ export const infoCommand = new SlashCommandBuilder()
 
 const prepareGroupIds = (groupId?: string | string[]): string => {
   if (!groupId) return ''
-  if (Array.isArray(groupId)) {
-    return groupId.map((id) => convertIdToRoleTag(id)).join(', ')
-  }
-  return convertIdToRoleTag(groupId)
+  return convertIdsToRoleTags(Array.isArray(groupId) ? groupId : [groupId])
 }
+
 const prepareUserIds = (userId?: string | string[]): string => {
   if (!userId) return ''
-  if (Array.isArray(userId)) {
-    return userId.map((id) => convertIdToUserTag(id)).join(', ')
-  }
-  return convertIdToUserTag(userId)
+  return convertIdsToUserTags(Array.isArray(userId) ? userId : [userId])
 }
 
 const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`

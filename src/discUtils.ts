@@ -21,6 +21,8 @@ export const convertIdToRoleTag = (groupId: string): string => `<@&${groupId}>`
 
 export const convertIdsToUserTags = (userIds: string[]): string => userIds.map((id) => convertIdToUserTag(id)).join(', ')
 
+export const convertIdsToRoleTags = (roleIds: string[]): string => roleIds.map((id) => convertIdToRoleTag(id)).join(', ')
+
 export const assignRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
   try {
     const member = await fetchMember(guildId, userId)

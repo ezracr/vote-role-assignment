@@ -1,7 +1,9 @@
 import { MessageEmbed, MessageEmbedOptions } from 'discord.js'
 
-import { convertIdToUserTag, convertIdsToUserTags } from '../discUtils'
+import { ChSettingsData } from '../db/dbTypes'
+import { convertIdToUserTag, convertIdsToUserTags, convertIdsToRoleTags } from '../discUtils'
 import config from '../config'
+import { genLinkToDocPage } from './commands/commUtils'
 
 type VotingMessageArg = {
   authorId: string;
@@ -10,7 +12,11 @@ type VotingMessageArg = {
   against?: string[];
   inFavorApprovals?: string[];
   color?: string | number | null;
+  chSettData: ChSettingsData;
+  channelId: string;
 }
+
+type FromArg = { oldEmbed: MessageEmbed } & Pick<VotingMessageArg, 'inFavor' | 'against' | 'inFavorApprovals' | 'chSettData' | 'channelId'>
 
 const replaceEmptyWithZeroWidthSpace = (txt?: string | null): string => (
   !txt || !txt.trim() ? '\u200b' : txt
@@ -33,7 +39,9 @@ class VotingMessage {
   inFavor: NonNullable<VotingMessageArg['inFavor']>
   against: NonNullable<VotingMessageArg['against']>
   inFavorApprovals: VotingMessageArg['inFavorApprovals']
-  color: number;
+  color: number
+  chSettData: ChSettingsData
+  channelId: string
 
   constructor(arg: VotingMessageArg) {
     this.authorId = arg.authorId
@@ -42,9 +50,16 @@ class VotingMessage {
     this.against = arg.against ?? []
     this.inFavorApprovals = arg.inFavorApprovals
     this.color = arg.color ? parseColor(arg.color) : 0xdfc600
+    this.chSettData = arg.chSettData
+    this.channelId = arg.channelId
   }
 
+  private calcTotalVotes = (): string => (
+    `${Math.max(this.inFavor.length - this.against.length, 0)}/${this.chSettData.voting_threshold ?? 0}`
+  )
+
   toEmbed(): MessageEmbedOptions {
+    const { allowed_to_vote_roles, submitter_roles, title } = this.chSettData
     return {
       color: this.color,
       title: this.url,
@@ -68,6 +83,26 @@ class VotingMessage {
         //   value: '\u200b',
         //   inline: false,
         // },
+        {
+          name: 'Total votes',
+          value: this.calcTotalVotes(),
+          inline: true,
+        },
+        ...(((allowed_to_vote_roles?.length ?? 0) > 0) ? [{
+          name: 'Allowed to vote',
+          value: convertIdsToRoleTags(allowed_to_vote_roles!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          inline: true,
+        }] : []),
+        ...(((submitter_roles?.length ?? 0) > 0) ? [{
+          name: 'Allowed to submit',
+          value: convertIdsToRoleTags(submitter_roles!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          inline: true,
+        }] : []),
+        {
+          name: 'Page',
+          value: `[${title}](${genLinkToDocPage(this.channelId)})`,
+          inline: true,
+        },
       ],
       footer: config.messages.votingMessage.footer,
     }
@@ -79,12 +114,12 @@ class VotingMessage {
    * @param inFavor 'in favor' array will override the one from the message string if specified.
    * @param against 'against' array will override the one from the message string if specified.
    */
-  static from({ oldEmbed, inFavor, against, inFavorApprovals }: { oldEmbed: MessageEmbed } & Pick<VotingMessageArg, 'inFavor' | 'against' | 'inFavorApprovals'>): VotingMessage | undefined {
+  static fromEmbed({ oldEmbed, inFavor, against, inFavorApprovals, chSettData, channelId }: FromArg): VotingMessage | undefined {
     const usrIdLine = oldEmbed.description
     const url = oldEmbed.url
     if (url && usrIdLine) {
       const id = usrIdLine.slice(usrIdLine.indexOf('<') + 3, usrIdLine.indexOf('>'))
-      return new VotingMessage({ authorId: id, url, inFavor, against, inFavorApprovals, color: oldEmbed.color })
+      return new VotingMessage({ authorId: id, url, inFavor, against, inFavorApprovals, color: oldEmbed.color, chSettData, channelId })
     }
   }
 }

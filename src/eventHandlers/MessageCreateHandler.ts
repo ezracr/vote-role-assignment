@@ -83,6 +83,8 @@ class MessageCreateHandler {
           const innerMsg = new VotingMessage({
             authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
             color: this.chConfig.message_color,
+            chSettData: this.chConfig,
+            channelId: this.msg.channelId,
           })
 
           return {

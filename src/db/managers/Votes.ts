@@ -57,8 +57,8 @@ class Votes {
       SELECT
         count(*) filter (where vs."in_favor") in_favor_count,
         count(*) filter (where vs."in_favor" IS FALSE) against_count,
-        COALESCE((ARRAY_AGG(vs."user"->>'tag' ORDER BY vs."created") filter (where "in_favor")), '{}') in_favor,
-        COALESCE((ARRAY_AGG(vs."user"->>'tag' ORDER BY vs."created") filter (where "in_favor" IS FALSE)), '{}') against
+        COALESCE((ARRAY_AGG(vs."user"->>'id' ORDER BY vs."created") filter (where "in_favor")), '{}') in_favor,
+        COALESCE((ARRAY_AGG(vs."user"->>'id' ORDER BY vs."created") filter (where "in_favor" IS FALSE)), '{}') against
       FROM votes_full vs
       WHERE vs."message_id" = $1 AND vs."is_approval" = $2
       GROUP BY "message_id"

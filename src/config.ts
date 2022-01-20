@@ -63,6 +63,12 @@ const config = {
       saved: 'Your submission has been successfully saved to the vault.',
       wrongUrl: (allowedTypes: string) => `Couldn't find a correct link in your message. Allowed types for submission: ${allowedTypes}.`,
     },
+    votingMessage: {
+      footer: {
+        text: 'Concave Co-Op - The world\'s best kept secret.',
+        iconUrl: 'https://images-ext-1.discordapp.net/external/3plHY115A7Nldy0s5l3Ktt7Rm8BCA6GWCoxLzF9ZkJ4/https/i.postimg.cc/Znn1MpXY/server-icon.png',
+      },
+    },
   },
   testing: {
     isEnabled: process.env.NODE_ENV === 'test-vote-discord-bot',
@@ -70,13 +76,13 @@ const config = {
     testChannel2Id: '929691426827141160',
     testChannel1Name: 'for-testing1',
     testChannel2Name: 'for-testing2',
-    userTag1: process.env.TEST_USER_TAG1 ?? 'User1 tag should be specified',
+    user1Id: process.env.TEST_USER_ID1 ?? '`TEST_USER_ID1` should be specified',
     userName1: process.env.TEST_USER_NAME1,
     mail1: process.env.TEST_MAIL1,
     pass1: process.env.TEST_PASS1,
     mail2: process.env.TEST_MAIL2,
     pass2: process.env.TEST_PASS2,
-    userTag2: process.env.TEST_USER_TAG2 ?? 'User2 tag should be specified',
+    user2Id: process.env.TEST_USER_ID2 ?? '`TEST_USER_ID2` should be specified',
     userName2: process.env.TEST_USER_NAME2,
     roleName1: '@T-Rex',
     roleName2: '@U-Rex',

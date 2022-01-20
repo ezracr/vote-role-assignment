@@ -27,6 +27,7 @@ type SetArgs = {
   'voting-threshold'?: string;
   'approval-threshold'?: string;
   'submission-threshold'?: string;
+  'message-color'?: string;
 } & AddRemoveArgs
 type EnableOptionalArgs = SetArgs
 
@@ -51,6 +52,8 @@ const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs 
 )
 
 const msgContainer = 'div>div:nth-of-type(2)'
+
+const replaceNewLinesWithWhiteSpaces = (msgTxt: string) => msgTxt.replaceAll(/[\r\n]+/g, ' ')
 
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
@@ -108,6 +111,9 @@ export class CommUtils {
   sendUpdateAdd = (optArgs: AddRemoveArgs): Promise<void> => (
     this.sendUpdate('add', optArgs)
   )
+  sendUpdateSet = (optArgs: SetArgs): Promise<void> => (
+    this.sendUpdate('set', optArgs)
+  )
 
   sendAddRole1 = (): Promise<void> => this.sendCommand('test add-role-1')
   sendAddRole2 = (): Promise<void> => this.sendCommand('test add-role-2')
@@ -124,8 +130,8 @@ export class CommUtils {
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
   ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
-  userTagAt1 = `@${config.testing.userTag1}`
-  userTagAt2 = `@${config.testing.userTag2}`
+  userNameAt1 = `@${config.testing.userName1}`
+  userNameAt2 = `@${config.testing.userName2}`
 
   sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
   sendSheet1 = (): Promise<void> => this.sendMessage(this.sheet1Url)
@@ -168,12 +174,22 @@ export class CommUtils {
     expect(msgText).not.toContain(text)
   }
 
+  expectMessageAccessoriesContainText = async (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => {
+    const msgTxt = await this.findMessageAccessoriesText(lastIndex)
+    expect(msgTxt).toContain(text)
+  }
+
+  expectMessageAccessoriesNotContainText = async (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => {
+    const msgTxt = await this.findMessageAccessoriesText(lastIndex)
+    expect(msgTxt).not.toContain(text)
+  }
+
   expectApprovedByToNotContain = (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => (
-    this.expectMessageNotContainsText(`Approved by: ${text}`, lastIndex)
+    this.expectMessageAccessoriesNotContainText(`Approved by ${text}`, lastIndex)
   )
 
   expectApprovedByToContain = (text: string, lastIndex: number | wd.WebElement = 0): Promise<void> => (
-    this.expectMessageContainsText(`Approved by: ${text}`, lastIndex)
+    this.expectMessageAccessoriesContainText(`Approved by ${text}`, lastIndex)
   )
 
   findMessageText = async (lastIndex: number | wd.WebElement = 0): Promise<string> => {
@@ -183,6 +199,15 @@ export class CommUtils {
       return await msgBody.getText()
     } catch (e: unknown) { } // eslint-disable-line no-empty
     return msg.getText()
+  }
+
+  findMessageAccessoriesText = async (lastIndex: number | wd.WebElement = 0): Promise<string> => {
+    const msgEl = typeof lastIndex === 'number' ? await this.findMessage(lastIndex + 1) : lastIndex
+    try {
+      const accEl = await this.selUtils.findElementByCss('[id^=message-accessories]', msgEl)
+      return replaceNewLinesWithWhiteSpaces(await accEl.getText())
+    } catch (e: unknown) { } // eslint-disable-line no-empty
+    return msgEl.getText()
   }
 
   removeMessagesAndRoles = async (): Promise<void> => {
@@ -243,22 +268,32 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
+  private waitForWasPinnedByMessageToDissapear = async () => {
+    try {
+      const msgEl = await this.driver.wait(wd.until.elementLocated(
+        By.xpath('//li/*[@aria-roledescription=\'Message\']//*[contains(text(), \'pinned\')]')
+      ), 200)
+      await this.driver.wait(wd.until.stalenessOf(msgEl), 200)
+    } catch (e) { }
+  }
+
   findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
     for (let i = 0; i < 20 * 2; i++) {
       const msg = await this.findMessage() // TODO
       try {
         const header = await this.selUtils.findElementByCss(`h2`, msg)
         if ((await header.getText()).toLowerCase().includes('bot')) {
+          await this.waitForWasPinnedByMessageToDissapear()
           return msg
         }
       } catch (e: unknown) { } // eslint-disable-line no-empty
-      await this.driver.sleep(50)
+      await this.driver.sleep(20)
     }
     throw new Error('Can\'t find the bot\'s message.')
   }
 
-  findAboutToAppearBotMessageBody = async (): Promise<wd.WebElement> => (
-    this.findReplyMessageContainer(await this.findAboutToAppearBotMessage())
+  findAboutToAppearBotEmbedMessageBody = async (): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('[id^=message-accessories]', await this.findAboutToAppearBotMessage())
   )
 
   findLatestBotMessage = async (): Promise<wd.WebElement> => {
@@ -282,28 +317,24 @@ export class CommUtils {
 
   clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
-    await this.selUtils.waitUntilClickable(button) // TODO Unnecessary?
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(3)', msg)
-    await this.selUtils.waitUntilClickable(button)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(4)', msg)
-    await this.selUtils.waitUntilClickable(button)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
-    await this.selUtils.waitUntilClickable(button)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
@@ -312,16 +343,20 @@ export class CommUtils {
     await this.sendInfo()
     await this.expectMessageContainsText(config.messages.wasNotEnabled)
   }
-  expectInfo = async ({ numOfDocs, numOfCandidates }: { numOfDocs?: number, numOfCandidates?: number }): Promise<void> => {
+
+  expectInfo = async ({ numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs): Promise<void> => {
     await this.sendInfo()
+    const msgTxt = await this.findMessageText()
     if (numOfDocs) {
-      await this.expectMessageContainsText(`Saved submissions: ${numOfDocs}`)
+      expect(msgTxt).toContain(`Saved submissions: ${numOfDocs}`)
     }
     if (numOfCandidates) {
-      await this.expectMessageContainsText(`Candidates: ${numOfCandidates}`)
+      expect(msgTxt).toContain(`Candidates: ${numOfCandidates}`)
+    }
+    if (args['message-color']) {
+      expect(msgTxt).toContain(`message-color: "${args['message-color']}"`)
     }
   }
-
 
   private parseTestStats = async (): Promise<any> => {
     const msg = await this.findMessage()

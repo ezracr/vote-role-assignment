@@ -5,7 +5,7 @@ import {
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { fetchMember, assignRoleById } from '../discUtils'
+import { fetchMember, assignRoleById, fetchMessageById } from '../discUtils'
 import {
   fetchSubmTitle, genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable,
 } from './handlUtils'
@@ -65,19 +65,25 @@ class VoteInteractionHandler {
   }
 
   private assignRole = async (voteNum: number, apprNum: number, innMessage: VotingMessage): Promise<void> => {
-    if (this.isGraterThanVotThreshold(voteNum) && this.isGraterThanApprThreshold(apprNum) && this.interaction.guildId) {
-      const guild = await client.guilds.fetch(this.interaction.guildId)
+    const { message, guildId } = this.interaction
+    if (message.type === 'REPLY'
+      && this.isGraterThanVotThreshold(voteNum)
+      && this.isGraterThanApprThreshold(apprNum)
+      && guildId
+    ) {
+      const guild = await client.guilds.fetch(guildId)
       const id = innMessage.authorId
       const member = guild.members.cache.get(id)
 
-      if (this.interaction.message.type === 'REPLY' && this.interaction.message.pinned) {
-        await this.interaction.message.unpin()
+      if (message.pinned) {
+        await message.unpin()
       }
       if (member) {
+        const repliedToMsg = message.reference?.messageId ? await fetchMessageById(message, message.reference.messageId) : null
         const link = innMessage.url
         const { type } = processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
-          const title = await fetchSubmTitle(this.interaction.message, type, link)
+          const title = await fetchSubmTitle(repliedToMsg, type, link)
           await this.managers.documents.updateTitleIsCandidate({
             message_id: this.interaction.message.id,
             title,
@@ -115,9 +121,8 @@ class VoteInteractionHandler {
       ) return null
 
       const message = msg as Message<boolean>
-      const actionRow = message.components.at(0)
 
-      if (actionRow?.type === 'ACTION_ROW') {
+      if (message.embeds[0]) {
         await this.managers.votes.processVote({
           message_id: msg.id,
           user: {
@@ -129,10 +134,12 @@ class VoteInteractionHandler {
         })
         const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
         const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
-
         const isAppr = isApprovable(this.chConfig)
         const innMessage = VotingMessage.from({
-          oldMessage: message.content, inFavor: vts?.in_favor, against: vts?.against, inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined
+          oldEmbed: message.embeds[0],
+          inFavor: vts?.in_favor,
+          against: vts?.against,
+          inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
         })
         if (innMessage) {
           const newActionRow = new MessageActionRow({
@@ -146,7 +153,7 @@ class VoteInteractionHandler {
             await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
           }
 
-          return { content: innMessage.toString(), components: [newActionRow] }
+          return { embeds: [innMessage.toEmbed()], components: [newActionRow] }
         }
       }
     } catch (e: unknown) {

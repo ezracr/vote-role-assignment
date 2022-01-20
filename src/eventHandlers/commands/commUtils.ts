@@ -151,6 +151,11 @@ export const enableOptions = {
       .setMinValue(1)
       .setRequired(isRequired)
   },
+  messageColor(isRequired: boolean, option: SlashCommandStringOption): SlashCommandStringOption {
+    return option.setName('message-color')
+      .setDescription('The color of the message\'s border, e.g. #dfc600')
+      .setRequired(isRequired)
+  },
 }
 
 export const convertEnableToDbType = (optionsData: readonly CommandInteractionOption<CacheType>[]) => (

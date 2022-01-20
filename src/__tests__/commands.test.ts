@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 const { testing: {
-  roleName1, roleName2, testChannel1Id, testChannel1Name, testChannel2Name, userTag1, userName1, userName2,
+  roleName1, roleName2, testChannel1Id, testChannel1Name, testChannel2Name, userName1, userName2,
 }, commands, messages } = config
 
 const testNonInit = async (commName: string, args?: SendCommandArgs): Promise<void> => {
@@ -47,6 +47,11 @@ describe('Returns non initilized message when the bot was not enabled in a chann
 })
 
 describe('/enable', () => {
+  it('Save values set during enable', async () => {
+    await utils.comm.sendEnable(roleName1, { 'message-color': '000000' })
+    await utils.comm.expectInfo({ 'message-color': '000000' })
+  })
+
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '10' })
     await utils.comm.sendTestStats()
@@ -65,6 +70,14 @@ describe('/enable', () => {
     await utils.comm.sendEnable(roleName1)
     const msg = await utils.comm.findMessage()
     await utils.sel.expectNotContainsText(msg, 'pinned')
+  })
+})
+
+describe('/update', () => {
+  it('Save updated values', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendUpdateSet({ 'message-color': '000000' })
+    await utils.comm.expectInfo({ 'message-color': '000000' })
   })
 })
 
@@ -152,7 +165,7 @@ describe('Approval', () => {
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToNotContain(userTag1, msgEl)
+    await utils.comm.expectApprovedByToNotContain(utils.comm.userNameAt1, msgEl)
   })
 
   it('Assigns the role after one approval when no threshold specified', async () => {
@@ -181,9 +194,9 @@ describe('Approval', () => {
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToContain(userTag1, msgEl)
+    await utils.comm.expectApprovedByToContain(utils.comm.userNameAt1, msgEl)
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToNotContain(userTag1, msgEl)
+    await utils.comm.expectApprovedByToNotContain(utils.comm.userNameAt1, msgEl)
   })
 })
 
@@ -231,19 +244,19 @@ describe('Submission', () => {
     await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.tweet })
     await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.ytvideo })
     await utils.comm.sendDoc1()
-    const msgEl = await utils.comm.findAboutToAppearBotMessageBody()
+    const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
     await utils.sel.expectContainsText(msgEl, utils.comm.doc1Url.slice(0, -12))
     await utils.comm.sendSheet1()
-    const msg1El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg1El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
     await utils.sel.expectContainsText(msg1El, utils.comm.sheet1Url.slice(0, -12))
     await utils.comm.sendTweet1()
-    const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg2El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg2El, utils.comm.tweet1Url)
     await utils.sel.expectContainsText(msg2El, utils.comm.tweet1Url.slice(0, -12))
     await utils.comm.sendYtvideo1()
-    const msg3El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg3El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg3El, utils.comm.tweet1Url)
     await utils.sel.expectContainsText(msg3El, utils.comm.ytvideo1Url.slice(0, -17))
   })
@@ -251,22 +264,22 @@ describe('Submission', () => {
   it('If not set, allows any type to be sent', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
-    const msgEl = await utils.comm.findAboutToAppearBotMessageBody()
+    const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectMessageToBeVotingMessage(msgEl)
     await utils.comm.sendSheet1()
-    const msg1El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg1El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectMessageToBeVotingMessage(msg1El)
     await utils.comm.sendTweet1()
-    const msg2El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg2El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectMessageToBeVotingMessage(msg2El)
   })
 
   it('Does not store duplicated links and duplicated pins', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
-    await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.sendDoc1()
-    await utils.comm.findAboutToAppearBotMessageBody()
+    await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectInfo({ numOfCandidates: 1 })
     await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ numOfPins: 2 })

@@ -1,28 +1,29 @@
 import { GuildMember, Guild, Message } from 'discord.js'
 import client from './client'
 
+const fetchReturnGuild = async (guildId: string | Guild): Promise<Guild> => (
+  typeof guildId === 'string' ? client.guilds.fetch(guildId) : guildId
+)
+
 /**
  * Fetch a discord user, it's done to get access to user's roles, ect, or to just fetch a user.
  * @param guildId Server(guild) id.
  * @param userId User id.
  */
-export const fetchMember = async (guildId: string, userId: string): Promise<GuildMember | undefined> => {
-  const guild = await client.guilds.fetch(guildId)
-  const member = guild.members.cache.get(userId)
+export const fetchMember = async (guildId: string | Guild, userId: string): Promise<GuildMember | undefined> => {
+  const guild = await fetchReturnGuild(guildId)
+  const member = await guild.members.fetch(userId)
   return member
 }
 
 export const convertIdToUserTag = (userId: string): string => `<@!${userId}>`
 export const convertIdToRoleTag = (groupId: string): string => `<@&${groupId}>`
 
-const fetchReturnGuild = async (guildId: string | Guild): Promise<Guild> => (
-  typeof guildId === 'string' ? client.guilds.fetch(guildId) : guildId
-)
+export const convertIdsToUserTags = (userIds: string[]): string => userIds.map((id) => convertIdToUserTag(id)).join(', ')
 
 export const assignRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
   try {
-    const guild = await fetchReturnGuild(guildId)
-    const member = guild.members.cache.get(userId)
+    const member = await fetchMember(guildId, userId)
     if (member) {
       await member.roles.add(roleId)
     }
@@ -50,8 +51,7 @@ export const assignRoleByName = async (guildId: string | Guild, userId: string, 
 }
 
 const removeRoleById = async (guildId: string | Guild, userId: string, roleId: string): Promise<void> => {
-  const guild = await fetchReturnGuild(guildId)
-  const member = guild.members.cache.get(userId)
+  const member = await fetchMember(guildId, userId)
   if (member) {
     await member.roles.remove(roleId)
   }
@@ -65,9 +65,13 @@ export const removeRoleByName = async (guildId: string | Guild, userId: string, 
   }
 }
 
+export const fetchMessageById = async (currMsg: Message<boolean>, msgId: string): Promise<Message<boolean>> => (
+  currMsg.channel.messages.fetch(msgId)
+)
+
 export const unpinMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
   try {
-    const msg = await currMsg.channel.messages.fetch(msgId)
+    const msg = await fetchMessageById(currMsg, msgId)
     if (msg.pinned) {
       await msg.unpin()
     }
@@ -77,7 +81,7 @@ export const unpinMessageByMessageId = async (currMsg: Message<boolean>, msgId: 
 }
 
 export const removeMessageByMessageId = async (currMsg: Message<boolean>, msgId: string): Promise<void> => {
-  const msg = await currMsg.channel.messages.fetch(msgId)
+  const msg = await fetchMessageById(currMsg, msgId)
   await msg.delete()
 }
 

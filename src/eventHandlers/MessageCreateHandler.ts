@@ -70,8 +70,15 @@ class MessageCreateHandler {
           })
           const innerMsg = new VotingMessage({
             authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
+            color: this.chConfig.message_color,
           })
-          return { newMsg: { content: innerMsg.toString(), components: [actionRow] }, entry: inputDoc }
+
+          return {
+            newMsg: {
+              components: [actionRow],
+              embeds: [innerMsg.toEmbed()],
+            }, entry: inputDoc
+          }
         }
       }
       if (urlCount > 0) {

@@ -16,13 +16,15 @@ const removeFromChannelByChId = async (chId: string): Promise<void> => {
 
 export const handleCleanCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
-    const { guildId, user: { id }, channel } = interaction
+    const { guildId, channel } = interaction
     if (guildId && channel?.type === 'GUILD_TEXT') {
       await Promise.all([
         removeFromChannelByChId(config.testing.testChannel1Id),
         removeFromChannelByChId(config.testing.testChannel2Id),
-        removeRoleByName(guildId, id, config.testing.roleName1.slice(1)),
-        removeRoleByName(guildId, id, config.testing.roleName2.slice(1)),
+        removeRoleByName(guildId, config.testing.user1Id, config.testing.roleName1.slice(1)),
+        removeRoleByName(guildId, config.testing.user1Id, config.testing.roleName2.slice(1)),
+        removeRoleByName(guildId, config.testing.user2Id, config.testing.roleName1.slice(1)),
+        removeRoleByName(guildId, config.testing.user2Id, config.testing.roleName2.slice(1)),
         cleanDb(),
       ])
       return 'Done'

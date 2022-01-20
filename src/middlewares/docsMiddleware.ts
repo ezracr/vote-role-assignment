@@ -21,7 +21,7 @@ const renderRows = (chId: string, title: string, docs: Submission[], isVoteShown
   <div class="row title-row">
   <div class="link first-cell">Document</div>
   <div class="author last-cell">Author</div>
-  ${isVoteShown ? '<div class="message last-cell"></div>' : ''}
+  ${isVoteShown ? '<div class="message last-cell">Message</div>' : ''}
   </div>
   ${docs.map((doc) => renderRow(chId, doc, isVoteShown)).join('')}
   </div>
@@ -99,7 +99,7 @@ const renderTemplate = (chId: string, chSettings: ChSetting, approved: Submissio
 </head>
 <body>
 <h1>${chSettings.data.title}</h1>
-${candidates && candidates.length > 0 ? renderRows(chId, 'Candidates', candidates) : ''}
+${candidates && candidates.length > 0 ? renderRows(chId, 'Candidates', candidates, true) : ''}
 ${renderRows(chId, 'Accepted submissions', approved, true)}
 </body>
 </html>

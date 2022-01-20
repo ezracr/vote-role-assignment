@@ -3,7 +3,9 @@ import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
 import { ChSettingsData, SubmissionType, Submission } from '../db/dbTypes'
-import { fetchMember, unpinMessageByMessageId, pinMessage } from '../discUtils'
+import {
+  unpinMessageByMessageId, pinMessage, hasSomeRoles,
+} from '../discUtils'
 import config from '../config'
 import {
   genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
@@ -31,10 +33,16 @@ const extractUrl = (chConfig: ChSettingsData, msg: Message<boolean>): { urlCount
 
 const isAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
   if (msg.guildId) {
-    const member = await fetchMember(msg.guildId, msg.author.id)
-    return member?.roles.cache.some((r) => chData.awarded_role === r.id) ?? false
+    return hasSomeRoles(msg.guildId, msg.author.id, chData.awarded_role)
   }
   return false
+}
+
+const canSubmit = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
+  if (msg.guildId && chData.submitter_roles) {
+    return hasSomeRoles(msg.guildId, msg.author.id, chData.submitter_roles)
+  }
+  return true
 }
 
 const stringifyAllowedTypes = (allowedTypes?: SubmissionType[]): string => {
@@ -51,6 +59,10 @@ class MessageCreateHandler {
 
   private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {
     if (!this.msg.author.bot) {
+      const canUserSubmit = await canSubmit(this.chConfig, this.msg)
+      if (!canUserSubmit) { // TODO merge with `prUrl?.type && prUrl.url`
+        return { newMsg: null }
+      }
       const { typeUrl: prUrl, urlCount } = extractUrl(this.chConfig, this.msg)
       if (prUrl?.type && prUrl.url) {
         const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)

@@ -18,6 +18,7 @@ export type ChSettingsData = {
   approval_threshold?: number;
   submission_threshold?: number;
   message_color?: string;
+  submitter_roles?: string[];
 }
 
 export type User = {

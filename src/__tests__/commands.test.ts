@@ -48,8 +48,14 @@ describe('Returns non initilized message when the bot was not enabled in a chann
 
 describe('/enable', () => {
   it('Save values set during enable', async () => {
-    await utils.comm.sendEnable(roleName1, { 'message-color': '000000' })
-    await utils.comm.expectInfo({ 'message-color': '000000' })
+    await utils.comm.sendEnable(roleName1, {
+      'message-color': '000000',
+      'submitter-roles': roleName2,
+    })
+    await utils.comm.expectInfo({
+      'message-color': '000000',
+      'submitter-roles': roleName2,
+    })
   })
 
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
@@ -74,14 +80,40 @@ describe('/enable', () => {
 })
 
 describe('/update', () => {
-  it('Save updated values', async () => {
+  it('Save values updated with set', async () => {
     await utils.comm.sendEnable(roleName1)
-    await utils.comm.sendUpdateSet({ 'message-color': '000000' })
-    await utils.comm.expectInfo({ 'message-color': '000000' })
+    await utils.comm.sendUpdateSet({
+      'message-color': '000000',
+      'submitter-roles': roleName2,
+    })
+    await utils.comm.expectInfo({
+      'message-color': '000000',
+      'submitter-roles': roleName2,
+    })
+  })
+
+  it('Saves values updated with add', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendUpdateAdd({
+      'submitter-roles': roleName2,
+    })
+    await utils.comm.expectInfo({
+      'submitter-roles': roleName2,
+    })
+  })
+
+  it('Saves values updated with remove', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submitter-roles': roleName2 })
+    await utils.comm.sendUpdateDel({
+      'submitter-roles': roleName2,
+    })
+    await utils.comm.expectInfo({
+      'submitter-roles': roleName2,
+    }, true)
   })
 })
 
-describe('submission-threshold', () => {
+describe('Submission threshold', () => {
   it('Assings the role only when enough documents were sent', async () => {
     await utils.comm.sendEnable(roleName1, { 'submission-threshold': '2' })
     await utils.comm.sendDoc1()
@@ -223,7 +255,7 @@ describe('Dismissal', () => {
   })
 })
 
-describe('Submission', () => {
+describe('Submission types', () => {
   it('Only allowed types are accepted', async () => {
     await utils.comm.sendEnable(roleName1, { 'submission-types': typeToTitleRecord.gdoc, 'voting-threshold': '1' })
     await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.tweet })
@@ -295,5 +327,13 @@ describe('Submission', () => {
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
     await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ numOfPins: 1 })
+  })
+})
+
+describe('Submitter roles', () => {
+  it('Prevents from submitting new entries when does not have requred roles', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submitter-roles': roleName2 })
+    await utils.comm.sendDoc1()
+    await expect(utils.comm.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
   })
 })

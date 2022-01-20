@@ -21,7 +21,10 @@ export type SendCommandArgs = {
 let isUser1LoggedIn: boolean
 
 type AddRemoveArgs = {
-  'submission-types'?: SubmissionTypeTitles, 'approver-roles'?: string, 'approver-users'?: string,
+  'submission-types'?: SubmissionTypeTitles,
+  'approver-roles'?: string,
+  'approver-users'?: string,
+  'submitter-roles'?: string,
 }
 type SetArgs = {
   'voting-threshold'?: string;
@@ -33,7 +36,7 @@ type EnableOptionalArgs = SetArgs
 
 type TestStatsArg = { numOfPins?: number, roles?: string[] }
 
-const lsItems = ['submission-types', 'approver-roles', 'approver-users']
+const lsItems = ['submission-types', 'approver-roles', 'approver-users', 'submitter-roles']
 
 const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs | undefined => (
   input
@@ -111,8 +114,13 @@ export class CommUtils {
   sendUpdateAdd = (optArgs: AddRemoveArgs): Promise<void> => (
     this.sendUpdate('add', optArgs)
   )
+
   sendUpdateSet = (optArgs: SetArgs): Promise<void> => (
     this.sendUpdate('set', optArgs)
+  )
+
+  sendUpdateDel = (optArgs: SetArgs): Promise<void> => (
+    this.sendUpdate('del', optArgs)
   )
 
   sendAddRole1 = (): Promise<void> => this.sendCommand('test add-role-1')
@@ -215,14 +223,12 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
-  private processSendCommandOptArg = async (txtField: wd.WebElement, name: string, value: SendCommandArgsVal, shouldUseTab: boolean): Promise<void> => {
+  private processSendCommandOptArg = async (txtField: wd.WebElement, name: string, value: SendCommandArgsVal): Promise<void> => {
     await txtField.sendKeys(name)
     await txtField.sendKeys(Key.ENTER)
     if (typeof value === 'string') {
       await txtField.sendKeys(value)
-      if (shouldUseTab) {
-        await txtField.sendKeys(Key.TAB)
-      }
+      await txtField.sendKeys(Key.TAB)
     } else {
       await txtField.sendKeys(value.listItem)
       await txtField.sendKeys(Key.ENTER)
@@ -257,11 +263,10 @@ export class CommUtils {
         await this.processSendCommandReqArg(txtField, arg, i === args.req.length - 1)
       }
     }
-    const hasRequired = Boolean(args?.req && args.opt)
     if (args?.opt) {
       const keys = Object.keys(args.opt)
       for (const key of keys) {
-        await this.processSendCommandOptArg(txtField, key, args.opt[key]!, hasRequired) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await this.processSendCommandOptArg(txtField, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
     }
     await txtField.sendKeys(Key.ENTER)
@@ -278,7 +283,7 @@ export class CommUtils {
   }
 
   findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
-    for (let i = 0; i < 20 * 2; i++) {
+    for (let i = 0; i < 50 * 1; i++) {
       const msg = await this.findMessage() // TODO
       try {
         const header = await this.selUtils.findElementByCss(`h2`, msg)
@@ -344,17 +349,21 @@ export class CommUtils {
     await this.expectMessageContainsText(config.messages.wasNotEnabled)
   }
 
-  expectInfo = async ({ numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs): Promise<void> => {
+  expectInfo = async ({ numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs, isNot = false): Promise<void> => {
     await this.sendInfo()
     const msgTxt = await this.findMessageText()
+    const normExpect = isNot ? expect(msgTxt).not : expect(msgTxt)
     if (numOfDocs) {
-      expect(msgTxt).toContain(`Saved submissions: ${numOfDocs}`)
+      normExpect.toContain(`Saved submissions: ${numOfDocs}`)
     }
     if (numOfCandidates) {
-      expect(msgTxt).toContain(`Candidates: ${numOfCandidates}`)
+      normExpect.toContain(`Candidates: ${numOfCandidates}`)
     }
     if (args['message-color']) {
-      expect(msgTxt).toContain(`message-color: "${args['message-color']}"`)
+      normExpect.toContain(`message-color: "${args['message-color']}"`)
+    }
+    if (args['submitter-roles']) {
+      normExpect.toContain(`submitter-roles: ${args['submitter-roles']}`)
     }
   }
 

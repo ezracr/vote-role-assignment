@@ -156,12 +156,17 @@ export const enableOptions = {
       .setDescription('The color of the message\'s border, e.g. #dfc600')
       .setRequired(isRequired)
   },
+  submitterRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
+    return option.setName('submitter-roles')
+      .setDescription('If set, will allow only the roles specified to send submissions')
+      .setRequired(isRequired)
+  },
 }
 
 export const convertEnableToDbType = (optionsData: readonly CommandInteractionOption<CacheType>[]) => (
   convertToDbType({
     optionsData,
-    toArray: ['allowed-to-vote-roles', 'submission-types', 'approver-roles', 'approver-users'],
+    toArray: ['allowed-to-vote-roles', 'submission-types', 'approver-roles', 'approver-users', 'submitter-roles'],
   })
 )
 

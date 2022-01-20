@@ -33,7 +33,7 @@ const prepareLine = (key: string, val: string): string => `  ${key}: ${val}`
 const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
   return (Object.keys(sett) as (keyof ChSettingsData)[]).map((key) => {
     const normKey = key.replaceAll('_', '-')
-    if (key === 'allowed_to_vote_roles' || key === 'awarded_role' || key === 'approver_roles') {
+    if (key === 'allowed_to_vote_roles' || key === 'awarded_role' || key === 'approver_roles' || key === 'submitter_roles') {
       return prepareLine(normKey, prepareGroupIds(sett[key]))
     }
     if (key === 'approver_users') {

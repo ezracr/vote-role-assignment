@@ -24,6 +24,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
       .addIntegerOption(enableOptions.submissionThreshold.bind(null, false))
       .addStringOption(enableOptions.messageColor.bind(null, false))
+      .addRoleOption(enableOptions.submitterRoles.bind(null, false))
       .addStringOption((option) => option.setName('title')
         .setDescription('The page\'s title.')
         .setRequired(false)
@@ -37,6 +38,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
+      .addRoleOption(enableOptions.submitterRoles.bind(null, false))
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -46,6 +48,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
+      .addRoleOption(enableOptions.submitterRoles.bind(null, false))
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {

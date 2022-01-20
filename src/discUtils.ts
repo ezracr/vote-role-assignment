@@ -92,3 +92,14 @@ export const pinMessage = async (msg?: Message<boolean>): Promise<void> => {
     console.log(e)
   }
 }
+
+const fetchReturnMember = async (guildId: string | Guild, userId: string | GuildMember): Promise<GuildMember | undefined> => {
+  const guild = await fetchReturnGuild(guildId)
+  return typeof userId === 'string' ? fetchMember(guild, userId) : userId
+}
+
+export const hasSomeRoles = async (guildId: string, userId: string | GuildMember, roleIds: string | string[]): Promise<boolean> => {
+  const member = await fetchReturnMember(guildId, userId)
+  const normRoles = typeof roleIds === 'string' ? [roleIds] : roleIds
+  return member?.roles.cache.some((r) => normRoles.includes(r.id)) ?? false
+}

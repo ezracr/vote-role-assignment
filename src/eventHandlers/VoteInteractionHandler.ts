@@ -1,23 +1,16 @@
 import {
-  Message, MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions, GuildMember,
+  Message, MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions,
 } from 'discord.js'
 
 import client from '../client'
 import { ChSettingsData } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { fetchMember, assignRoleById, fetchMessageById } from '../discUtils'
+import { assignRoleById, fetchMessageById, hasSomeRoles } from '../discUtils'
 import {
   fetchSubmTitle, genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
-
-const isInRoleList = (member?: GuildMember, allowedIds?: string[]): boolean => {
-  if (member && allowedIds && allowedIds.length > 0) {
-    return member.roles.cache.some((r) => allowedIds.includes(r.id))
-  }
-  return false
-}
 
 class VoteInteractionHandler {
   private type: 'like' | 'dislike' | 'approve' | 'dismiss'
@@ -26,24 +19,27 @@ class VoteInteractionHandler {
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
-  private canApprove = (member?: GuildMember): boolean => {
+  private canApprove = async (): Promise<boolean> => {
     const { approver_roles, approver_users } = this.chConfig
-    if (this.interaction.guildId && member) {
+    const { guildId, user } = this.interaction
+    if (guildId) {
       if (approver_roles) {
-        return isInRoleList(member, approver_roles)
+        const hasRoles = await hasSomeRoles(guildId, user.id, approver_roles)
+        return hasRoles
       }
       if (approver_users && approver_users.length > 0) {
-        return approver_users.includes(member.id)
+        return approver_users.includes(user.id)
       }
     }
     return false
   }
 
-  private canVote = (member?: GuildMember): boolean => {
+  private canVote = async (): Promise<boolean> => {
     const { allowed_to_vote_roles } = this.chConfig
+    const { guildId, user } = this.interaction
     if (allowed_to_vote_roles) {
-      if (this.interaction.guildId) {
-        return isInRoleList(member, allowed_to_vote_roles)
+      if (guildId) {
+        return hasSomeRoles(guildId, user.id, allowed_to_vote_roles)
       }
     }
     return true
@@ -100,10 +96,9 @@ class VoteInteractionHandler {
 
   process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null> => { // eslint-disable-line complexity
     try {
-      const { message: msg, user, guildId } = this.interaction
+      const { message: msg, user } = this.interaction
 
-      const member = guildId ? await fetchMember(guildId, user.id) : undefined
-      const isAllowedToApprove = this.canApprove(member)
+      const isAllowedToApprove = await this.canApprove()
 
       if (this.type === 'dismiss' && isAllowedToApprove) {
         if (msg.type === 'REPLY' && msg.deletable) {
@@ -113,7 +108,7 @@ class VoteInteractionHandler {
         return null
       }
 
-      const isAllowedToVote = this.canVote(member)
+      const isAllowedToVote = await this.canVote()
 
       if (
         ((this.type === 'like' || this.type === 'dislike') && !isAllowedToVote)

@@ -18,17 +18,24 @@ type Val = {
 }
 
 const gdocMatcher = pathToRegexp('/document/d/:id/', undefined, { end: false })
+const gdocPubMatcher = pathToRegexp('/document/d/e/:id/', undefined, { end: false })
 const gsheetMatcher = pathToRegexp('/spreadsheets/d/:id/', undefined, { end: false })
+const gsheetPubMatcher = pathToRegexp('/spreadsheets/d/e/:id/', undefined, { end: false })
 const tweetMatcher = pathToRegexp('/:user/status/:id', undefined, { end: false })
 
 const detectors: Record<SubmissionType, Val> = {
   gdoc: {
     type: 'gdoc',
     normalize: (url: URL): string | null => {
-      if (url.hostname === 'docs.google.com' && url.pathname.startsWith('/document/d/')) {
-        const matches = url.pathname.match(gdocMatcher)
+      const { hostname, pathname } = url
+      if (hostname === 'docs.google.com' && pathname.startsWith('/document/d/')) {
+        const isPub = pathname.includes('/e/')
+        const matches = isPub ? pathname.match(gdocPubMatcher) : pathname.match(gdocMatcher)
         const id = matches?.[1]
         if (id) {
+          if (isPub) {
+            return `https://docs.google.com/document/d/e/${id}/pub`
+          }
           return `https://docs.google.com/document/d/${id}/edit`
         }
       }
@@ -39,10 +46,15 @@ const detectors: Record<SubmissionType, Val> = {
   gsheet: {
     type: 'gsheet',
     normalize: (url: URL): string | null => {
-      if (url.hostname === 'docs.google.com' && url.pathname.startsWith('/spreadsheets/d/')) {
-        const matches = url.pathname.match(gsheetMatcher)
+      const { hostname, pathname } = url
+      if (hostname === 'docs.google.com' && pathname.startsWith('/spreadsheets/d/')) {
+        const isPub = pathname.includes('/e/')
+        const matches = isPub ? pathname.match(gsheetPubMatcher) : pathname.match(gsheetMatcher)
         const id = matches?.[1]
         if (id) {
+          if (isPub) {
+            return `https://docs.google.com/spreadsheets/d/e/${id}/pubhtml`
+          }
           return `https://docs.google.com/spreadsheets/d/${id}/edit`
         }
       }

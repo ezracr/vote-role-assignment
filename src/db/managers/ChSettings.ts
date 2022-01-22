@@ -2,7 +2,7 @@ import { PoolClient } from 'pg'
 
 import pool from '../pool'
 import { ChSettingsData, ChSetting } from '../dbTypes'
-import { ReportableError } from './manUtils'
+import { ReportableError, format, helpers } from './manUtils'
 import Submissions from './Submissions'
 
 type InsSetting = ChSetting & { inserted: boolean }
@@ -51,12 +51,17 @@ class ChSettings {
     }
   }
 
-  private async updateChIdByChId(channelId: string, newChannelId: string, client?: PoolClient): Promise<ChSetting | undefined> { // TODO Turn into patch and merge with `updateAnySettingsFieldByChId`
+  async patchByChId(chId: string, payload: Partial<Omit<ChSetting, 'data'>> & { data?: Partial<ChSetting['data']> }, client?: PoolClient): Promise<ChSetting | undefined> {
+    const { data, ...regularFields } = payload
+    const setSt = helpers.sets(regularFields)
+    const dataSetSt = data
+      ? format(`"data" = (SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1) || $2`, [chId, data])
+      : ''
     const { rows: [row] } = await (client ?? pool).query<ChSetting>(`
-      UPDATE channel_settings sts SET "channel_id" = $2
+      UPDATE channel_settings sts SET ${setSt}${dataSetSt}
       WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
       RETURNING *
-    `, [channelId, newChannelId])
+    `, [chId])
     return row
   }
 
@@ -74,7 +79,7 @@ class ChSettings {
         await this.deleteByChId(fromChId, client, 'last')
         res = await this.getByChId(intoChId)
       } else {
-        res = await this.updateChIdByChId(fromChId, intoChId, client)
+        res = await this.patchByChId(fromChId, { channel_id: intoChId }, client)
       }
       await client.query('COMMIT')
       return res
@@ -102,17 +107,6 @@ class ChSettings {
     }
   }
 
-  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
-    const { rows } = await pool.query<ChSetting>(`
-      UPDATE channel_settings sts SET "data" = (
-        SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1
-      ) || $2
-      WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
-      RETURNING *
-    `, [channelId, data])
-    return rows[0]
-  }
-
   async patchDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isDel = false): Promise<ChSetting | undefined> {
     const client = await pool.connect()
     await client.query('BEGIN')
@@ -121,7 +115,7 @@ class ChSettings {
     `, [channelId])
     if (oldChSett?.data) {
       const mergedData = modifyArrVals(oldChSett.data, data, isDel)
-      const chSettNew = this.patchDataByChId(channelId, mergedData)
+      const chSettNew = this.patchByChId(channelId, { data: mergedData })
       await client.query('COMMIT')
       return chSettNew
     }

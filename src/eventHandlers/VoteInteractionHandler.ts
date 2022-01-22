@@ -80,8 +80,7 @@ class VoteInteractionHandler {
         const { type } = processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
           const title = await fetchSubmTitle(repliedToMsg, type, link)
-          await this.managers.documents.updateTitleIsCandidate({
-            message_id: this.interaction.message.id,
+          await this.managers.documents.patchByMsgId(this.interaction.message.id, {
             title,
             is_candidate: false,
           })

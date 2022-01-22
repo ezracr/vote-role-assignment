@@ -3,6 +3,7 @@ import { PoolClient } from 'pg'
 import pool from '../pool'
 import { Submission, ChSetting } from '../dbTypes'
 import Users from './Users'
+import { helpers } from './manUtils'
 
 type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
@@ -12,7 +13,7 @@ type InsertOuput = Submission & { old_message_id: string | undefined }
 class Submissions {
   users = new Users()
 
-  async insert(data: InsertInput): Promise<InsertOuput | undefined> {
+  async upsert(data: InsertInput): Promise<InsertOuput | undefined> {
     const user = await this.users.upsert(data.user)
 
     const { rows: [doc] } = await pool.query<InsertOuput>(`
@@ -29,12 +30,13 @@ class Submissions {
     }
   }
 
-  async updateTitleIsCandidate(data: Pick<Submission, 'title' | 'is_candidate'> & MessageIdReq): Promise<Submission | undefined> { // todo patch
+  async patchByMsgId(messageId: string, payload: Partial<Omit<Submission, 'message_id'>>): Promise<Submission | undefined> {
+    const setSt = helpers.sets(payload)
     const { rows: [row] } = await pool.query<Submission>(`
-      UPDATE documents ds SET "title" = $2, "is_candidate" = $3
+      UPDATE documents ds SET ${setSt}
       WHERE ds."message_id" = $1
       RETURNING *
-    `, [data.message_id, data.title, data.is_candidate])
+    `, [messageId])
     return row
   }
 

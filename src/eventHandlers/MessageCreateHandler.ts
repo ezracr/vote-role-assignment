@@ -45,7 +45,7 @@ const canSubmit = async (chData: ChSettingsData, msg: Message<boolean>): Promise
   return true
 }
 
-type InputEntry = Pick<Parameters<Managers['documents']['insert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
+type InputEntry = Pick<Parameters<Managers['documents']['upsert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
 
 class MessageCreateHandler {
   constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { }
@@ -106,7 +106,7 @@ class MessageCreateHandler {
   }
 
   addToDocuments = async (inputDoc: InputEntry): Promise<Submission | undefined> => {
-    const doc = await this.managers.documents.insert({
+    const doc = await this.managers.documents.upsert({
       user: {
         id: this.msg.author.id,
         tag: this.msg.author.tag,

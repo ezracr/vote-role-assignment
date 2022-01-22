@@ -68,7 +68,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       if (res) return messages.done
     }
     if (interaction.options.getSubcommand() === 'set') {
-      const res = await managers.settings.patchDataByChId(interaction.channelId, dbSettData as unknown as ChSettingsData)
+      const res = await managers.settings.patchByChId(interaction.channelId, { data: dbSettData as unknown as ChSettingsData })
       if (res) return messages.done
     }
     return config.messages.wasNotEnabled

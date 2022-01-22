@@ -23,6 +23,7 @@
     "express": "^4.17.2",
     "path-to-regexp": "^6.2.0",
     "pg": "^8.7.1",
+    "pg-promise": "^10.11.1",
     "url-regex-safe": "^3.0.0"
   },
   "devDependencies": {

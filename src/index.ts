@@ -114,7 +114,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
 
           if (result) { // eslint-disable-line max-depth
             await interaction.update(result)
-          } else {
+          } else if (result !== false) { // `false` means that the message was dismissed
             await interaction.update({})
           }
         }

@@ -93,7 +93,7 @@ class VoteInteractionHandler {
     }
   }
 
-  process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null> => { // eslint-disable-line complexity
+  process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null | false> => { // eslint-disable-line complexity
     try {
       const { message: msg, user, channelId } = this.interaction
 
@@ -103,6 +103,7 @@ class VoteInteractionHandler {
         if (msg.type === 'REPLY' && msg.deletable) {
           await msg.delete()
           await this.managers.documents.deleteByMessageId({ message_id: msg.id })
+          return false
         }
         return null
       }

@@ -5,8 +5,7 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
-import { pinMessage } from '../../discUtils'
-import { enableOptions, genLinkToDocPage, convertEnableToDbType } from './commUtils'
+import { enableOptions, convertEnableToDbType } from './commUtils'
 
 export const enableCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -44,12 +43,6 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
     const res = await managers.settings.upsert(interaction.channelId, dbSettData as unknown as ChSettingsData)
     const { commands: { enable: { messages } } } = config
 
-    if (res?.inserted) {
-      const newMsg = await interaction.channel?.send({
-        content: messages.docLinkMsg(genLinkToDocPage(interaction.channelId)),
-      })
-      await pinMessage(newMsg)
-    }
     await interaction.reply({ content: res?.inserted ? messages.enabled : messages.updated, ephemeral: true })
   } catch (e: unknown) {
     if (e instanceof ReportableError) {

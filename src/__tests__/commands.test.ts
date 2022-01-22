@@ -6,7 +6,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init()
+  utils = await Utils.init(true)
   await utils.comm.login1()
 })
 
@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 const { testing: {
-  roleName1, roleName2, testChannel1Id, testChannel1Name, testChannel2Name,
+  roleName1, roleName2, testChannel1Name, testChannel2Name,
 }, commands, messages } = config
 
 const testNonInit = async (commName: string, args?: SendCommandArgs): Promise<void> => {
@@ -60,11 +60,9 @@ describe('/enable', () => {
     })
   })
 
-  it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
+  it('Returns an ephemeral message that it was enabled', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '10' })
-    await utils.comm.expectTestStats({ numOfPins: 1 })
-    await utils.comm.expectMessageContainsText(`/docs/${testChannel1Id}`, 1)
-    await utils.comm.expectMessageContainsText(commands.enable.messages.enabled, 2)
+    await utils.comm.expectMessageContainsText(commands.enable.messages.enabled)
   })
 
   it('Updates the settings when called again', async () => {

@@ -20,7 +20,6 @@ const config = {
       messages: {
         enabled: 'Enabled',
         updated: 'Updated',
-        docLinkMsg: (link: string) => `The page with submissions: ${link}.`
       },
     },
     info: {

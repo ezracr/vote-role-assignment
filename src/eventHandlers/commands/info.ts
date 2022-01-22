@@ -49,7 +49,12 @@ export const infoCommandHandler = async (managers: Managers, interaction: Comman
     if (res) {
       const { commands: { info: { messages } } } = config
       await interaction.reply({
-        content: messages.main(prepareSettingsForDisplay(res.data), genLinkToDocPage(interaction.channelId), totalRes?.total ?? 0, totalCand?.total ?? 0),
+        content: messages.main(
+          prepareSettingsForDisplay(res.data),
+          genLinkToDocPage(interaction.channelId),
+          totalRes?.total ?? 0,
+          totalCand?.total ?? 0,
+        ),
         ephemeral: true,
       })
     } else {

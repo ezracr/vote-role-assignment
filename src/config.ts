@@ -1,3 +1,5 @@
+import pjson from '../package.json'
+
 const config = {
   port: 3000,
   token: process.env.DISCORD_TOKEN as string,
@@ -25,7 +27,9 @@ const config = {
       name: 'info',
       description: 'Show the settings of this channel/thread.',
       messages: {
-        main: (settings: string, link: string, total: number, totalCand: number) => `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}\n**Candidates**: ${totalCand}`,
+        main: (settings: string, link: string, total: number, totalCand: number) => (
+          `**Settings**:\n${settings}\n**Link**: ${link}\n**Saved submissions**: ${total}\n**Candidates**: ${totalCand}\n**Version**: ${pjson.version}`
+        )
       },
     },
     disable: {
@@ -65,7 +69,7 @@ const config = {
     votingMessage: {
       footer: {
         text: 'Concave Co-Op - The world\'s best kept secret.',
-        iconUrl: 'https://images-ext-1.discordapp.net/external/3plHY115A7Nldy0s5l3Ktt7Rm8BCA6GWCoxLzF9ZkJ4/https/i.postimg.cc/Znn1MpXY/server-icon.png',
+        iconURL: 'https://i.postimg.cc/GmDwBbD4/CNV-white.png',
       },
     },
   },

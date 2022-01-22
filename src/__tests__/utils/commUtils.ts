@@ -169,7 +169,7 @@ export class CommUtils {
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
   sheetPub1Url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml#'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
-  ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
+  ytvideo1Url = 'https://www.youtube.com/watch?v=zqpFqfeXHnM&feature=youtu.be'
 
   sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)

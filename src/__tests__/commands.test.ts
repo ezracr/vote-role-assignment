@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 const { testing: {
-  roleName1, roleName2, testChannel1Id, testChannel1Name, testChannel2Name, userName1, userName2,
+  roleName1, roleName2, testChannel1Id, testChannel1Name, testChannel2Name,
 }, commands, messages } = config
 
 const testNonInit = async (commName: string, args?: SendCommandArgs): Promise<void> => {
@@ -52,15 +52,16 @@ describe('/enable', () => {
       'message-color': '000000',
       'submitter-roles': roleName2,
     })
-    await utils.comm.expectInfo({
-      'message-color': '000000',
-      'submitter-roles': roleName2,
+    await utils.comm.expectTestStats({
+      chSett: {
+        'message_color': '000000',
+        'submitter_roles': [roleName2],
+      }
     })
   })
 
   it('Returns an ephemeral message that it was enabled and pins the message with the link', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '10' })
-    await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ numOfPins: 1 })
     await utils.comm.expectMessageContainsText(`/docs/${testChannel1Id}`, 1)
     await utils.comm.expectMessageContainsText(commands.enable.messages.enabled, 2)
@@ -86,9 +87,11 @@ describe('/update', () => {
       'message-color': '000000',
       'submitter-roles': roleName2,
     })
-    await utils.comm.expectInfo({
-      'message-color': '000000',
-      'submitter-roles': roleName2,
+    await utils.comm.expectTestStats({
+      chSett: {
+        'message_color': '000000',
+        'submitter_roles': [roleName2],
+      }
     })
   })
 
@@ -97,8 +100,10 @@ describe('/update', () => {
     await utils.comm.sendUpdateAdd({
       'submitter-roles': roleName2,
     })
-    await utils.comm.expectInfo({
-      'submitter-roles': roleName2,
+    await utils.comm.expectTestStats({
+      chSett: {
+        'submitter_roles': [roleName2],
+      }
     })
   })
 
@@ -107,8 +112,10 @@ describe('/update', () => {
     await utils.comm.sendUpdateDel({
       'submitter-roles': roleName2,
     })
-    await utils.comm.expectInfo({
-      'submitter-roles': roleName2,
+    await utils.comm.expectTestStats({
+      chSett: {
+        'submitter_roles': [roleName2],
+      }
     }, true)
   })
 })
@@ -119,13 +126,11 @@ describe('Submission threshold', () => {
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg)
-    await utils.comm.sendTestStats()
-    await utils.comm.expectTestStatsNot({ roles: [roleName1.slice(1)] })
+    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, true)
     await utils.comm.sendSheet1()
     const msg1 = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 2 })
-    await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] })
   })
 })
@@ -174,34 +179,29 @@ describe('Voting', () => {
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteAgainst(msg)
-    await utils.driver.quit()
     await utils.reInit()
-    await utils.comm.login2()
+    await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
     const msg1 = await utils.comm.findLatestBotMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 0 })
-    // TODO Use 'current user' in other tests and remove these?:
-    await utils.driver.quit()
-    await utils.reInit()
-    await utils.comm.login1()
   })
 })
 
 describe('Approval', () => {
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
-      'approver-users': userName2,
+      'approver-users': utils.comm.anotherUser.name,
       'approver-roles': roleName2,
     })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToNotContain(utils.comm.userNameAt1, msgEl)
+    await utils.comm.expectApprovedByToNotContain(utils.comm.currUser.nameAt, msgEl)
   })
 
   it('Assigns the role after one approval when no threshold specified', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-users': userName1 })
+    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
@@ -210,7 +210,7 @@ describe('Approval', () => {
 
   it('Assigns the role after approval and vote requirements are met', async () => {
     await utils.comm.sendEnable(roleName1, {
-      'approver-users': userName1, 'approval-threshold': '1', 'voting-threshold': '1',
+      'approver-users': utils.comm.currUser.name, 'approval-threshold': '1', 'voting-threshold': '1',
     })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -226,16 +226,16 @@ describe('Approval', () => {
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToContain(utils.comm.userNameAt1, msgEl)
+    await utils.comm.expectApprovedByToContain(utils.comm.currUser.nameAt, msgEl)
     await utils.comm.clickApprove(msgEl)
-    await utils.comm.expectApprovedByToNotContain(utils.comm.userNameAt1, msgEl)
+    await utils.comm.expectApprovedByToNotContain(utils.comm.currUser.nameAt, msgEl)
   })
 })
 
 describe('Dismissal', () => {
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
-      'approver-users': userName2,
+      'approver-users': utils.comm.anotherUser.name,
       'approver-roles': roleName2,
     })
     await utils.comm.sendDoc1()
@@ -246,7 +246,7 @@ describe('Dismissal', () => {
 
   it('Removes and unpins the post when the user has a permission', async () => {
     await utils.comm.sendEnable(roleName1, {
-      'approver-users': userName1,
+      'approver-users': utils.comm.currUser.name,
     })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -279,7 +279,7 @@ describe('Submission types', () => {
     await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
     await utils.sel.expectContainsText(msgEl, utils.comm.doc1Url.slice(0, -12))
     await utils.comm.sendDocPub1()
-    const msg4El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg4El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg4El, utils.comm.docPub1Url)
     await utils.sel.expectContainsText(msg4El, utils.comm.docPub1Url.slice(0, -1))
     await utils.comm.sendSheet1()
@@ -287,7 +287,7 @@ describe('Submission types', () => {
     await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
     await utils.sel.expectContainsText(msg1El, utils.comm.sheet1Url.slice(0, -12))
     await utils.comm.sendSheetPub1()
-    const msg5El = await utils.comm.findAboutToAppearBotMessageBody()
+    const msg5El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg5El, utils.comm.sheetPub1Url)
     await utils.sel.expectContainsText(msg5El, utils.comm.sheetPub1Url.slice(0, -1))
     await utils.comm.sendTweet1()
@@ -320,7 +320,6 @@ describe('Submission types', () => {
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectInfo({ numOfCandidates: 1 })
-    await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ numOfPins: 2 })
   })
 
@@ -332,7 +331,6 @@ describe('Submission types', () => {
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
-    await utils.comm.sendTestStats()
     await utils.comm.expectTestStats({ numOfPins: 1 })
   })
 })

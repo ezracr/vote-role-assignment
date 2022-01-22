@@ -9,16 +9,16 @@ type InsSetting = ChSetting & { inserted: boolean }
 
 type SettDataKey = keyof ChSettingsData
 
-const modifyArrVals = (oldChSettData: ChSettingsData, newChSettData: Partial<ChSettingsData>, isDel = false) => {
+const modifyArrVals = (oldChSettData: ChSettingsData, newChSettData: Partial<ChSettingsData>, isDel = false): ChSettingsData => {
   return (Array.from(new Set([...Object.keys(oldChSettData), ...Object.keys(newChSettData)])) as (SettDataKey)[])
     .reduce<ChSettingsData>(<K extends SettDataKey>(acc: ChSettingsData, key: K) => {
       const newVal = newChSettData[key]
       const oldVal = acc[key]
       if (newVal && Array.isArray(newVal)) {
-        if (!isDel) {
-          acc[key] = Array.from(new Set([...(oldVal ?? [] as any), ...newVal])) as ChSettingsData[typeof key]
+        if (isDel) {
+          acc[key] = (oldVal ?? [] as any).filter((vl: any) => !newVal.includes(vl)) as ChSettingsData[typeof key] // eslint-disable-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         } else {
-          acc[key] = (oldVal ?? [] as any).filter((vl: any) => !newVal.includes(vl)) as ChSettingsData[typeof key]
+          acc[key] = Array.from(new Set([...(oldVal ?? [] as any), ...newVal])) as ChSettingsData[typeof key] // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         }
       }
       return acc
@@ -102,7 +102,7 @@ class ChSettings {
     }
   }
 
-  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>, client?: PoolClient): Promise<ChSetting | undefined> {
+  async patchDataByChId(channelId: string, data: Partial<ChSettingsData>): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`
       UPDATE channel_settings sts SET "data" = (
         SELECT "data" FROM channel_settings sts1 WHERE sts1."channel_id" = $1
@@ -120,8 +120,8 @@ class ChSettings {
       SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
     `, [channelId])
     if (oldChSett?.data) {
-      const mergedData = modifyArrVals(oldChSett?.data, data, isDel)
-      const chSettNew = this.patchDataByChId(channelId, mergedData, client)
+      const mergedData = modifyArrVals(oldChSett.data, data, isDel)
+      const chSettNew = this.patchDataByChId(channelId, mergedData)
       await client.query('COMMIT')
       return chSettNew
     }

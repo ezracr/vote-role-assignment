@@ -80,8 +80,8 @@ export const convertToDbType = ({ optionsData, group, appendId, rename, valueOve
       return acc
     }
 
-    if (toArray && toArray.includes(val.name)) {
-      acc[normKey] = [normValue as any]
+    if (toArray?.includes(val.name)) {
+      acc[normKey] = [normValue as any] // eslint-disable-line @typescript-eslint/no-explicit-any
       return acc
     }
 
@@ -163,7 +163,7 @@ export const enableOptions = {
   },
 }
 
-export const convertEnableToDbType = (optionsData: readonly CommandInteractionOption<CacheType>[]) => (
+export const convertEnableToDbType = (optionsData: readonly CommandInteractionOption<CacheType>[]): Record<string, ValType> => (
   convertToDbType({
     optionsData,
     toArray: ['allowed-to-vote-roles', 'submission-types', 'approver-roles', 'approver-users', 'submitter-roles'],

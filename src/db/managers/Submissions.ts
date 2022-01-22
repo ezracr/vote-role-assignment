@@ -52,7 +52,7 @@ class Submissions {
       SELECT count(*) total
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
-    `, [input.channel_id, input.is_candidate ?? false])
+    `, [input.channel_id, input.is_candidate])
     return row
   }
 
@@ -61,7 +61,7 @@ class Submissions {
       SELECT count(*) total
       FROM documents_full ds
       WHERE ds."user_id" = $1 AND ds."is_candidate" = $2
-    `, [input.user_id, input.is_candidate ?? false])
+    `, [input.user_id, input.is_candidate])
     return row
   }
 
@@ -71,7 +71,7 @@ class Submissions {
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
       ORDER BY ds."created" DESC, ds."id"
-    `, [input.channel_id, input.is_candidate ?? false])
+    `, [input.channel_id, input.is_candidate])
     return rows
   }
 

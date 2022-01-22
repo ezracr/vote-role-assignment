@@ -1,5 +1,7 @@
 import wd from 'selenium-webdriver'
 
+/* eslint-disable no-empty */
+
 export class SelUtils { // eslint-disable-line import/prefer-default-export
   constructor(private driver: wd.WebDriver) { } // eslint-disable-line no-useless-constructor
 
@@ -20,7 +22,7 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
   isDisplayed = async (el: wd.WebElement): Promise<boolean> => {
     try {
       return await el.isDisplayed()
-    } catch (e) { }
+    } catch (e: unknown) { }
     return false;
   }
 
@@ -77,7 +79,7 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
     cssSelectorOrEl: string | wd.WebElement, numOfPos: number, arrowKeyCode: string,
   ): Promise<void> => {
     const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
-    await el.sendKeys(...new Array(numOfPos).fill(arrowKeyCode))
+    await el.sendKeys(...new Array(numOfPos).fill(arrowKeyCode)) // eslint-disable-line @typescript-eslint/no-unsafe-argument
   }
 
   arrowDown = async (cssSelectorOrEl: string | wd.WebElement, numOfPos = 1): Promise<void> => (

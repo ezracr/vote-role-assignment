@@ -1,10 +1,11 @@
 import wd from 'selenium-webdriver'
+
 import config from '../../config'
+import { ChSettingsData } from '../../db/dbTypes'
 import { SubmissionTypeTitles } from '../../eventHandlers/submissionTypes'
 import { SelUtils } from './selUtils'
 
-
-/* eslint-disable no-await-in-loop */
+/* eslint-disable no-await-in-loop, @typescript-eslint/no-unsafe-member-access, no-empty, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 const messageContainer = '[data-list-id=chat-messages]'
 
@@ -20,6 +21,12 @@ export type SendCommandArgs = {
 
 let isUser1LoggedIn: boolean
 
+type TestUser = {
+  id: string;
+  name: string;
+  nameAt: string;
+}
+
 type AddRemoveArgs = {
   'submission-types'?: SubmissionTypeTitles,
   'approver-roles'?: string,
@@ -34,9 +41,11 @@ type SetArgs = {
 } & AddRemoveArgs
 type EnableOptionalArgs = SetArgs
 
-type TestStatsArg = { numOfPins?: number, roles?: string[] }
+type TestStatsArg = { numOfPins?: number, roles?: string[], chSett?: Partial<ChSettingsData> }
 
 const lsItems = ['submission-types', 'approver-roles', 'approver-users', 'submitter-roles']
+
+const { testing: { userName2, userName1, user1Id, user2Id } } = config
 
 const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs | undefined => (
   input
@@ -54,9 +63,14 @@ const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs 
     : undefined
 )
 
-const msgContainer = 'div>div:nth-of-type(2)'
+const msgContainerCss = 'div>div:nth-of-type(2)'
 
-const replaceNewLinesWithWhiteSpaces = (msgTxt: string) => msgTxt.replaceAll(/[\r\n]+/g, ' ')
+const replaceNewLinesWithWhiteSpaces = (msgTxt: string): string => msgTxt.replaceAll(/[\r\n]+/g, ' ')
+
+function expectOrNot<T extends boolean>(isNot: T, ...args: Parameters<jest.Expect>): T extends true ? jest.Matchers<void, unknown> : jest.JestMatchers<unknown>;
+function expectOrNot(isNot: boolean, ...args: Parameters<jest.Expect>): jest.Matchers<void, unknown> | jest.JestMatchers<unknown> {
+  return isNot ? expect(...args).not : expect(...args) // eslint-disable-line jest/valid-expect
+}
 
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
@@ -93,6 +107,22 @@ export class CommUtils {
       await this.login2()
     } else {
       await this.login1()
+    }
+  }
+
+  get currUser(): TestUser {
+    return {
+      id: isUser1LoggedIn ? user1Id : user2Id,
+      name: isUser1LoggedIn ? userName1! : userName2!,
+      nameAt: isUser1LoggedIn ? `@${userName1}` : `@${userName2}`
+    }
+  }
+
+  get anotherUser(): TestUser {
+    return {
+      id: isUser1LoggedIn ? user2Id : user1Id,
+      name: isUser1LoggedIn ? userName2! : userName1!,
+      nameAt: isUser1LoggedIn ? `@${userName2}` : `@${userName1}`
     }
   }
 
@@ -140,8 +170,6 @@ export class CommUtils {
   sheetPub1Url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml#'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
   ytvideo1Url = 'https://www.youtube.com/watch?v=S7xEQ6D2gjQ&feature=youtu.be'
-  userNameAt1 = `@${config.testing.userName1}`
-  userNameAt2 = `@${config.testing.userName2}`
 
   sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
@@ -158,7 +186,7 @@ export class CommUtils {
     // TODO wait for the messages to be fully populated
   }
   findReplyMessageContainer = (msg: wd.WebElement): Promise<wd.WebElement> => (
-    this.selUtils.findElementByCss(msgContainer, msg)
+    this.selUtils.findElementByCss(msgContainerCss, msg)
   )
 
   findMessageWithTitleBody = (msg: wd.WebElement): Promise<wd.WebElement> => (
@@ -209,7 +237,7 @@ export class CommUtils {
     try {
       const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
       return await msgBody.getText()
-    } catch (e: unknown) { } // eslint-disable-line no-empty
+    } catch (e: unknown) { }
     return msg.getText()
   }
 
@@ -218,7 +246,7 @@ export class CommUtils {
     try {
       const accEl = await this.selUtils.findElementByCss('[id^=message-accessories]', msgEl)
       return replaceNewLinesWithWhiteSpaces(await accEl.getText())
-    } catch (e: unknown) { } // eslint-disable-line no-empty
+    } catch (e: unknown) { }
     return msgEl.getText()
   }
 
@@ -277,13 +305,13 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
-  private waitForWasPinnedByMessageToDissapear = async () => {
+  private waitForWasPinnedByMessageToDissapear = async (): Promise<void> => {
     try {
       const msgEl = await this.driver.wait(wd.until.elementLocated(
         By.xpath('//li/*[@aria-roledescription=\'Message\']//*[contains(text(), \'pinned\')]')
       ), 200)
       await this.driver.wait(wd.until.stalenessOf(msgEl), 200)
-    } catch (e) { }
+    } catch (e: unknown) { }
   }
 
   findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
@@ -295,7 +323,7 @@ export class CommUtils {
           await this.waitForWasPinnedByMessageToDissapear()
           return msg
         }
-      } catch (e: unknown) { } // eslint-disable-line no-empty
+      } catch (e: unknown) { }
       await this.driver.sleep(20)
     }
     throw new Error('Can\'t find the bot\'s message.')
@@ -356,7 +384,7 @@ export class CommUtils {
   expectInfo = async ({ numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs, isNot = false): Promise<void> => {
     await this.sendInfo()
     const msgTxt = await this.findMessageText()
-    const normExpect = isNot ? expect(msgTxt).not : expect(msgTxt)
+    const normExpect = isNot ? expect(msgTxt).not : expect(msgTxt) // eslint-disable-line jest/valid-expect
     if (numOfDocs) {
       normExpect.toContain(`Saved submissions: ${numOfDocs}`)
     }
@@ -378,23 +406,20 @@ export class CommUtils {
     return JSON.parse(text)
   }
 
-  expectTestStats = async ({ numOfPins, roles }: TestStatsArg): Promise<void> => {
+  expectTestStats = async ({ numOfPins, roles, chSett }: TestStatsArg, isNot = false): Promise<void> => {
+    await this.sendTestStats()
     const stats = await this.parseTestStats()
     if (numOfPins) {
-      expect(stats.numOfPins).toEqual(numOfPins)
+      expectOrNot(isNot, stats.numOfPins).toEqual(numOfPins)
     }
     if (roles) {
-      expect(stats.roles).toEqual(expect.arrayContaining(roles))
+      expectOrNot(isNot, stats.roles).toEqual(expect.arrayContaining(roles))
     }
-  }
-
-  expectTestStatsNot = async ({ numOfPins, roles }: TestStatsArg): Promise<void> => {
-    const stats = await this.parseTestStats()
-    if (numOfPins) {
-      expect(stats.numOfPins).not.toEqual(numOfPins)
-    }
-    if (roles) {
-      expect(stats.roles).toEqual(expect.not.arrayContaining(roles))
+    if (chSett) {
+      expectOrNot(isNot, stats.chSett).toEqual(expect.objectContaining({
+        ...chSett,
+        submitter_roles: expect.arrayContaining(chSett.submitter_roles ?? [])
+      }))
     }
   }
 

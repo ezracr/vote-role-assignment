@@ -29,6 +29,7 @@ class Utils {
   }
 
   async reInit(): Promise<void> {
+    await this.driver.quit()
     this.driver = await initDriver(this.isNotHeadless)
     this.comm = new CommUtils(this.driver)
     this.sel = new SelUtils(this.driver)

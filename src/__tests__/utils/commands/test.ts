@@ -35,7 +35,7 @@ export const testCommand = new SlashCommandBuilder()
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
-    switch (true) {
+    switch (true) { // eslint-disable-line default-case
       case (interaction.options.getSubcommand() === 'clean'):
         return await handleCleanCommand(managers, interaction)
       case (interaction.options.getSubcommand() === 'add-role-1' || interaction.options.getSubcommand() === 'add-role-2'):

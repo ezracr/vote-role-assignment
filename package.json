@@ -8,7 +8,7 @@
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "build:start": "npm run build ; npm run start:prod",
-    "lint": "kcd-scripts lint ./src/**/*.ts ./src/*.ts",
+    "lint": "kcd-scripts lint './src/**/*.ts'",
     "lint:staged": "lint-staged --allow-empty",
     "test": "kcd-scripts test --config jest/jest.config.js --runInBand"
   },

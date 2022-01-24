@@ -6,8 +6,8 @@ import config from './config'
 import client from './client'
 import VoteInteractionHandler from './eventHandlers/VoteInteractionHandler'
 import MessageCreateHandler from './eventHandlers/MessageCreateHandler'
+import messageUpdateHandler from './eventHandlers/messageUpdateHandler'
 import Managers from './db/managers'
-import { ChSettingsData } from './db/dbTypes'
 import { enableCommand, enableCommandHandler } from './eventHandlers/commands/enable'
 import { disableCommand, disableCommandHandler } from './eventHandlers/commands/disable'
 import { updateCommand, updateCommandHandler } from './eventHandlers/commands/update'
@@ -52,18 +52,13 @@ client.on('ready', async () => {
   }
 })
 
-const getChannelConfig = async (managers: Managers, chlThId: string): Promise<ChSettingsData | undefined> => {
-  const res = await managers.settings.getByChId(chlThId)
-  return res?.data
-}
-
 client.on('messageCreate', async (msg): Promise<void> => {
   try {
     if (msg.type === 'CHANNEL_PINNED_MESSAGE' && msg.author.bot) {
       await msg.delete()
     }
     const managers = new Managers()
-    const chConfig = await getChannelConfig(managers, msg.channelId)
+    const chConfig = await managers.settings.getByChId(msg.channelId)
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
       await handler.process()
@@ -72,6 +67,8 @@ client.on('messageCreate', async (msg): Promise<void> => {
     console.log(e)
   }
 })
+
+client.on('messageUpdate', messageUpdateHandler)
 
 client.on("interactionCreate", async (interaction): Promise<void> => {
   try {
@@ -106,7 +103,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
       const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike' || customId === 'approve' || customId === 'dismiss')) {
-        const chConfig = await getChannelConfig(managers, interaction.channelId)
+        const chConfig = await managers.settings.getByChId(interaction.channelId)
         if (chConfig) {
           const handler = new VoteInteractionHandler(chConfig, interaction, managers)
 

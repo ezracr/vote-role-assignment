@@ -3,11 +3,11 @@ import {
 } from 'discord.js'
 
 import client from '../client'
-import { ChSettingsData } from '../db/dbTypes'
+import { ChSetting } from '../db/dbTypes'
 import Managers from '../db/managers'
-import { assignRoleById, fetchMessageById, hasSomeRoles } from '../discUtils'
+import { assignRoleById, hasSomeRoles } from '../discUtils'
 import {
-  fetchSubmTitle, genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable,
+  genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
@@ -15,12 +15,12 @@ import { processUrl } from './submissionTypes'
 class VoteInteractionHandler {
   private type: 'like' | 'dislike' | 'approve' | 'dismiss'
 
-  constructor(private chConfig: ChSettingsData, private interaction: ButtonInteraction<CacheType>, private managers: Managers) {
+  constructor(private chConfig: ChSetting, private interaction: ButtonInteraction<CacheType>, private managers: Managers) {
     this.type = this.interaction.customId as 'like' | 'dislike'
   }
 
   private canApprove = async (): Promise<boolean> => {
-    const { approver_roles, approver_users } = this.chConfig
+    const { data: { approver_roles, approver_users } } = this.chConfig
     const { guildId, user } = this.interaction
     if (guildId) {
       if (approver_roles) {
@@ -35,7 +35,7 @@ class VoteInteractionHandler {
   }
 
   private canVote = async (): Promise<boolean> => {
-    const { allowed_to_vote_roles } = this.chConfig
+    const { data: { allowed_to_vote_roles } } = this.chConfig
     const { guildId, user } = this.interaction
     if (allowed_to_vote_roles) {
       if (guildId) {
@@ -45,16 +45,16 @@ class VoteInteractionHandler {
     return true
   }
 
-  private isGraterThanVotThreshold = (votes: number): boolean => votes >= (this.chConfig.voting_threshold ?? 0)
+  private isGraterThanVotThreshold = (votes: number): boolean => votes >= (this.chConfig.data.voting_threshold ?? 0)
 
   private isGraterThanApprThreshold = (approvals: number): boolean => (
-    approvals >= (this.chConfig.approval_threshold ?? 0) || !isApprovable(this.chConfig)
+    approvals >= (this.chConfig.data.approval_threshold ?? 0) || !isApprovable(this.chConfig.data)
   )
 
   private isEnoughSubmissions = async (): Promise<boolean> => {
-    const threshold = this.chConfig.submission_threshold ?? 0
+    const threshold = this.chConfig.data.submission_threshold ?? 0
     if (threshold > 0) {
-      const totalRes = await this.managers.documents.getNumOfDocsPerUserId({ user_id: this.interaction.user.id, is_candidate: false })
+      const totalRes = await this.managers.submissions.getNumOfDocsPerUserId({ user_id: this.interaction.user.id, is_candidate: false })
       return (totalRes?.total ?? 0) >= threshold
     }
     return true
@@ -75,19 +75,16 @@ class VoteInteractionHandler {
         await message.unpin()
       }
       if (member) {
-        const repliedToMsg = message.reference?.messageId ? await fetchMessageById(message, message.reference.messageId) : null
         const link = innMessage.url
         const { type } = processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
-          const title = await fetchSubmTitle(repliedToMsg, type, link)
-          await this.managers.documents.patchByMsgId(this.interaction.message.id, {
-            title,
+          await this.managers.submissions.patchByFilter({ message_id: this.interaction.message.id }, {
             is_candidate: false,
           })
         }
         const isEnoughSubmissions = await this.isEnoughSubmissions()
         if (isEnoughSubmissions) {
-          await assignRoleById(guild, id, this.chConfig.awarded_role)
+          await assignRoleById(guild, id, this.chConfig.data.awarded_role)
         }
       }
     }
@@ -102,7 +99,7 @@ class VoteInteractionHandler {
       if (this.type === 'dismiss' && isAllowedToApprove) {
         if (msg.type === 'REPLY' && msg.deletable) {
           await msg.delete()
-          await this.managers.documents.deleteByMessageId({ message_id: msg.id })
+          await this.managers.submissions.deleteByMessageId({ message_id: msg.id })
           return false
         }
         return null
@@ -129,21 +126,25 @@ class VoteInteractionHandler {
         })
         const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
         const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
-        const isAppr = isApprovable(this.chConfig)
-        const innMessage = VotingMessage.fromEmbed({
-          oldEmbed: message.embeds[0],
-          inFavor: vts?.in_favor,
-          against: vts?.against,
-          inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
-          chSettData: this.chConfig,
-          channelId,
-        })
-        if (innMessage) {
+        const isAppr = isApprovable(this.chConfig.data)
+        const subm = await this.managers.submissions.getByMsgId(msg.id) // todo
+        if (subm) {
+          const innMessage = new VotingMessage({
+            inFavor: vts?.in_favor,
+            against: vts?.against,
+            inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
+            chSettData: this.chConfig.data,
+            channelId,
+            authorId: subm.user.id,
+            url: subm.link,
+            color: this.chConfig.data.message_color,
+            title: subm.title,
+          })
           const newActionRow = new MessageActionRow({
             components: [
               genLikeButton(vts?.in_favor_count ?? 0),
               genDislikeButton(vts?.against_count ?? 0),
-              ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0, apprs?.in_favor_count ?? 0), genDismissButton()] : []),
+              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0), genDismissButton()] : []),
             ]
           })
           if (this.type === 'like' || this.type === 'approve') {

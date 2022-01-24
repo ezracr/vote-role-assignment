@@ -1,3 +1,13 @@
+-- 3.0
+ALTER TABLE documents ADD COLUMN "usr_message_id" text COLLATE "C";
+CREATE INDEX CONCURRENTLY documents_usr_message_id_index ON documents ("usr_message_id");
+DROP VIEW documents_full;
+CREATE OR REPLACE VIEW documents_full AS
+  SELECT documents.*, row_to_json(users.*) "user", row_to_json(css.*) "ch_settings"
+  FROM documents
+    LEFT JOIN users ON documents."user_id" = users."id"
+    LEFT JOIN channel_settings css ON documents."ch_sett_id" = css."id";
+
 -- 2.0
 -- STEP 1
 -- Titles can be empty (tweets)

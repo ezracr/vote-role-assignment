@@ -19,10 +19,12 @@ CREATE TABLE IF NOT EXISTS documents(
   "submission_type" text,
   "is_candidate" boolean DEFAULT false,
   "message_id" text COLLATE "C",
+  "usr_message_id" text COLLATE "C",
   UNIQUE("link")
 );
 
 CREATE INDEX CONCURRENTLY documents_message_id_index ON documents ("message_id");
+CREATE INDEX CONCURRENTLY documents_usr_message_id_index ON documents ("usr_message_id");
 
 CREATE TABLE IF NOT EXISTS votes(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,

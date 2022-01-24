@@ -171,7 +171,7 @@ export class CommUtils {
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
   ytvideo1Url = 'https://www.youtube.com/watch?v=zqpFqfeXHnM&feature=youtu.be'
 
-  sendDoc1 = (): Promise<void> => this.sendMessage(this.doc1Url)
+  sendDoc1 = (isUniqueQuery = false): Promise<void> => this.sendMessage(`${this.doc1Url}${isUniqueQuery ? Date.now() : ''}`)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
   sendSheet1 = (): Promise<void> => this.sendMessage(this.sheet1Url)
   sendSheetPub1 = (): Promise<void> => this.sendMessage(this.sheetPub1Url)
@@ -288,7 +288,7 @@ export class CommUtils {
   sendCommand = async (name: string, args?: SendCommandArgs): Promise<void> => {
     const txtField = await this.findTextField()
     await txtField.sendKeys(`/${name}`)
-    await this.driver.wait(wd.until.elementLocated(By.css('[data-list-id=channel-autocomplete]')), 2000)
+    await this.driver.wait(wd.until.elementLocated(By.css('[data-list-id=channel-autocomplete]')), 5000)
     await txtField.sendKeys(Key.ENTER)
     if (args?.req) {
       for (const [i, arg] of args.req.entries()) {

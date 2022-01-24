@@ -111,8 +111,8 @@ export default function docsMiddleware(app: Application): void {
     const { id } = req.params
     if (id && id.length === 18) {
       const settings = await managers.settings.getByChId(id)
-      const subms = await managers.documents.getByChannelId({ channel_id: id, is_candidate: false })
-      const candidates = await managers.documents.getByChannelId({ channel_id: id, is_candidate: true })
+      const subms = await managers.submissions.getManyByChannelId({ channel_id: id, is_candidate: false })
+      const candidates = await managers.submissions.getManyByChannelId({ channel_id: id, is_candidate: true })
       if (settings && subms) {
         return res.send(renderTemplate(id, settings, subms, candidates))
       }

@@ -15,6 +15,7 @@ type VotingMessageArg = {
   color?: string | number | null;
   chSettData: ChSettingsData;
   channelId: string;
+  title?: string | null;
 }
 
 type FromArg = { oldEmbed: MessageEmbed } & Pick<VotingMessageArg, 'inFavor' | 'against' | 'inFavorApprovals' | 'chSettData' | 'channelId'>
@@ -43,6 +44,7 @@ class VotingMessage {
   color: number
   chSettData: ChSettingsData
   channelId: string
+  title: VotingMessageArg['title']
 
   constructor(arg: VotingMessageArg) {
     this.authorId = arg.authorId
@@ -53,6 +55,7 @@ class VotingMessage {
     this.color = arg.color ? parseColor(arg.color) : 0xdfc600
     this.chSettData = arg.chSettData
     this.channelId = arg.channelId
+    this.title = arg.title
   }
 
   private calcTotalVotes = (): string => (
@@ -63,7 +66,7 @@ class VotingMessage {
     const { allowed_to_vote_roles, submitter_roles, title, submission_types } = this.chSettData
     return {
       color: this.color,
-      title: this.url,
+      title: this.title ?? this.url,
       url: this.url,
       description: `by ${convertIdToUserTag(this.authorId)}`,
       fields: [

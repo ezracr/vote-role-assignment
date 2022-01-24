@@ -4,6 +4,6 @@ import Votes from './Votes'
 
 export default class Managers {
   settings: ChSettings = new ChSettings()
-  documents: Submissions = new Submissions()
+  submissions: Submissions = new Submissions()
   votes: Votes = new Votes()
 }

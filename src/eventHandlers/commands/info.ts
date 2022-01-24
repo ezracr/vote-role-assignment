@@ -44,8 +44,8 @@ const prepareSettingsForDisplay = (sett: ChSettingsData): string => {
 export const infoCommandHandler = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<void> => {
   try {
     const res = await managers.settings.getByChId(interaction.channelId)
-    const totalRes = await managers.documents.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: false })
-    const totalCand = await managers.documents.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: true })
+    const totalRes = await managers.submissions.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: false })
+    const totalCand = await managers.submissions.getNumOfDocsPerChannel({ channel_id: interaction.channelId, is_candidate: true })
     if (res) {
       const { commands: { info: { messages } } } = config
       await interaction.reply({

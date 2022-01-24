@@ -76,6 +76,14 @@ describe('/enable', () => {
     const msg = await utils.comm.findMessage()
     await utils.sel.expectNotContainsText(msg, 'pinned')
   })
+
+  it('Shows title after the first interaction', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDoc1(true)
+    const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.sel.expectContainsText(msgEl, 'Test Document')
+  })
 })
 
 describe('/update', () => {
@@ -318,7 +326,7 @@ describe('Submission types', () => {
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.expectInfo({ numOfCandidates: 1 })
-    await utils.comm.expectTestStats({ numOfPins: 2 })
+    await utils.comm.expectTestStats({ numOfPins: 1 })
   })
 
   it('Unpins user\'s message when the role was awarded for another submission', async () => {
@@ -329,7 +337,7 @@ describe('Submission types', () => {
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
-    await utils.comm.expectTestStats({ numOfPins: 1 })
+    await utils.comm.expectTestStats({ numOfPins: 0 })
   })
 })
 

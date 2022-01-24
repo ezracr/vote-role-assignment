@@ -2,7 +2,7 @@ import { Message, MessageActionRow, ReplyMessageOptions } from 'discord.js'
 import parseUrls from 'url-regex-safe'
 
 import Managers from '../db/managers'
-import { ChSettingsData, SubmissionType, Submission } from '../db/dbTypes'
+import { ChSettingsData, SubmissionType, Submission, ChSetting } from '../db/dbTypes'
 import {
   unpinMessageByMessageId, pinMessage, hasSomeRoles,
 } from '../discUtils'
@@ -45,38 +45,37 @@ const canSubmit = async (chData: ChSettingsData, msg: Message<boolean>): Promise
   return true
 }
 
-type InputEntry = Pick<Parameters<Managers['documents']['upsert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
+type InputEntry = Pick<Parameters<Managers['submissions']['upsert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
 
 class MessageCreateHandler {
-  constructor(private chConfig: ChSettingsData, private msg: Message<boolean>, private managers: Managers) { }
+  constructor(private chConfig: ChSetting, private msg: Message<boolean>, private managers: Managers) { }
 
   private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {
     if (!this.msg.author.bot) {
-      const canUserSubmit = await canSubmit(this.chConfig, this.msg)
+      const canUserSubmit = await canSubmit(this.chConfig.data, this.msg)
       if (!canUserSubmit) { // TODO merge with `prUrl?.type && prUrl.url`
         return { newMsg: null }
       }
-      const { typeUrl: prUrl } = extractUrl(this.chConfig, this.msg)
+      const { typeUrl: prUrl } = extractUrl(this.chConfig.data, this.msg)
       if (prUrl?.type && prUrl.url) {
-        const isAwarded = await isAlreadyAwarded(this.chConfig, this.msg)
+        const isAwarded = await isAlreadyAwarded(this.chConfig.data, this.msg)
         if (isAwarded) {
-          const title = await fetchSubmTitle(this.msg, prUrl.type, prUrl.url)
-          const inputEntry = { title, submission_type: prUrl.type, link: prUrl.url, is_candidate: false }
-          return { newMsg: { content: config.messages.messageCreateHandler.saved }, entry: inputEntry }
+          const inputSubm = { submission_type: prUrl.type, link: prUrl.url, is_candidate: false }
+          return { newMsg: { content: config.messages.messageCreateHandler.saved }, entry: inputSubm }
         } else {
-          const inputDoc = { title: null, submission_type: prUrl.type, link: prUrl.url, is_candidate: true }
-          const isAppr = isApprovable(this.chConfig)
+          const inputSubm = { submission_type: prUrl.type, link: prUrl.url, is_candidate: true }
+          const isAppr = isApprovable(this.chConfig.data)
           const actionRow = new MessageActionRow({
             components: [
               genLikeButton(),
               genDislikeButton(),
-              ...(isAppr ? [genApproveButton(this.chConfig.approval_threshold ?? 0), genDismissButton()] : []),
+              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0), genDismissButton()] : []),
             ]
           })
           const innerMsg = new VotingMessage({
             authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
-            color: this.chConfig.message_color,
-            chSettData: this.chConfig,
+            color: this.chConfig.data.message_color,
+            chSettData: this.chConfig.data,
             channelId: this.msg.channelId,
           })
 
@@ -84,7 +83,7 @@ class MessageCreateHandler {
             newMsg: {
               components: [actionRow],
               embeds: [innerMsg.toEmbed()],
-            }, entry: inputDoc
+            }, entry: inputSubm
           }
         }
       }
@@ -100,29 +99,32 @@ class MessageCreateHandler {
         await pinMessage(botMsg)
       }
       if (entry) {
-        await this.addToDocuments({ ...entry, message_id: botMsg.id })
+        await this.addToSubmissions({ ...entry, message_id: botMsg.id })
       }
     }
   }
 
-  addToDocuments = async (inputDoc: InputEntry): Promise<Submission | undefined> => {
-    const doc = await this.managers.documents.upsert({
+  addToSubmissions = async (inputSubm: InputEntry): Promise<Submission | undefined> => {
+    const title = await fetchSubmTitle(this.msg, inputSubm.link, inputSubm.submission_type)
+
+    const entry = await this.managers.submissions.upsert({
       user: {
         id: this.msg.author.id,
         tag: this.msg.author.tag,
       },
-      link: inputDoc.link,
-      channel_id: this.msg.channelId,
-      title: inputDoc.title,
-      submission_type: inputDoc.submission_type,
-      is_candidate: inputDoc.is_candidate,
-      message_id: inputDoc.message_id,
+      link: inputSubm.link,
+      ch_sett_id: this.chConfig.id,
+      submission_type: inputSubm.submission_type,
+      is_candidate: inputSubm.is_candidate,
+      message_id: inputSubm.message_id,
+      usr_message_id: this.msg.id,
+      ...(title ? { title } : {}),
     })
-    if (doc?.old_message_id && doc.message_id !== doc.old_message_id) {
-      // await removeMessageByMessageId(this.msg, doc.old_message_id)
-      await unpinMessageByMessageId(this.msg, doc.old_message_id)
+    if (entry?.old_message_id && entry.message_id !== entry.old_message_id) {
+      // await removeMessageByMessageId(this.msg, entry.old_message_id)
+      await unpinMessageByMessageId(this.msg, entry.old_message_id)
     }
-    return doc
+    return entry
   }
 }
 

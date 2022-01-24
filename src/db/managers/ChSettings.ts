@@ -30,7 +30,7 @@ class ChSettings {
 
   async getByChId(channelId: string): Promise<ChSetting | undefined> {
     const { rows } = await pool.query<ChSetting>(`
-      SELECT sts."data"
+      SELECT *
       FROM channel_settings sts
       WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
     `, [channelId])

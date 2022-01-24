@@ -1,42 +1,56 @@
 import { PoolClient } from 'pg'
+import { SetOptional } from 'type-fest'
 
 import pool from '../pool'
 import { Submission, ChSetting } from '../dbTypes'
 import Users from './Users'
-import { helpers } from './manUtils'
+import { helpers, format, formatUpsert } from './manUtils'
 
 type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
-type InsertInput = Pick<Submission, 'user' | 'link' | 'title' | 'submission_type' | 'is_candidate'> & MessageIdReq & { channel_id: ChSetting['channel_id'] }
-type InsertOuput = Submission & { old_message_id: string | undefined }
+type SumbissionOptional = SetOptional<Submission, 'title' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'>
+
+type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings'> & { ch_sett_id: string }
+type UpsertOuput = Submission & { old_message_id: string | undefined }
+
+type PatchFilter = Partial<Pick<Submission, 'message_id' | 'usr_message_id'>>
+
+const genPatchWhereSt = (filter: PatchFilter): string => {
+  const query: string[] = []
+  if (filter.message_id) {
+    query.push(format(`ds."message_id" = $1`, [filter.message_id]))
+  }
+  if (filter.usr_message_id) {
+    query.push(format(`ds."usr_message_id" = $1`, [filter.usr_message_id]))
+  }
+  return query.length === 0 ? 'TRUE' : query.join(' AND ')
+}
 
 class Submissions {
   users = new Users()
 
-  async upsert(data: InsertInput): Promise<InsertOuput | undefined> {
-    const user = await this.users.upsert(data.user)
+  async upsert(data: UpsertInput): Promise<UpsertOuput | undefined> {
+    const { user, ...submission } = data
+    const upUser = await this.users.upsert(user)
 
-    const { rows: [doc] } = await pool.query<InsertOuput>(`
-      INSERT INTO documents ("user_id", "link", "title", "submission_type", "is_candidate", "message_id", "ch_sett_id")
-      VALUES ($1, $2, $4, $5, $6, $7, (SELECT css."id" FROM channel_settings css WHERE css."channel_id" = $3))
-      ON CONFLICT ("link")
-        DO UPDATE SET "is_candidate" = EXCLUDED."is_candidate", "title" = EXCLUDED."title", "message_id" = EXCLUDED."message_id"
-      RETURNING *, (SELECT ds1."message_id" FROM documents ds1 WHERE ds1."link" = $2) "old_message_id"
-    `, [data.user.id, data.link, data.channel_id, data.title, data.submission_type, data.is_candidate, data.message_id])
+    const { rows: [doc] } = await pool.query<UpsertOuput>(`
+      ${formatUpsert({ ...submission, user_id: data.user.id }, ['link'], 'documents')}
+      RETURNING *, (SELECT ds1."message_id" FROM documents ds1 WHERE ds1."link" = $1) "old_message_id"
+    `, [data.link])
 
-    if (doc && user) {
-      doc.user = user
+    if (doc && upUser) {
+      doc.user = upUser
       return doc
     }
   }
 
-  async patchByMsgId(messageId: string, payload: Partial<Omit<Submission, 'message_id'>>): Promise<Submission | undefined> {
+  async patchByFilter(filter: PatchFilter, payload: Partial<Omit<Submission, 'message_id'>>): Promise<Submission | undefined> {
     const setSt = helpers.sets(payload)
     const { rows: [row] } = await pool.query<Submission>(`
       UPDATE documents ds SET ${setSt}
-      WHERE ds."message_id" = $1
+      WHERE ${genPatchWhereSt(filter)}
       RETURNING *
-    `, [messageId])
+    `)
     return row
   }
 
@@ -47,6 +61,15 @@ class Submissions {
       RETURNING *
     `, [oldChId, newChSettId])
     return rows
+  }
+
+  async getByMsgId(messageId: string): Promise<Submission | undefined> {
+    const { rows: [row] } = await pool.query<Submission>(`
+      SELECT *
+      FROM documents_full ds
+      WHERE ds."message_id" = $1
+    `, [messageId])
+    return row
   }
 
   async getNumOfDocsPerChannel(input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>): Promise<{ total: number } | undefined> {
@@ -67,7 +90,7 @@ class Submissions {
     return row
   }
 
-  async getByChannelId(input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] }): Promise<Submission[] | undefined> {
+  async getManyByChannelId(input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] }): Promise<Submission[] | undefined> {
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds

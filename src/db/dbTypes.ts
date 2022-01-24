@@ -35,6 +35,7 @@ export type Submission = {
   submission_type: SubmissionType;
   is_candidate: boolean;
   message_id: string | null;
+  usr_message_id: string | null;
 }
 
 export type Vote = {

@@ -1,16 +1,19 @@
 {
   "name": "vote-role-assignment-bot",
-  "version": "2.1.2",
+  "version": "3.0.0",
   "description": "Assigns a role automatically provided enough votes",
-  "main": "dist/index.js",
+  "main": "dist/bot/src",
   "scripts": {
-    "start": "ts-node-dev --transpile-only src/index.ts",
-    "build": "tsc",
+    "start": "ts-node-dev --project bot/tsconfig.json --transpile-only bot/src/index.ts",
+    "build": "npm run build:web && npm run build:bot",
+    "build:bot": "tsc --p bot",
+    "start:web": "react-scripts start",
+    "build:web": "react-scripts build",
     "start:prod": "node dist/index.js",
     "build:start": "npm run build ; npm run start:prod",
-    "lint": "kcd-scripts lint ./src/**/*.ts ./src/*.ts",
+    "lint": "kcd-scripts lint 'bot/src/**/*.ts'",
     "lint:staged": "lint-staged --allow-empty",
-    "test": "kcd-scripts test --config jest/jest.config.js --runInBand"
+    "test": "kcd-scripts test --config bot/jest/jest.config.js --runInBand"
   },
   "author": "ezracr",
   "license": "MIT",
@@ -23,21 +26,50 @@
     "express": "^4.17.2",
     "path-to-regexp": "^6.2.0",
     "pg": "^8.7.1",
+    "pg-promise": "^10.11.1",
     "url-regex-safe": "^3.0.0"
   },
   "devDependencies": {
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mui/icons-material": "^5.3.1",
+    "@mui/material": "^5.3.1",
     "@types/express": "^4.17.13",
     "@types/node": "^16.11.17",
     "@types/pg": "^8.6.3",
+    "@types/react": "^17.0.38",
+    "@types/react-dom": "^17.0.11",
+    "@types/react-router-dom": "^5.3.3",
     "@types/selenium-webdriver": "^4.0.16",
     "@types/url-regex-safe": "^1.0.0",
     "kcd-scripts": "^11.2.2",
     "lint-staged": "^12.1.4",
     "pre-commit": "^1.2.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-helmet-async": "^1.2.2",
+    "react-router": "^5.2.1",
+    "react-router-dom": "^5.3.0",
+    "react-scripts": "^5.0.0",
     "selenium-webdriver": "^4.1.0",
+    "swr": "^1.1.2",
     "ts-node-dev": "^1.1.8",
+    "type-fest": "^2.10.0",
     "typescript": "^4.5.4"
   },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:3000",
   "lint-staged": {
     "*.ts": [
       "kcd-scripts lint --fix --max-warnings=0",

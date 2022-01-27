@@ -8,5 +8,9 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-parameter-properties': 'off',
-  }
+  },
+  parserOptions: {
+    tsconfigRootDir: `${__dirname}`,
+    project: './bot/tsconfig.json',
+  },
 }

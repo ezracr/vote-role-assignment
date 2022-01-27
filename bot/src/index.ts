@@ -16,16 +16,16 @@ import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/
 import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
 import { testCommand, testCommandHandler } from './__tests__/utils/commands/test'
 import apiMiddleware from './middlewares/apiMiddleware'
-import prodMiddleware from './middlewares/prodMiddleware'
+// import prodMiddleware from './middlewares/prodMiddleware'
 
 const app = express().disable('x-powered-by')
 
 apiMiddleware(app)
-prodMiddleware(app)
+// prodMiddleware(app)
 
-// app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-//   res.status(404).send('Error 404')
-// })
+app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  res.status(404).send('Error 404')
+})
 
 app.listen(config.port, () => console.log('Express server: ✅'))
 

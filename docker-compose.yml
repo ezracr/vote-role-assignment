@@ -10,6 +10,7 @@ services:
     env_file: local.env
 
   app:
+    container_name: vtbot_app
     ports:
       - "5000:3000"
     environment:

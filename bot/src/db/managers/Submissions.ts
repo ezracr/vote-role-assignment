@@ -8,7 +8,7 @@ import { helpers, format, formatUpsert } from './manUtils'
 
 type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
-type SumbissionOptional = SetOptional<Submission, 'title' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'>
+type SumbissionOptional = SetOptional<Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'>
 
 type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings'> & { ch_sett_id: string }
 type UpsertOuput = Submission & { old_message_id: string | undefined }
@@ -96,6 +96,7 @@ class Submissions {
       FROM documents_full ds
       WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
       ORDER BY ds."created" DESC, ds."id"
+      LIMIT 50
     `, [input.channel_id, input.is_candidate])
     return rows
   }

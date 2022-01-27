@@ -37,6 +37,16 @@ class ChSettings {
     return rows[0]
   }
 
+  async getMany(): Promise<ChSetting[]> {
+    const { rows } = await pool.query<ChSetting>(`
+      SELECT *
+      FROM channel_settings sts
+      WHERE sts."is_disabled" = FALSE
+      ORDER BY sts."data"->>'title'
+    `, [])
+    return rows
+  }
+
   async upsert(channelId: string, data: ChSettingsData): Promise<InsSetting | undefined> {
     try {
       const { rows } = await pool.query<InsSetting>(`

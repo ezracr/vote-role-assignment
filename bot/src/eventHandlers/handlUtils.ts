@@ -44,31 +44,34 @@ const normTitle = (type: SubmissionType, title?: string): string | null => {
   return title ?? null
 }
 
-export const extractTitleFromFirstMsgEmbed = (msg: Message<boolean> | PartialMessage | null): string | null => (
-  msg?.embeds[0]?.title ?? null
-)
+type TitleDesc = { title?: string, description?: string }
+
+export const extractTitleDescFromFirstMsgEmbed = (msg: Message<boolean> | PartialMessage | null): TitleDesc => ({
+  title: msg?.embeds[0]?.title ?? undefined,
+  description: msg?.embeds[0]?.description ?? undefined,
+})
 
 /**
  * Fetches the title from embeds
  * Embeds are not available for published Google Docs and Sheets
  */
-export const fetchSubmTitle = async (msg: Message<boolean> | null, url: string, type?: SubmissionType): Promise<string | null> => {
+export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: string, type?: SubmissionType): Promise<TitleDesc> => {
   try {
-    const title = extractTitleFromFirstMsgEmbed(msg)
-    if (title) {
-      return title
+    const titleDesc = extractTitleDescFromFirstMsgEmbed(msg)
+    if (titleDesc.title) {
+      return titleDesc
     }
     if ((type === 'gsheet' || type === 'gdoc') && url.includes('/e/')) {
       if (msg) {
         const res = await axios.get(url, { timeout: 1000 })
         if (typeof res.data === 'string') {
           const matched = res.data.match(/<title>([^<]*)<\/title>/i)
-          return normTitle(type, matched?.[1])
+          return { title: normTitle(type, matched?.[1]) ?? undefined }
         }
       }
     }
   } catch (e: unknown) {
     console.log(e)
   }
-  return null
+  return {}
 }

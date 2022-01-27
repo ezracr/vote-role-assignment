@@ -8,7 +8,7 @@ import {
 } from '../discUtils'
 import config from '../config'
 import {
-  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitle, isApprovable, genDismissButton,
+  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitleDesc, isApprovable, genDismissButton,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
@@ -105,7 +105,7 @@ class MessageCreateHandler {
   }
 
   addToSubmissions = async (inputSubm: InputEntry): Promise<Submission | undefined> => {
-    const title = await fetchSubmTitle(this.msg, inputSubm.link, inputSubm.submission_type)
+    const titleDesc = await fetchSubmTitleDesc(this.msg, inputSubm.link, inputSubm.submission_type)
 
     const entry = await this.managers.submissions.upsert({
       user: {
@@ -118,7 +118,7 @@ class MessageCreateHandler {
       is_candidate: inputSubm.is_candidate,
       message_id: inputSubm.message_id,
       usr_message_id: this.msg.id,
-      ...(title ? { title } : {}),
+      ...titleDesc,
     })
     if (entry?.old_message_id && entry.message_id !== entry.old_message_id) {
       // await removeMessageByMessageId(this.msg, entry.old_message_id)

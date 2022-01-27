@@ -1,5 +1,7 @@
 -- 3.0
 ALTER TABLE documents ADD COLUMN "usr_message_id" text COLLATE "C";
+ALTER TABLE documents ADD COLUMN "description" text;
+
 CREATE INDEX CONCURRENTLY documents_usr_message_id_index ON documents ("usr_message_id");
 DROP VIEW documents_full;
 CREATE OR REPLACE VIEW documents_full AS

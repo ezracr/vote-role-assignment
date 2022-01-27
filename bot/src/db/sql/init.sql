@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS documents(
   "user_id" text COLLATE "C" NOT NULL,
   "link" text NOT NULL,
   "title" text,
+  "description" text,
   "created" timestamp WITH TIME ZONE DEFAULT now() NOT NULL,
   "ch_sett_id" uuid NOT NULL,
   "submission_type" text,

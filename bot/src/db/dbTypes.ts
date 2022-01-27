@@ -30,6 +30,7 @@ export type Submission = {
   id: string;
   link: string;
   title: string | null;
+  description: string | null;
   user: User;
   ch_settings: ChSetting;
   submission_type: SubmissionType;

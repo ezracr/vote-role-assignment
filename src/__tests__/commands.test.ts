@@ -6,7 +6,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init(true)
+  utils = await Utils.init()
   await utils.comm.login1()
 })
 
@@ -235,6 +235,17 @@ describe('Approval', () => {
     await utils.comm.expectApprovedByToContain(utils.comm.currUser.nameAt, msgEl)
     await utils.comm.clickApprove(msgEl)
     await utils.comm.expectApprovedByToNotContain(utils.comm.currUser.nameAt, msgEl)
+  })
+
+  it('Makes dismiss button dissapear when at least one approval', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2 })
+    await utils.comm.sendAddRole2()
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickApprove(msgEl)
+    await utils.comm.expectDismissButtonNotExists(msgEl)
+    await utils.comm.clickApprove(msgEl)
+    await utils.comm.expectDismissButtonExists(msgEl)
   })
 })
 

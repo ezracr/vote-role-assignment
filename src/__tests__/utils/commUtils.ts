@@ -370,6 +370,14 @@ export class CommUtils {
     await this.waitToFinishProcessingInteraction()
   }
 
+  expectDismissButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectNotExists('button:nth-of-type(4)', msg)
+  }
+
+  expectDismissButtonExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectExists('button:nth-of-type(4)', msg)
+  }
+
   clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
     await button.click()

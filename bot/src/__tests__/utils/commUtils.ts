@@ -67,7 +67,9 @@ const msgContainerCss = 'div>div:nth-of-type(2)'
 
 const replaceNewLinesWithWhiteSpaces = (msgTxt: string): string => msgTxt.replaceAll(/[\r\n]+/g, ' ')
 
-function expectOrNot<T extends boolean>(isNot: T, ...args: Parameters<jest.Expect>): T extends true ? jest.Matchers<void, unknown> : jest.JestMatchers<unknown>;
+type ExpectOrNotRet<T extends boolean> = T extends true ? jest.Matchers<void, unknown> : jest.JestMatchers<unknown>;
+
+function expectOrNot<T extends boolean>(isNot: T, ...args: Parameters<jest.Expect>): ExpectOrNotRet<T>;
 function expectOrNot(isNot: boolean, ...args: Parameters<jest.Expect>): jest.Matchers<void, unknown> | jest.JestMatchers<unknown> {
   return isNot ? expect(...args).not : expect(...args) // eslint-disable-line jest/valid-expect
 }
@@ -114,7 +116,7 @@ export class CommUtils {
     return {
       id: isUser1LoggedIn ? user1Id : user2Id,
       name: isUser1LoggedIn ? userName1! : userName2!,
-      nameAt: isUser1LoggedIn ? `@${userName1}` : `@${userName2}`
+      nameAt: isUser1LoggedIn ? `@${userName1}` : `@${userName2}`,
     }
   }
 
@@ -122,7 +124,7 @@ export class CommUtils {
     return {
       id: isUser1LoggedIn ? user2Id : user1Id,
       name: isUser1LoggedIn ? userName2! : userName1!,
-      nameAt: isUser1LoggedIn ? `@${userName2}` : `@${userName1}`
+      nameAt: isUser1LoggedIn ? `@${userName2}` : `@${userName1}`,
     }
   }
 
@@ -308,7 +310,7 @@ export class CommUtils {
   private waitForWasPinnedByMessageToDissapear = async (): Promise<void> => {
     try {
       const msgEl = await this.driver.wait(wd.until.elementLocated(
-        By.xpath('//li/*[@aria-roledescription=\'Message\']//*[contains(text(), \'pinned\')]')
+        By.xpath('//li/*[@aria-roledescription=\'Message\']//*[contains(text(), \'pinned\')]'),
       ), 200)
       await this.driver.wait(wd.until.stalenessOf(msgEl), 200)
     } catch (e: unknown) { }
@@ -393,7 +395,9 @@ export class CommUtils {
     await this.expectMessageContainsText(config.messages.wasNotEnabled)
   }
 
-  expectInfo = async ({ numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs, isNot = false): Promise<void> => {
+  expectInfo = async (
+    { numOfDocs, numOfCandidates, ...args }: { numOfDocs?: number, numOfCandidates?: number } & SetArgs, isNot = false,
+  ): Promise<void> => {
     await this.sendInfo()
     const msgTxt = await this.findMessageText()
     const normExpect = isNot ? expect(msgTxt).not : expect(msgTxt) // eslint-disable-line jest/valid-expect
@@ -430,7 +434,7 @@ export class CommUtils {
     if (chSett) {
       expectOrNot(isNot, stats.chSett).toEqual(expect.objectContaining({
         ...chSett,
-        submitter_roles: expect.arrayContaining(chSett.submitter_roles ?? [])
+        submitter_roles: expect.arrayContaining(chSett.submitter_roles ?? []),
       }))
     }
   }

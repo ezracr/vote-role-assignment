@@ -15,22 +15,22 @@ export const testCommand = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName('clean')
-      .setDescription('Removes the last 100 messages.')
+      .setDescription('Removes the last 100 messages.'),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName('add-role-1')
-      .setDescription('Assigns RoleName1')
+      .setDescription('Assigns RoleName1'),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName('add-role-2')
-      .setDescription('Assigns RoleName2')
+      .setDescription('Assigns RoleName2'),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName('stats')
-      .setDescription('Assigns RoleName2')
+      .setDescription('Assigns RoleName2'),
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
@@ -47,7 +47,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (e instanceof ReportableError) {
       return e.message
     } else {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
     }
   }
   return 'Failed.'

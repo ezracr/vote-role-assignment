@@ -27,8 +27,8 @@ export const updateCommand = new SlashCommandBuilder()
       .addRoleOption(enableOptions.submitterRoles.bind(null, false))
       .addStringOption((option) => option.setName('title')
         .setDescription('The page\'s title.')
-        .setRequired(false)
-      )
+        .setRequired(false),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -38,7 +38,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
-      .addRoleOption(enableOptions.submitterRoles.bind(null, false))
+      .addRoleOption(enableOptions.submitterRoles.bind(null, false)),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -48,7 +48,7 @@ export const updateCommand = new SlashCommandBuilder()
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
-      .addRoleOption(enableOptions.submitterRoles.bind(null, false))
+      .addRoleOption(enableOptions.submitterRoles.bind(null, false)),
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
@@ -76,7 +76,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (e instanceof ReportableError) {
       return e.message
     } else {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
     }
   }
   return 'Failed to update'

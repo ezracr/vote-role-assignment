@@ -56,7 +56,7 @@ describe('/enable', () => {
       chSett: {
         'message_color': '000000',
         'submitter_roles': [roleName2],
-      }
+      },
     })
   })
 
@@ -97,7 +97,7 @@ describe('/update', () => {
       chSett: {
         'message_color': '000000',
         'submitter_roles': [roleName2],
-      }
+      },
     })
   })
 
@@ -109,7 +109,7 @@ describe('/update', () => {
     await utils.comm.expectTestStats({
       chSett: {
         'submitter_roles': [roleName2],
-      }
+      },
     })
   })
 
@@ -121,7 +121,7 @@ describe('/update', () => {
     await utils.comm.expectTestStats({
       chSett: {
         'submitter_roles': [roleName2],
-      }
+      },
     }, true)
   })
 })

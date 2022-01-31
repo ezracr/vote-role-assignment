@@ -13,7 +13,7 @@ export const handleAddRoleCommand = async (managers: Managers, interaction: Comm
       return 'Done'
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
   return 'Failed'
 }

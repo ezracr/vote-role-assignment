@@ -9,7 +9,7 @@ export default function apiMiddleware(app: Application): void {
       const setting = await managers.settings.getByChId(req.params.chId)
       res.json(setting ?? null)
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       res.json(null)
     }
   })
@@ -20,7 +20,7 @@ export default function apiMiddleware(app: Application): void {
       const settings = await managers.settings.getMany()
       res.json(settings)
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       res.json(null)
     }
   })
@@ -34,7 +34,7 @@ export default function apiMiddleware(app: Application): void {
       })
       res.json(subm ?? null)
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       res.json(null)
     }
   })

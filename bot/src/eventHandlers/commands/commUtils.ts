@@ -15,7 +15,9 @@ const findDbGroupPrefix = (key: string, group: GroupType): string | undefined =>
   group.find((grKey) => key.startsWith(grKey))
 )
 
-const normalizeToDbKey = (name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType): [name: string, isGroup: boolean] => {
+const normalizeToDbKey = (
+  name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType,
+): [name: string, isGroup: boolean] => {
   if (group) {
     const groupPrefix = findDbGroupPrefix(name, group)
     if (groupPrefix) {
@@ -70,7 +72,9 @@ export type ConvertToDbTypeRet = Record<string, ValType>
  * @param toArray Convert values of given keys to an array.
  * @param valueOverrides Override value for a given key.
  */
-export const convertToDbType = ({ optionsData, group, appendId, rename, valueOverrides, toArray }: ConvertDbTypeInput): Record<string, ValType> => {
+export const convertToDbType = ({
+  optionsData, group, appendId, rename, valueOverrides, toArray,
+}: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
     const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId, rename)
     const normValue = normalizeToDbValue(val)

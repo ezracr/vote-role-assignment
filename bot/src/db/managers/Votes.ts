@@ -14,7 +14,9 @@ type VoteCountsRes = {
 class Votes {
   users = new Users()
 
-  private async upsert(data: Pick<Vote, 'message_id' | 'user' | 'in_favor' | 'is_approval'>, client?: PoolClient): Promise<Vote | undefined> {
+  private async upsert(
+    data: Pick<Vote, 'message_id' | 'user' | 'in_favor' | 'is_approval'>, client?: PoolClient,
+  ): Promise<Vote | undefined> {
     const user = await this.users.upsert(data.user, client)
 
     const { rows: [vote] } = await (client ?? pool).query<Vote>(`
@@ -45,7 +47,7 @@ class Votes {
       await client.query('COMMIT')
       return res
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       await client.query('ROLLBACK')
     } finally {
       client.release()
@@ -67,7 +69,9 @@ class Votes {
     return rows[0]
   }
 
-  private async deleteByUserMessageId({ user, message_id, is_approval }: Pick<Vote, 'user' | 'message_id' | 'is_approval'>, client?: PoolClient): Promise<string | undefined> {
+  private async deleteByUserMessageId(
+    { user, message_id, is_approval }: Pick<Vote, 'user' | 'message_id' | 'is_approval'>, client?: PoolClient,
+  ): Promise<string | undefined> {
     const { rows } = await (client ?? pool).query<Pick<Vote, 'id'>>(`
       DELETE FROM votes vs WHERE vs."user_id" = $1 AND vs."message_id" = $2 AND vs."is_approval" = $3 RETURNING "id"
     `, [user.id, message_id, is_approval])

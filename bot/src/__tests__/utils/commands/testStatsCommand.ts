@@ -21,7 +21,7 @@ const fetchStats = async (managers: Managers, interaction: CommandInteraction<Ca
   const { channel } = interaction
   const [pinned, member, chSett] = await Promise.all([
     channel?.messages.fetchPinned(), fetchMember(interaction.guildId!, interaction.user.id), // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    managers.settings.getByChId(interaction.channelId)
+    managers.settings.getByChId(interaction.channelId),
   ])
 
   return {
@@ -39,7 +39,7 @@ export const handleStatsCommand = async (managers: Managers, interaction: Comman
       return JSON.stringify(res)
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
   return 'Failed'
 }

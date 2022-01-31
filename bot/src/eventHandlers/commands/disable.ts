@@ -19,6 +19,6 @@ export const disableCommandHandler = async (managers: Managers, interaction: Com
       await interaction.reply({ content: config.messages.wasNotEnabled, ephemeral: true })
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 }

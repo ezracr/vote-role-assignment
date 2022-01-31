@@ -30,7 +30,7 @@ export const assignRoleById = async (guildId: string | Guild, userId: string, ro
       await member.roles.add(roleId)
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 }
 
@@ -48,7 +48,7 @@ export const assignRoleByName = async (guildId: string | Guild, userId: string, 
       await assignRoleById(guild, userId, roleId)
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 }
 
@@ -78,7 +78,7 @@ export const unpinMessageByMessageId = async (currMsg: Message<boolean>, msgId: 
       await msg.unpin()
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 }
 
@@ -91,7 +91,7 @@ export const pinMessage = async (msg?: Message<boolean>): Promise<void> => {
   try {
     await msg?.pin()
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 }
 

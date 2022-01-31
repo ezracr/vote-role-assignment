@@ -146,7 +146,7 @@ class VoteInteractionHandler {
               genDislikeButton(vts?.against_count ?? 0),
               ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0)] : []),
               ...(isAppr && ((apprs?.in_favor_count ?? 0) <= 0) ? [genDismissButton()] : []),
-            ]
+            ],
           })
           if (this.type === 'like' || this.type === 'approve') {
             await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
@@ -156,7 +156,7 @@ class VoteInteractionHandler {
         }
       }
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
     }
     return null
   }

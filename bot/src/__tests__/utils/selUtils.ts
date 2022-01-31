@@ -23,7 +23,7 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
     try {
       return await el.isDisplayed()
     } catch (e: unknown) { }
-    return false;
+    return false
   }
 
   expectIsDisplayed = async (el: wd.WebElement): Promise<void> => (

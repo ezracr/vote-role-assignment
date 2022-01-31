@@ -23,7 +23,7 @@ export const enableCommand = new SlashCommandBuilder()
   .addRoleOption(enableOptions.submitterRoles.bind(null, false))
   .addStringOption((option) => option.setName('title')
     .setDescription('The page\'s title will be taken from channel/thread\'s name if not set.')
-    .setRequired(false)
+    .setRequired(false),
   )
 
 const getChannelName = (interaction: CommandInteraction<CacheType>): string => {
@@ -48,7 +48,7 @@ export const enableCommandHandler = async (managers: Managers, interaction: Comm
     if (e instanceof ReportableError) {
       await interaction.reply({ content: e.message, ephemeral: true })
     } else {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
     }
   }
 }

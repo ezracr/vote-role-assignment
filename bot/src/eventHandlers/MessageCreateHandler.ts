@@ -45,7 +45,10 @@ const canSubmit = async (chData: ChSettingsData, msg: Message<boolean>): Promise
   return true
 }
 
-type InputEntry = Pick<Parameters<Managers['submissions']['upsert']>[0], 'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'>
+type InputEntry = Pick<Parameters<
+  Managers['submissions']['upsert']>[0],
+  'link' | 'submission_type' | 'title' | 'is_candidate' | 'message_id'
+>
 
 class MessageCreateHandler {
   constructor(private chConfig: ChSetting, private msg: Message<boolean>, private managers: Managers) { }
@@ -76,7 +79,7 @@ class MessageCreateHandler {
               genLikeButton(),
               genDislikeButton(),
               ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0), genDismissButton()] : []),
-            ]
+            ],
           })
           const innerMsg = new VotingMessage({
             authorId: this.msg.author.id, url: prUrl.url, inFavorApprovals: isAppr ? [] : undefined,
@@ -89,7 +92,7 @@ class MessageCreateHandler {
             newMsg: {
               components: [actionRow],
               embeds: [innerMsg.toEmbed()],
-            }, entry: inputSubm
+            }, entry: inputSubm,
           }
         }
       }

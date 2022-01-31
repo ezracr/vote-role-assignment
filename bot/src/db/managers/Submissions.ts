@@ -8,7 +8,9 @@ import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
 
 type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
-type SumbissionOptional = SetOptional<Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'>
+type SumbissionOptional = SetOptional<
+  Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'
+>
 
 type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings'> & { ch_sett_id: string }
 type UpsertOuput = Submission & { old_message_id: string | undefined }
@@ -73,7 +75,9 @@ class Submissions {
     return row
   }
 
-  async getNumOfDocsPerChannel(input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>): Promise<{ total: number } | undefined> {
+  async getNumOfDocsPerChannel(
+    input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>,
+  ): Promise<{ total: number } | undefined> {
     const { rows: [row] } = await pool.query<{ total: number }>(`
       SELECT count(*) total
       FROM documents_full ds
@@ -82,7 +86,9 @@ class Submissions {
     return row
   }
 
-  async getNumOfDocsPerUserId(input: { user_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>): Promise<{ total: number } | undefined> {
+  async getNumOfDocsPerUserId(
+    input: { user_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>,
+  ): Promise<{ total: number } | undefined> {
     const { rows: [row] } = await pool.query<{ total: number }>(`
       SELECT count(*) total
       FROM documents_full ds
@@ -91,7 +97,9 @@ class Submissions {
     return row
   }
 
-  async getManyByChannelId(input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] }): Promise<Submission[] | undefined> {
+  async getManyByChannelId(
+    input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] },
+  ): Promise<Submission[] | undefined> {
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds

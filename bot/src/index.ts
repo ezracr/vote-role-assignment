@@ -27,7 +27,7 @@ app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-di
   res.status(404).send('Error 404')
 })
 
-app.listen(config.port, () => console.log('Express server: ✅'))
+app.listen(config.port, () => console.log('Express server: ✅')) // eslint-disable-line no-console
 
 const rest = new REST({ version: '9' }).setToken(config.token)
 
@@ -47,10 +47,10 @@ client.on('ready', async () => {
       const promPermSet = commands.map((command) => command?.permissions.set({ permissions: config.permissions }))
       await Promise.all(promPermSet)
     }
-    console.log('Commands: ✅')
+    console.log('Commands: ✅') // eslint-disable-line no-console
   } catch (e: unknown) {
-    console.log('Commands: ❌')
-    console.log(e)
+    console.log('Commands: ❌') // eslint-disable-line no-console
+    console.log(e) // eslint-disable-line no-console
   }
 })
 
@@ -66,7 +66,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
       await handler.process()
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 })
 
@@ -120,8 +120,8 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
       }
     }
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e) // eslint-disable-line no-console
   }
 })
 
-client.login(config.token).catch((e: unknown) => console.log(e))
+client.login(config.token).catch((e: unknown) => console.log(e)) // eslint-disable-line no-console

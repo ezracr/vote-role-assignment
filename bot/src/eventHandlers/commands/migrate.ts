@@ -12,7 +12,7 @@ export const migrateCommand = new SlashCommandBuilder()
   .addChannelOption(
     (option) => option.setName('channel')
       .setDescription('Channel/thread.')
-      .setRequired(true)
+      .setRequired(true),
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
@@ -29,7 +29,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (e instanceof ReportableError) {
       return e.message
     } else {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
     }
   }
   return messages.failed

@@ -56,12 +56,14 @@ class ChSettings {
       `, [channelId, data])
       return rows[0]
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       throw new ReportableError('Failed to save settings')
     }
   }
 
-  async patchByChId(chId: string, payload: Partial<Omit<ChSetting, 'data'>> & { data?: Partial<ChSetting['data']> }, client?: PoolClient): Promise<ChSetting | undefined> {
+  async patchByChId(
+    chId: string, payload: Partial<Omit<ChSetting, 'data'>> & { data?: Partial<ChSetting['data']> }, client?: PoolClient,
+  ): Promise<ChSetting | undefined> {
     const { data, ...regularFields } = payload
     const setSt = helpers.sets(regularFields)
     const dataSetSt = data
@@ -94,7 +96,7 @@ class ChSettings {
       await client.query('COMMIT')
       return res
     } catch (e: unknown) {
-      console.log(e)
+      console.log(e) // eslint-disable-line no-console
       await client.query('ROLLBACK')
     }
   }

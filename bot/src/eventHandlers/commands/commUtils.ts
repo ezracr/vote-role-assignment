@@ -174,4 +174,4 @@ export const convertEnableToDbType = (optionsData: readonly CommandInteractionOp
   })
 )
 
-export const genLinkToDocPage = (channelId: string): string => `${config.baseUrl}/docs/${channelId}`
+export const genLinkToDocPage = (channelId: string): string => `${config.baseUrl}/${channelId}`

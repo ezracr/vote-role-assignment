@@ -5,3 +5,4 @@ local.env
 pgdata
 docker-compose.override.yml
 private-key.json
+.env.bot.development

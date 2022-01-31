@@ -1,4 +1,10 @@
+import dotenv from 'dotenv'
+
 import pjson from '../../package.json'
+
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '.env.bot.development' })
+}
 
 const config = {
   port: 3000,

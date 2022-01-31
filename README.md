@@ -18,12 +18,28 @@ A discord bot that assigns the specified role automatically provided enough vote
 If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`
 
 ### `local.env` structure
+```
 DISCORD_TOKEN=YourBotsToken  
 POSTGRES_PASSWORD=PickAnyPsqlPass  
 DB_CONNECTION_STRING=postgres://postgres:PickAnyPsqlPass@postgres:5432/bot  
 BASE_URL=http://your-url:5000
+```
 
 If the port is different, then you need to modify it in `docker-compose.yml` and replace `5000` in `"5000:3000"` with something else.
+
+### `.env.bot.development` structure
+If you want to test the project, in addition to the fields above add (name should be user's server name without `@`):
+```bash
+TEST_USER_NAME1=
+TEST_USER_ID1=
+TEST_MAIL1=
+TEST_PASS1=
+TEST_USER_NAME2=
+TEST_USER_ID2=
+TEST_MAIL2=
+TEST_PASS2=
+NODE_ENV=test-vote-discord-bot
+```
 
 ### Docker
 - Docker image can be public, as environmental variables are not stored in images.

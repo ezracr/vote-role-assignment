@@ -16,7 +16,7 @@
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ],
-      "envFile": "${workspaceFolder}/local.env"
+      "envFile": "${workspaceFolder}/.env.bot.development"
     }
   ]
 }

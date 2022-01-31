@@ -11,7 +11,7 @@ import './index.css'
 import App from './App'
 import config from './config'
 
-const fetcher = (url: string): Promise<any> => fetch(url).then((res) => res.json()) // eslint-disable-line @typescript-eslint/no-explicit-any
+const fetcher = (url: string): Promise<any> => fetch(`${config.baseUrl}${url}`).then((res) => res.json()) // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const theme = createTheme({
   palette: {

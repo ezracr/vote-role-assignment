@@ -31,7 +31,7 @@ const extractUrl = (chConfig: ChSettingsData, msg: Message<boolean>): { urlCount
   return { urlCount: matches.length }
 }
 
-const isAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
+const isRoleAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
   if (msg.guildId) {
     return hasSomeRoles(msg.guildId, msg.author.id, chData.awarded_role)
   }
@@ -67,7 +67,7 @@ class MessageCreateHandler {
       if (prUrl?.type && prUrl.url) {
         if (await this.isLinkAlreadySaved(prUrl.url)) return { newMsg: null }
 
-        const isAwarded = await isAlreadyAwarded(this.chConfig.data, this.msg)
+        const isAwarded = await isRoleAlreadyAwarded(this.chConfig.data, this.msg)
         if (isAwarded) {
           const inputSubm = { submission_type: prUrl.type, link: prUrl.url, is_candidate: false }
           return { newMsg: { content: config.messages.messageCreateHandler.saved }, entry: inputSubm }

@@ -142,7 +142,7 @@ export const enableOptions = {
   },
   allowedToApproveUsers(isRequired: boolean, option: SlashCommandUserOption): SlashCommandUserOption {
     return option.setName('approver-users')
-      .setDescription('If set, will allow only users picked to vote')
+      .setDescription('If set, will allow only users picked to approve')
       .setRequired(isRequired)
   },
   submissionThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {

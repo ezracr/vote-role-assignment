@@ -50,6 +50,10 @@ type InputEntry = Pick<Parameters<Managers['submissions']['upsert']>[0], 'link' 
 class MessageCreateHandler {
   constructor(private chConfig: ChSetting, private msg: Message<boolean>, private managers: Managers) { }
 
+  private isLinkAlreadySaved = async (url: string): Promise<boolean> => (
+    Boolean(await this.managers.submissions.getByFilter({ link: url }))
+  )
+
   private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {
     if (!this.msg.author.bot) {
       const canUserSubmit = await canSubmit(this.chConfig.data, this.msg)
@@ -58,6 +62,8 @@ class MessageCreateHandler {
       }
       const { typeUrl: prUrl } = extractUrl(this.chConfig.data, this.msg)
       if (prUrl?.type && prUrl.url) {
+        if (await this.isLinkAlreadySaved(prUrl.url)) return { newMsg: null }
+
         const isAwarded = await isAlreadyAwarded(this.chConfig.data, this.msg)
         if (isAwarded) {
           const inputSubm = { submission_type: prUrl.type, link: prUrl.url, is_candidate: false }

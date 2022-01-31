@@ -330,12 +330,12 @@ describe('Submission types', () => {
     await utils.comm.expectMessageToBeVotingMessage(msg2El)
   })
 
-  it('Does not store duplicated links and duplicated pins', async () => {
+  it('Does not create another voting message on re-submission', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.sendDoc1()
-    await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.comm.expectNewVotingMessageToNotAppear()
     await utils.comm.expectInfo({ numOfCandidates: 1 })
     await utils.comm.expectTestStats({ numOfPins: 1 })
   })
@@ -345,7 +345,7 @@ describe('Submission types', () => {
     await utils.comm.sendDoc1()
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.sendAddRole1()
-    await utils.comm.sendDoc1()
+    await utils.comm.sendSheet1()
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
     await utils.comm.expectTestStats({ numOfPins: 0 })
@@ -356,6 +356,6 @@ describe('Submitter roles', () => {
   it('Prevents from submitting new entries when does not have requred roles', async () => {
     await utils.comm.sendEnable(roleName1, { 'submitter-roles': roleName2 })
     await utils.comm.sendDoc1()
-    await expect(utils.comm.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
+    await utils.comm.expectNewVotingMessageToNotAppear()
   })
 })

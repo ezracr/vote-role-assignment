@@ -4,7 +4,7 @@ import { SetOptional } from 'type-fest'
 import pool from '../pool'
 import { Submission, ChSetting } from '../dbTypes'
 import Users from './Users'
-import { helpers, format, formatUpsert } from './manUtils'
+import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
 
 type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
@@ -63,12 +63,13 @@ class Submissions {
     return rows
   }
 
-  async getByMsgId(messageId: string): Promise<Submission | undefined> {
+  async getByFilter(filter: Partial<Submission>): Promise<Submission | undefined> {
+    const whereConds = formatWhereAnd(filter, 'ds')
     const { rows: [row] } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
-      WHERE ds."message_id" = $1
-    `, [messageId])
+      WHERE ${whereConds}
+    `)
     return row
   }
 

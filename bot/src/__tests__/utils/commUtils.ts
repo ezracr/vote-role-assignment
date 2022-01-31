@@ -378,6 +378,10 @@ export class CommUtils {
     await this.selUtils.expectExists('button:nth-of-type(4)', msg)
   }
 
+  expectNewVotingMessageToNotAppear = async (): Promise<void> => {
+    await expect(this.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
+  }
+
   clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
     await button.click()

@@ -16,3 +16,7 @@ export const formatUpsert = (data: Parameters<typeof helpers.insert>[0], onConfl
   }).join(', ')
   return `${insertSt} ${onConflictSt} ${updateSt}`
 }
+
+export const formatWhereAnd = (data: Record<string, any>, prefix?: string): string => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+  Object.keys(data).map((key) => format(`${prefix ? `${prefix}.` : ''}${pgp.as.name(key)} = $1`, [data[key]])).join(' AND ')
+)

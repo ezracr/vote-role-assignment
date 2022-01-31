@@ -114,7 +114,7 @@ class VoteInteractionHandler {
 
       const message = msg as Message<boolean>
 
-      if (message.embeds[0]) {
+      if (message) {
         await this.managers.votes.processVote({
           message_id: msg.id,
           user: {
@@ -128,6 +128,7 @@ class VoteInteractionHandler {
         const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
         const isAppr = isApprovable(this.chConfig.data)
         const subm = await this.managers.submissions.getByFilter({ message_id:  msg.id })
+
         if (subm) {
           const innMessage = new VotingMessage({
             inFavor: vts?.in_favor,
@@ -152,7 +153,7 @@ class VoteInteractionHandler {
             await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
           }
 
-          return { embeds: [innMessage.toEmbed()], components: [newActionRow] }
+          return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow] }
         }
       }
     } catch (e: unknown) {

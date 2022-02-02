@@ -1,5 +1,5 @@
 import {
-  Message, MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions,
+  MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions,
 } from 'discord.js'
 
 import client from '../client'
@@ -76,7 +76,7 @@ class VoteInteractionHandler {
       }
       if (member) {
         const link = innMessage.url
-        const { type } = processUrl(new URL(link)) ?? {}
+        const { type } = await processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
           await this.managers.submissions.patchByFilter({ message_id: this.interaction.message.id }, {
             is_candidate: false,
@@ -112,50 +112,47 @@ class VoteInteractionHandler {
         || ((this.type === 'approve') && !isAllowedToApprove)
       ) return null
 
-      const message = msg as Message<boolean>
+      await this.managers.votes.processVote({
+        message_id: msg.id,
+        user: {
+          id: user.id,
+          tag: user.tag,
+        },
+        in_favor: this.type === 'like' || this.type === 'approve',
+        is_approval: this.type === 'approve',
+      })
+      const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
+      const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
+      const isAppr = isApprovable(this.chConfig.data)
+      const subm = await this.managers.submissions.getByFilter({ message_id: msg.id })
 
-      if (message) {
-        await this.managers.votes.processVote({
-          message_id: msg.id,
-          user: {
-            id: user.id,
-            tag: user.tag,
-          },
-          in_favor: this.type === 'like' || this.type === 'approve',
-          is_approval: this.type === 'approve',
+      if (subm) {
+        const innMessage = new VotingMessage({
+          inFavor: vts?.in_favor,
+          against: vts?.against,
+          inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
+          chSettData: this.chConfig.data,
+          channelId,
+          authorId: subm.user.id,
+          url: subm.link,
+          color: this.chConfig.data.message_color,
+          title: subm.title,
         })
-        const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
-        const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
-        const isAppr = isApprovable(this.chConfig.data)
-        const subm = await this.managers.submissions.getByFilter({ message_id:  msg.id })
-
-        if (subm) {
-          const innMessage = new VotingMessage({
-            inFavor: vts?.in_favor,
-            against: vts?.against,
-            inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
-            chSettData: this.chConfig.data,
-            channelId,
-            authorId: subm.user.id,
-            url: subm.link,
-            color: this.chConfig.data.message_color,
-            title: subm.title,
-          })
-          const newActionRow = new MessageActionRow({
-            components: [
-              genLikeButton(vts?.in_favor_count ?? 0),
-              genDislikeButton(vts?.against_count ?? 0),
-              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0)] : []),
-              ...(isAppr && ((apprs?.in_favor_count ?? 0) <= 0) ? [genDismissButton()] : []),
-            ],
-          })
-          if (this.type === 'like' || this.type === 'approve') {
-            await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
-          }
-
-          return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow] }
+        const newActionRow = new MessageActionRow({
+          components: [
+            genLikeButton(vts?.in_favor_count ?? 0),
+            genDislikeButton(vts?.against_count ?? 0),
+            ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0)] : []),
+            ...(isAppr && ((apprs?.in_favor_count ?? 0) <= 0) ? [genDismissButton()] : []),
+          ],
+        })
+        if (this.type === 'like' || this.type === 'approve') {
+          await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
         }
+
+        return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow] }
       }
+
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
     }

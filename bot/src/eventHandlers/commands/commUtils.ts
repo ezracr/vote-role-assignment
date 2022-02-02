@@ -4,6 +4,7 @@ import {
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 
 import config from '../../config'
+import { typeToTitleRecord } from '../submissionTypes'
 
 const replaceHyphensInKey = (name: string): string => name.replaceAll('-', '_')
 
@@ -125,13 +126,14 @@ export const enableOptions = {
       .setRequired(isRequired)
   },
   submissionType(isRequired: boolean, option: SlashCommandStringOption): SlashCommandStringOption {
-    return option.setName('submission-types')
+    const opt = option.setName('submission-types')
       .setDescription('Set or override allowed type to submit')
-      .addChoice('Google Sheet', 'gsheet')
-      .addChoice('Google Doc', 'gdoc')
-      .addChoice('Tweet', 'tweet')
-      .addChoice('YouTube video', 'ytvideo')
-      .setRequired(isRequired)
+      .setRequired(isRequired);
+
+      (Object.keys(typeToTitleRecord) as (keyof typeof typeToTitleRecord)[]).forEach((value) => {
+        opt.addChoice(typeToTitleRecord[value], value)
+      })
+      return opt
   },
   approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('approval-threshold')

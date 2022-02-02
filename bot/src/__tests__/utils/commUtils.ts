@@ -167,11 +167,23 @@ export class CommUtils {
   sendHelp = (): Promise<void> => this.sendCommand('help')
 
   doc1Url = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing'
+  doc1UrlNorm = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit'
   docPub1Url = 'https://docs.google.com/document/d/e/2PACX-1vTV7TGOMu2p8UP9VNAt2PEK3qUuNpXFStfS_yZ-s9GdqMhpat0ybx_kBQtWdDW76uMRJ7xzA7DSs0tW/pub#'
+  docPub1UrlNorm = 'https://docs.google.com/document/d/e/2PACX-1vTV7TGOMu2p8UP9VNAt2PEK3qUuNpXFStfS_yZ-s9GdqMhpat0ybx_kBQtWdDW76uMRJ7xzA7DSs0tW/pub'
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
+  sheet1UrlNorm = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit'
   sheetPub1Url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml#'
+  sheetPub1UrlNorm = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
+  tweet1UrlNorm = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221'
   ytvideo1Url = 'https://www.youtube.com/watch?v=zqpFqfeXHnM&feature=youtu.be'
+  ytvideo1UrlNorm = 'https://www.youtube.com/watch?v=zqpFqfeXHnM'
+  openCloudUrl = 'https://soundcloud.com/aiyo-music/leaving-gravity?in=aiyo-music/sets/leaving-gravity-simulations'
+  openCloudUrlNorm = 'https://soundcloud.com/aiyo-music/leaving-gravity'
+  openCloudShortUrl = 'https://soundcloud.app.goo.gl/ca5QEH4zBBq73t63A'
+  openCloudShortUrlNorm = 'https://soundcloud.com/elijahwho/weusedtotalkeverynight'
+  spotifyUrl = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg?si=ae3ee0c8fd734e88'
+  spotifyUrlNorm = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg'
 
   sendDoc1 = (isUniqueQuery = false): Promise<void> => this.sendMessage(`${this.doc1Url}${isUniqueQuery ? Date.now() : ''}`)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
@@ -179,6 +191,9 @@ export class CommUtils {
   sendSheetPub1 = (): Promise<void> => this.sendMessage(this.sheetPub1Url)
   sendTweet1 = (): Promise<void> => this.sendMessage(this.tweet1Url)
   sendYtvideo1 = (): Promise<void> => this.sendMessage(this.ytvideo1Url)
+  sendOpenCloud1 = (): Promise<void> => this.sendMessage(this.openCloudUrl)
+  sendOpenCloudShort1 = (): Promise<void> => this.sendMessage(this.openCloudShortUrl)
+  sendSpotify1 = (): Promise<void> => this.sendMessage(this.spotifyUrl)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)

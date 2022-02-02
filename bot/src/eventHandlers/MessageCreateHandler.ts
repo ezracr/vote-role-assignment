@@ -18,17 +18,15 @@ const isAllowedSubmType = (chData: ChSettingsData, type?: SubmissionType): boole
   return Boolean(!submission_types || submission_types.length === 0 || (type && submission_types.includes(type)))
 }
 
-const extractUrl = (chConfig: ChSettingsData, msg: Message<boolean>): { urlCount: number, typeUrl?: ReturnType<typeof processUrl> } => {
+const extractUrl = async (chConfig: ChSettingsData, msg: Message<boolean>): Promise<ReturnType<typeof processUrl> | undefined> => {
   const matches = msg.content.match(parseUrls()) ?? []
 
   for (const match of matches) {
-    const urlType = processUrl(new URL(match))
+    const urlType = await processUrl(new URL(match)) // eslint-disable-line no-await-in-loop
     if (urlType && isAllowedSubmType(chConfig, urlType.type)) {
-      return { typeUrl: urlType, urlCount: matches.length }
+      return urlType
     }
   }
-
-  return { urlCount: matches.length }
 }
 
 const isRoleAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
@@ -63,7 +61,7 @@ class MessageCreateHandler {
       if (!canUserSubmit) { // TODO merge with `prUrl?.type && prUrl.url`
         return { newMsg: null }
       }
-      const { typeUrl: prUrl } = extractUrl(this.chConfig.data, this.msg)
+      const prUrl = await extractUrl(this.chConfig.data, this.msg)
       if (prUrl?.type && prUrl.url) {
         if (await this.isLinkAlreadySaved(prUrl.url)) return { newMsg: null }
 

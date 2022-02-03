@@ -16,6 +16,7 @@ import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/
 import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
 import { testCommand, testCommandHandler } from './__tests__/utils/commands/test'
 import apiMiddleware from './middlewares/apiMiddleware'
+import cron from './cron'
 // import prodMiddleware from './middlewares/prodMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -46,6 +47,7 @@ client.on('ready', async () => {
       const commands = await Promise.all(promCommands)
       const promPermSet = commands.map((command) => command?.permissions.set({ permissions: config.permissions }))
       await Promise.all(promPermSet)
+      cron(client)
     }
     console.log('[BOT] ✅') // eslint-disable-line no-console
   } catch (e: unknown) {

@@ -28,7 +28,7 @@ export default function apiMiddleware(app: Application): void {
   app.get('/api/submissions/:chId', async (req, res) => {
     try {
       const managers = new Managers()
-      const subm = await managers.submissions.getManyByChannelId({
+      const subm = await managers.submissions.getManyByFilter({
         channel_id: req.params.chId,
         is_candidate: Boolean(req.query.is_candidate),
       })

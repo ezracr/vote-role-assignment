@@ -99,7 +99,7 @@ class VoteInteractionHandler {
       if (this.type === 'dismiss' && isAllowedToApprove) {
         if (msg.type === 'REPLY' && msg.deletable) {
           await msg.delete()
-          await this.managers.submissions.deleteByMessageId({ message_id: msg.id })
+          await this.managers.submissions.deleteByFilter({ message_id: msg.id })
           return false
         }
         return null

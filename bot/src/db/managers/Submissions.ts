@@ -6,8 +6,6 @@ import { Submission, ChSetting } from '../dbTypes'
 import Users from './Users'
 import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
 
-type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
-
 type SumbissionOptional = SetOptional<
   Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'
 >
@@ -24,6 +22,35 @@ const genPatchWhereSt = (filter: PatchFilter): string => {
   }
   if (filter.usr_message_id) {
     query.push(format(`ds."usr_message_id" = $1`, [filter.usr_message_id]))
+  }
+  return query.length === 0 ? 'TRUE' : query.join(' AND ')
+}
+
+type DelFilter = Partial<Submission> & { ids?: string[] }
+
+const genDelWehereSt = ({ ids, ...other }: DelFilter): string | null => {
+  const query: string[] = []
+  if (ids && ids.length > 0) {
+    query.push(format(`ds."id" = ANY ($1::uuid[])`, [ids]))
+  }
+  if (Object.keys(other).length !== 0) {
+    query.push(formatWhereAnd(other, 'ds'))
+  }
+  return query.length === 0 ? null : query.join(' AND ')
+}
+
+type GetManyFilter = Partial<Submission> & Partial<Pick<ChSetting, 'channel_id'>> & { olderThanDays?: number }
+
+const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, ...other }: GetManyFilter): string => {
+  const query: string[] = []
+  if (channel_id) {
+    query.push(format(`ds."ch_settings"->>'channel_id' = $1`, [channel_id]))
+  }
+  if (Object.keys(other).length !== 0) {
+    query.push(formatWhereAnd(other, 'ds'))
+  }
+  if (typeof interval === 'number') {
+    query.push(format(`ds."created" < NOW() - INTERVAL '$1 DAYS'`, [interval]))
   }
   return query.length === 0 ? 'TRUE' : query.join(' AND ')
 }
@@ -97,24 +124,26 @@ class Submissions {
     return row
   }
 
-  async getManyByChannelId(
-    input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] },
-  ): Promise<Submission[] | undefined> {
+  async getManyByFilter(input: GetManyFilter): Promise<Submission[] | undefined> {
+    const whereSt = genGetManyWhereSt(input)
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
-      WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
+      WHERE ${whereSt}
       ORDER BY ds."created" DESC, ds."id"
       LIMIT 50
-    `, [input.channel_id, input.is_candidate])
+    `)
     return rows
   }
 
-  async deleteByMessageId({ message_id }: MessageIdReq): Promise<string | undefined> {
-    const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
-      DELETE FROM documents ds WHERE ds."message_id" = $1 RETURNING "id"
-    `, [message_id])
-    return row?.id
+  async deleteByFilter(filter: DelFilter): Promise<string | undefined> {
+    const whereSt = genDelWehereSt(filter)
+    if (whereSt) {
+      const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
+        DELETE FROM documents ds WHERE ${whereSt} RETURNING "id"
+      `)
+      return row?.id
+    }
   }
 }
 

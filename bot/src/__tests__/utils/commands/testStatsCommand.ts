@@ -34,7 +34,7 @@ const fetchStats = async (managers: Managers, interaction: CommandInteraction<Ca
 export const handleStatsCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
     const { guildId, channel } = interaction
-    if (guildId && channel?.type === 'GUILD_TEXT') {
+    if (guildId && channel && 'messages' in channel) {
       const res = await fetchStats(managers, interaction)
       return JSON.stringify(res)
     }

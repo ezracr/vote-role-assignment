@@ -17,7 +17,7 @@ export default function cleanup(): void {
 
         const result = subms.map(async (subm) => {
           const channel = client.channels.cache.get(subm.ch_settings.channel_id)
-          if (channel?.type === 'GUILD_TEXT' && subm.message_id) {
+          if (channel && 'messages' in channel && subm.message_id) {
             try {
               const msg = await channel.messages.fetch(subm.message_id)
               await msg.unpin()

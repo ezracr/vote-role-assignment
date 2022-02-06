@@ -7,7 +7,7 @@ import { ChSetting } from '../db/dbTypes'
 import Managers from '../db/managers'
 import { assignRoleById, hasSomeRoles } from '../discUtils'
 import {
-  genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable,
+  genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable, isDismissible,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
@@ -143,7 +143,7 @@ class VoteInteractionHandler {
             genLikeButton(vts?.in_favor_count ?? 0),
             genDislikeButton(vts?.against_count ?? 0),
             ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0)] : []),
-            ...(isAppr && ((apprs?.in_favor_count ?? 0) <= 0) ? [genDismissButton()] : []),
+            ...(isDismissible(this.chConfig.data) && (apprs?.in_favor_count ?? 0) <= 0 ? [genDismissButton()] : []),
           ],
         })
         if (this.type === 'like' || this.type === 'approve') {

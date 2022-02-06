@@ -143,12 +143,12 @@ export const enableOptions = {
   },
   allowedToApproveRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('approver-roles')
-      .setDescription('If set, will allow only this role to approve')
+      .setDescription('If set, will allow only this role to approve/dismiss')
       .setRequired(isRequired)
   },
   allowedToApproveUsers(isRequired: boolean, option: SlashCommandUserOption): SlashCommandUserOption {
     return option.setName('approver-users')
-      .setDescription('If set, will allow only users picked to approve')
+      .setDescription('If set, will allow only users picked to approve/dismiss')
       .setRequired(isRequired)
   },
   submissionThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {

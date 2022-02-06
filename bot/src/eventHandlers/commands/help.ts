@@ -4,6 +4,8 @@ import { CommandInteraction, CacheType } from 'discord.js'
 import Managers from '../../db/managers'
 import config from '../../config'
 
+/* eslint-disable max-len */
+
 export const helpCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
   .setName(config.commands.help.name)
@@ -27,6 +29,8 @@ const handleCommand = async (): Promise<string> => {
 \`\`\`
 ${res.join('\n')}
 \`\`\`
+**Approvals/dismissals**
+Either \`approver-roles\` or \`approver-users\` are needed to be set for the dismiss button to show up. In addition to these two, set \`approval-threshold\` if you want the submissions to be approvable.
 `
 }
 

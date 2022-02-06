@@ -74,6 +74,9 @@ function expectOrNot(isNot: boolean, ...args: Parameters<jest.Expect>): jest.Mat
   return isNot ? expect(...args).not : expect(...args) // eslint-disable-line jest/valid-expect
 }
 
+const dismissLocator = By.xpath('.//*[contains(text(), \'Dismiss\')]/ancestor::button')
+const approveLocator = By.xpath('.//*[contains(text(), \'Approve\')]/ancestor::button')
+
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
 
@@ -212,9 +215,10 @@ export class CommUtils {
 
   waitToFinishProcessingInteraction = async (): Promise<void> => {
     try {
-      const loadEl = await this.selUtils.findElementByCss(`${messageContainer} li svg`)
+      const loadEl = await this.selUtils.findElementByCss(`${messageContainer} li svg[class*=dots-]`)
       await this.driver.wait(wd.until.stalenessOf(loadEl), 2000)
     } catch (e: unknown) { } // eslint-disable-line no-empty
+    await this.driver.sleep(200)
   }
 
   findMessage = async (lastIndex = 1): Promise<wd.WebElement> => {
@@ -376,23 +380,31 @@ export class CommUtils {
   }
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(3)', msg)
+    const button = await msg.findElement(approveLocator)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(4)', msg)
+    const button = await msg.findElement(dismissLocator)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   expectDismissButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectNotExists('button:nth-of-type(4)', msg)
+    await this.selUtils.expectNotExists(dismissLocator, msg)
   }
 
   expectDismissButtonExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectExists('button:nth-of-type(4)', msg)
+    await this.selUtils.expectExists(dismissLocator, msg)
+  }
+
+  expectApproveButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectNotExists(approveLocator, msg)
+  }
+
+  expectApproveButtonExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectExists(approveLocator, msg)
   }
 
   expectNewVotingMessageToNotAppear = async (): Promise<void> => {

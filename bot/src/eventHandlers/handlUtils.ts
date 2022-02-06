@@ -30,8 +30,12 @@ export const genDismissButton = (): MessageButton => new MessageButton({
   label: `Dismiss`,
 })
 
-export const isApprovable = (chSettData: ChSettingsData): boolean => (
+export const isDismissible = (chSettData: ChSettingsData): boolean => (
   (chSettData.approver_roles?.length ?? 0) > 0 || (chSettData.approver_users?.length ?? 0) > 0
+)
+
+export const isApprovable = (chSettData: ChSettingsData): boolean => (
+  isDismissible(chSettData) && (chSettData.approval_threshold ?? 0) > 0
 )
 
 /**

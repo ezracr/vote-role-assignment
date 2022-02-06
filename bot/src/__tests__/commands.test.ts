@@ -209,10 +209,20 @@ describe('Voting', () => {
 })
 
 describe('Approval', () => {
+  it('Does not show the approve button without `approval-threshold`', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name, 'approver-roles': roleName1 })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectApproveButtonNotExists(msgEl)
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.comm.expectApproveButtonNotExists(msgEl)
+  })
+
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
       'approver-users': utils.comm.anotherUser.name,
       'approver-roles': roleName2,
+      'approval-threshold': '1',
     })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -221,7 +231,7 @@ describe('Approval', () => {
   })
 
   it('Assigns the role after one approval when no threshold specified', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name })
+    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name, 'approval-threshold': '1' })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
@@ -241,7 +251,7 @@ describe('Approval', () => {
   })
 
   it('Allows to undo an approval', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2 })
+    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2, 'approval-threshold': '1' })
     await utils.comm.sendAddRole2()
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -250,9 +260,20 @@ describe('Approval', () => {
     await utils.comm.clickApprove(msgEl)
     await utils.comm.expectApprovedByToNotContain(utils.comm.currUser.nameAt, msgEl)
   })
+})
 
-  it('Makes dismiss button dissapear when at least one approval', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2 })
+describe('Dismissal', () => {
+  it('Does not show the dismiss button without approver-roles or approver-users', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectDismissButtonNotExists(msgEl)
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.comm.expectDismissButtonNotExists(msgEl)
+  })
+
+  it('Makes the dismiss button dissapear when at least one approval', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2, 'approval-threshold': '1' })
     await utils.comm.sendAddRole2()
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -261,9 +282,7 @@ describe('Approval', () => {
     await utils.comm.clickApprove(msgEl)
     await utils.comm.expectDismissButtonExists(msgEl)
   })
-})
 
-describe('Dismissal', () => {
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
       'approver-users': utils.comm.anotherUser.name,

@@ -8,7 +8,7 @@ import {
 } from '../discUtils'
 import config from '../config'
 import {
-  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitleDesc, isApprovable, genDismissButton,
+  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitleDesc, isApprovable, genDismissButton, isDismissible,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
@@ -76,7 +76,8 @@ class MessageCreateHandler {
             components: [
               genLikeButton(),
               genDislikeButton(),
-              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0), genDismissButton()] : []),
+              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0)] : []),
+              ...(isDismissible(this.chConfig.data) ? [genDismissButton()] : []),
             ],
           })
           const innerMsg = new VotingMessage({

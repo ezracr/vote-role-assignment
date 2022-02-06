@@ -92,16 +92,6 @@ class Submissions {
     return rows
   }
 
-  async getByFilter(filter: Partial<Submission>): Promise<Submission | undefined> {
-    const whereConds = formatWhereAnd(filter, 'ds')
-    const { rows: [row] } = await pool.query<Submission>(`
-      SELECT *
-      FROM documents_full ds
-      WHERE ${whereConds}
-    `)
-    return row
-  }
-
   async getNumOfDocsPerChannel(
     input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>,
   ): Promise<{ total: number } | undefined> {
@@ -124,7 +114,7 @@ class Submissions {
     return row
   }
 
-  async getManyByFilter(input: GetManyFilter): Promise<Submission[] | undefined> {
+  async getManyByFilter(input: GetManyFilter): Promise<Submission[]> {
     const whereSt = genGetManyWhereSt(input)
     const { rows } = await pool.query<Submission>(`
       SELECT *

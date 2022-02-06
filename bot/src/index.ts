@@ -47,7 +47,7 @@ client.on('ready', async () => {
       const commands = await Promise.all(promCommands)
       const promPermSet = commands.map((command) => command?.permissions.set({ permissions: config.permissions }))
       await Promise.all(promPermSet)
-      cron(client)
+      cron()
     }
     console.log('[BOT] ✅') // eslint-disable-line no-console
   } catch (e: unknown) {
@@ -62,7 +62,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
       await msg.delete()
     }
     const managers = new Managers()
-    const chConfig = await managers.settings.getByChId(msg.channelId)
+    const chConfig = (await managers.settings.getMany({ channel_id: msg.channelId }))[0]
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
       await handler.process()
@@ -107,7 +107,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
       const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike' || customId === 'approve' || customId === 'dismiss')) {
-        const chConfig = await managers.settings.getByChId(interaction.channelId)
+        const chConfig = (await managers.settings.getMany({ channel_id: interaction.channelId }))[0]
         if (chConfig) {
           const handler = new VoteInteractionHandler(chConfig, interaction, managers)
 

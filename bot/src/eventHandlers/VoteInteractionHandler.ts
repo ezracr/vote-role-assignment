@@ -124,7 +124,7 @@ class VoteInteractionHandler {
       const vts = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id })
       const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
       const isAppr = isApprovable(this.chConfig.data)
-      const subm = await this.managers.submissions.getByFilter({ message_id: msg.id })
+      const subm = (await this.managers.submissions.getManyByFilter({ message_id: msg.id }))[0]
 
       if (subm) {
         const innMessage = new VotingMessage({

@@ -21,13 +21,13 @@ const fetchStats = async (managers: Managers, interaction: CommandInteraction<Ca
   const { channel } = interaction
   const [pinned, member, chSett] = await Promise.all([
     channel?.messages.fetchPinned(), fetchMember(interaction.guildId!, interaction.user.id), // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    managers.settings.getByChId(interaction.channelId),
+    managers.settings.getMany({ channel_id: interaction.channelId }),
   ])
 
   return {
     numOfPins: pinned?.size ?? 0,
     roles: member?.roles.cache.map((role) => role.name) ?? [],
-    chSett: prepareChSettData(chSett?.data),
+    chSett: prepareChSettData(chSett[0]?.data),
   }
 }
 

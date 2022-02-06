@@ -2,24 +2,23 @@ import React from 'react'
 import Typography from '@mui/material/Typography'
 import { useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
+import Tab from '@mui/material/Tab'
+import TabContext from '@mui/lab/TabContext'
+import TabList from '@mui/lab/TabList'
+import TabPanel from '@mui/lab/TabPanel'
 
-import { ChSetting, Submission } from '../types'
-import SubmTable from './Table'
+import { ChSetting } from '../types'
+import CandidatesTab from './SubmTab'
 
 const SubmissionsPage: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>()
-  const { data: accepted } = useSWR<Submission[]>(`/api/submissions/${channelId}`)
-  const { data: candidates } = useSWR<Submission[]>(`/api/submissions/${channelId}?is_candidate=true`)
   const { data: category } = useSWR<ChSetting>(`/api/categories/${channelId}`)
 
-  if (candidates === undefined) {
-    return (
-      <Box sx={{ display: 'flex' }}>
-        <CircularProgress />
-      </Box>
-    )
+  const [value, setValue] = React.useState('1')
+
+  const handleChange = (event: React.SyntheticEvent, newValue: string): void => {
+    setValue(newValue)
   }
 
   return (
@@ -27,8 +26,18 @@ const SubmissionsPage: React.FC = () => {
       <Typography variant="h1">
         {category?.data.title ?? ''}
       </Typography>
-      <SubmTable items={candidates} title="Candidates" channelId={channelId} />
-      <SubmTable items={accepted} title="Accepted" channelId={channelId} />
+      <Box sx={{ width: '100%', typography: 'body1' }}>
+        <TabContext value={value}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <TabList onChange={handleChange} aria-label="Pick submissions">
+              <Tab label="Accepted" value="1" />
+              <Tab label="Candidates" value="2" />
+            </TabList>
+          </Box>
+          <TabPanel sx={{ padding: 0 }} value="1"><CandidatesTab /></TabPanel>
+          <TabPanel sx={{ padding: 0 }} value="2"><CandidatesTab isCandidate /></TabPanel>
+        </TabContext>
+      </Box>
     </>
   )
 }

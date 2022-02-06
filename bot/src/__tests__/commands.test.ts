@@ -46,6 +46,20 @@ describe('Returns non initilized message when the bot was not enabled in a chann
   })
 })
 
+describe('Message creation', () => {
+  it('Removes "saved to vault" message 2 seconds later', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendAddRole1()
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.sel.expectContainsText(msgEl, messages.messageCreateHandler.saved)
+    await utils.driver.sleep(2300)
+    await utils.sel.expectNotDisplayed(msgEl)
+    const usrMsgEl = await utils.comm.findMessage()
+    await utils.sel.expectExists('[data-name=✅]', usrMsgEl)
+  })
+})
+
 describe('/enable', () => {
   it('Save values set during enable', async () => {
     await utils.comm.sendEnable(roleName1, {

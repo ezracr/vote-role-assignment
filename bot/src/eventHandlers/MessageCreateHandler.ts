@@ -52,7 +52,7 @@ class MessageCreateHandler {
   constructor(private chConfig: ChSetting, private msg: Message<boolean>, private managers: Managers) { }
 
   private isLinkAlreadySaved = async (url: string): Promise<boolean> => (
-    Boolean((await this.managers.submissions.getManyByFilter({ link: url }))[0])
+    Boolean((await this.managers.submissions.getMany({ link: url }))[0])
   )
 
   private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {

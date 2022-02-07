@@ -2,7 +2,7 @@ import { PoolClient } from 'pg'
 import { SetOptional } from 'type-fest'
 
 import pool from '../pool'
-import { Submission, ChSetting } from '../dbTypes'
+import { Submission, ChSetting, PaginatedSubmissions } from '../dbTypes'
 import Users from './Users'
 import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
 
@@ -39,9 +39,40 @@ const genDelWehereSt = ({ ids, ...other }: DelFilter): string | null => {
   return query.length === 0 ? null : query.join(' AND ')
 }
 
-type GetManyFilter = Partial<Submission> & Partial<Pick<ChSetting, 'channel_id'>> & { olderThanDays?: number }
+type GetManyFilter = Partial<Submission>
+  & Partial<Pick<ChSetting, 'channel_id'>>
+  & {
+    olderThanDays?: number;
+    after?: string;
+    limit?: number;
+  }
 
-const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, ...other }: GetManyFilter): string => {
+const encodeCursor = <T extends { id: string }>({
+  limit, fieldName, nodes,
+}: { limit: number, fieldName: keyof T, nodes: T[] }): string | null => {
+  const lastItem = nodes[nodes.length - 1]
+  if (nodes.length < limit || !lastItem) {
+    return null
+  }
+  return Buffer.from(JSON.stringify({ id: lastItem.id, fld: lastItem[fieldName] })).toString('base64')
+}
+
+const decodeCursor = (cursor: string): { id: string, fld: string } | null => {
+  const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  if (decoded) {
+    const { id, fld } = decoded // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    if (typeof id === 'string' && fld === 'string') {
+      const idNorm = id.trim()
+      const fldNorm = fld.trim() // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (idNorm.length === 36 && fldNorm) {
+        return { id: idNorm, fld: fldNorm } // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+      }
+    }
+  }
+  return null
+}
+
+const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, after, ...other }: GetManyFilter): string => {
   const query: string[] = []
   if (channel_id) {
     query.push(format(`ds."ch_settings"->>'channel_id' = $1`, [channel_id]))
@@ -51,6 +82,12 @@ const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, ...other }: Ge
   }
   if (typeof interval === 'number') {
     query.push(format(`ds."created" < NOW() - INTERVAL '$1 DAYS'`, [interval]))
+  }
+  if (after) {
+    const decAfter = decodeCursor(after)
+    if (decAfter) {
+      query.push(format(`(ds."created", ds."id") < ($1, $2)`, [decAfter.fld, decAfter.id]))
+    }
   }
   return query.length === 0 ? 'TRUE' : query.join(' AND ')
 }
@@ -114,16 +151,32 @@ class Submissions {
     return row
   }
 
-  async getManyByFilter(input: GetManyFilter): Promise<Submission[]> {
-    const whereSt = genGetManyWhereSt(input)
+  async getMany({ limit, ...filter }: GetManyFilter): Promise<Submission[]> {
+    const whereSt = genGetManyWhereSt(filter)
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
       WHERE ${whereSt}
-      ORDER BY ds."created" DESC, ds."id"
-      LIMIT 50
-    `)
+      ORDER BY ds."created" DESC, ds."id" DESC
+      LIMIT $1
+    `, [limit ?? 1])
     return rows
+  }
+
+  async getPaginated({ limit = 1, after, ...filter }: GetManyFilter): Promise<PaginatedSubmissions> {
+    const whereSt = genGetManyWhereSt(filter)
+    const nodes = await this.getMany({ limit, after, ...filter })
+    const { rows: [countRes] } = await pool.query<{ count: number }>(`
+      SELECT count(*) "count"
+      FROM documents_full ds
+      WHERE ${whereSt}
+    `)
+
+    return {
+      cursor: encodeCursor<Submission>({ limit, fieldName: 'created', nodes }),
+      count: countRes?.count ?? 0,
+      nodes,
+    }
   }
 
   async deleteByFilter(filter: DelFilter): Promise<string | undefined> {

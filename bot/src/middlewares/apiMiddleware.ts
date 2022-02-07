@@ -28,9 +28,12 @@ export default function apiMiddleware(app: Application): void {
   app.get('/api/submissions/:chId', async (req, res) => {
     try {
       const managers = new Managers()
-      const subm = await managers.submissions.getManyByFilter({
+      const { is_candidate, after } = req.query
+      const subm = await managers.submissions.getPaginated({
         channel_id: req.params.chId,
-        is_candidate: req.query.is_candidate === 'true',
+        is_candidate: is_candidate === 'true',
+        after: typeof after === 'string' ? after : undefined,
+        limit: 50,
       })
       res.json(subm)
     } catch (e: unknown) {

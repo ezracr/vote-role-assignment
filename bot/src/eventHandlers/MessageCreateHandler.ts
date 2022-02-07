@@ -109,9 +109,9 @@ class MessageCreateHandler {
       if (entry) {
         if (!entry.is_candidate) {
           setTimeout(() => botMsg.delete().catch(() => { }), 2000)
+          await this.msg.react('✅')
         }
         await this.addToSubmissions({ ...entry, message_id: entry.is_candidate ? botMsg.id : null })
-        await this.msg.react('✅')
       }
     }
   }

@@ -10,7 +10,7 @@ type SumbissionOptional = SetOptional<
   Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'
 >
 
-type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings'> & { ch_sett_id: string }
+type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
 type UpsertOuput = Submission & { old_message_id: string | undefined }
 
 type PatchFilter = Partial<Pick<Submission, 'message_id' | 'usr_message_id'>>

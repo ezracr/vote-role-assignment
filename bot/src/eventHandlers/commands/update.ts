@@ -80,7 +80,7 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
       return messages.noArgs
     }
     if (interaction.options.getSubcommand() === 'unset') {
-      const selected = optionsData[0]
+      const selected = interaction.options.get('option')
       if (typeof selected?.value === 'string') {
         const [normKey] = normalizeToDbKey(selected.value)
         const res = await managers.settings.removeDataField(interaction.channelId, normKey as keyof ChSettingsData)

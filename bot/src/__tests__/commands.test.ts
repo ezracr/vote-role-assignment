@@ -6,7 +6,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init()
+  utils = await Utils.init(true)
   await utils.comm.login1()
 })
 
@@ -209,7 +209,7 @@ describe('Voting', () => {
     await utils.comm.expectInfo({ numOfDocs: 1 })
   })
 
-  it('Assigns the role when the threshold higher than in favor - against vote count', async () => {
+  it('Assigns the role when the threshold higher than (in favor - against) vote count', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
@@ -217,7 +217,8 @@ describe('Voting', () => {
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    const msg1 = await utils.comm.findLatestBotMessage()
+    await utils.comm.findMessagesContainer()
+    const msg1 = await utils.comm.findMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 0 })
   })

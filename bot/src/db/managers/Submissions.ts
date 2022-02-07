@@ -2,17 +2,15 @@ import { PoolClient } from 'pg'
 import { SetOptional } from 'type-fest'
 
 import pool from '../pool'
-import { Submission, ChSetting } from '../dbTypes'
+import { Submission, ChSetting, PaginatedSubmissions } from '../dbTypes'
 import Users from './Users'
 import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
-
-type MessageIdReq = { message_id: NonNullable<Submission['message_id']> }
 
 type SumbissionOptional = SetOptional<
   Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'
 >
 
-type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings'> & { ch_sett_id: string }
+type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
 type UpsertOuput = Submission & { old_message_id: string | undefined }
 
 type PatchFilter = Partial<Pick<Submission, 'message_id' | 'usr_message_id'>>
@@ -24,6 +22,72 @@ const genPatchWhereSt = (filter: PatchFilter): string => {
   }
   if (filter.usr_message_id) {
     query.push(format(`ds."usr_message_id" = $1`, [filter.usr_message_id]))
+  }
+  return query.length === 0 ? 'TRUE' : query.join(' AND ')
+}
+
+type DelFilter = Partial<Submission> & { ids?: string[] }
+
+const genDelWehereSt = ({ ids, ...other }: DelFilter): string | null => {
+  const query: string[] = []
+  if (ids && ids.length > 0) {
+    query.push(format(`ds."id" = ANY ($1::uuid[])`, [ids]))
+  }
+  if (Object.keys(other).length !== 0) {
+    query.push(formatWhereAnd(other, 'ds'))
+  }
+  return query.length === 0 ? null : query.join(' AND ')
+}
+
+type GetManyFilter = Partial<Submission>
+  & Partial<Pick<ChSetting, 'channel_id'>>
+  & {
+    olderThanDays?: number;
+    after?: string;
+    limit?: number;
+  }
+
+const encodeCursor = <T extends { id: string }>({
+  limit, fieldName, nodes,
+}: { limit: number, fieldName: keyof T, nodes: T[] }): string | null => {
+  const lastItem = nodes[nodes.length - 1]
+  if (nodes.length < limit || !lastItem) {
+    return null
+  }
+  return Buffer.from(JSON.stringify({ id: lastItem.id, fld: lastItem[fieldName] })).toString('base64')
+}
+
+const decodeCursor = (cursor: string): { id: string, fld: string } | null => {
+  const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  if (decoded) {
+    const { id, fld } = decoded // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    if (typeof id === 'string' && fld === 'string') {
+      const idNorm = id.trim()
+      const fldNorm = fld.trim() // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (idNorm.length === 36 && fldNorm) {
+        return { id: idNorm, fld: fldNorm } // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+      }
+    }
+  }
+  return null
+}
+
+const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, after, ...other }: GetManyFilter): string => {
+  const query: string[] = []
+  if (channel_id) {
+    query.push(format(`ds."ch_settings"->>'channel_id' = $1`, [channel_id]))
+  }
+  if (Object.keys(other).length !== 0) {
+    query.push(formatWhereAnd(other, 'ds'))
+  }
+  if (typeof interval === 'number') {
+    query.push(format(`ds."created" < NOW() - INTERVAL '$1 DAYS'`, [interval]))
+  }
+  if (after) {
+    const decAfter = decodeCursor(after)
+    if (decAfter) {
+      query.push(format(`(ds."created", ds."id") < ($1, $2)`, [decAfter.fld, decAfter.id]))
+    }
   }
   return query.length === 0 ? 'TRUE' : query.join(' AND ')
 }
@@ -65,16 +129,6 @@ class Submissions {
     return rows
   }
 
-  async getByFilter(filter: Partial<Submission>): Promise<Submission | undefined> {
-    const whereConds = formatWhereAnd(filter, 'ds')
-    const { rows: [row] } = await pool.query<Submission>(`
-      SELECT *
-      FROM documents_full ds
-      WHERE ${whereConds}
-    `)
-    return row
-  }
-
   async getNumOfDocsPerChannel(
     input: { channel_id: ChSetting['channel_id'] } & Pick<Submission, 'is_candidate'>,
   ): Promise<{ total: number } | undefined> {
@@ -97,24 +151,42 @@ class Submissions {
     return row
   }
 
-  async getManyByChannelId(
-    input: Pick<Submission, 'is_candidate'> & { channel_id: ChSetting['channel_id'] },
-  ): Promise<Submission[] | undefined> {
+  async getMany({ limit, ...filter }: GetManyFilter): Promise<Submission[]> {
+    const whereSt = genGetManyWhereSt(filter)
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
-      WHERE ds."ch_settings"->>'channel_id' = $1 AND ds."is_candidate" = $2
-      ORDER BY ds."created" DESC, ds."id"
-      LIMIT 50
-    `, [input.channel_id, input.is_candidate])
+      WHERE ${whereSt}
+      ORDER BY ds."created" DESC, ds."id" DESC
+      LIMIT $1
+    `, [limit ?? 1])
     return rows
   }
 
-  async deleteByMessageId({ message_id }: MessageIdReq): Promise<string | undefined> {
-    const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
-      DELETE FROM documents ds WHERE ds."message_id" = $1 RETURNING "id"
-    `, [message_id])
-    return row?.id
+  async getPaginated({ limit = 1, after, ...filter }: GetManyFilter): Promise<PaginatedSubmissions> {
+    const whereSt = genGetManyWhereSt(filter)
+    const nodes = await this.getMany({ limit, after, ...filter })
+    const { rows: [countRes] } = await pool.query<{ count: number }>(`
+      SELECT count(*) "count"
+      FROM documents_full ds
+      WHERE ${whereSt}
+    `)
+
+    return {
+      cursor: encodeCursor<Submission>({ limit, fieldName: 'created', nodes }),
+      count: countRes?.count ?? 0,
+      nodes,
+    }
+  }
+
+  async deleteByFilter(filter: DelFilter): Promise<string | undefined> {
+    const whereSt = genDelWehereSt(filter)
+    if (whereSt) {
+      const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
+        DELETE FROM documents ds WHERE ${whereSt} RETURNING "id"
+      `)
+      return row?.id
+    }
   }
 }
 

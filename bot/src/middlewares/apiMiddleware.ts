@@ -6,7 +6,7 @@ export default function apiMiddleware(app: Application): void {
   app.get('/api/categories/:chId', async (req, res) => {
     try {
       const managers = new Managers()
-      const setting = await managers.settings.getByChId(req.params.chId)
+      const setting = (await managers.settings.getMany({ channel_id: req.params.chId }))[0]
       res.json(setting ?? null)
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
@@ -28,11 +28,14 @@ export default function apiMiddleware(app: Application): void {
   app.get('/api/submissions/:chId', async (req, res) => {
     try {
       const managers = new Managers()
-      const subm = await managers.submissions.getManyByChannelId({
+      const { is_candidate, after } = req.query
+      const subm = await managers.submissions.getPaginated({
         channel_id: req.params.chId,
-        is_candidate: Boolean(req.query.is_candidate),
+        is_candidate: is_candidate === 'true',
+        after: typeof after === 'string' ? after : undefined,
+        limit: 50,
       })
-      res.json(subm ?? null)
+      res.json(subm)
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
       res.json(null)

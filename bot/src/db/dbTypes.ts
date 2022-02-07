@@ -5,7 +5,7 @@ export type ChSetting = {
   is_disabled: boolean;
 }
 
-export type SubmissionType = 'gsheet' | 'gdoc' | 'tweet' | 'ytvideo'
+export type SubmissionType = 'gsheet' | 'gdoc' | 'tweet' | 'ytvideo' | 'audio'
 
 export type ChSettingsData = {
   allowed_to_vote_roles?: string[];
@@ -37,6 +37,7 @@ export type Submission = {
   is_candidate: boolean;
   message_id: string | null;
   usr_message_id: string | null;
+  created: string;
 }
 
 export type Vote = {
@@ -45,4 +46,10 @@ export type Vote = {
   in_favor: boolean;
   user: User;
   is_approval?: boolean;
+}
+
+export type PaginatedSubmissions = {
+  cursor: string | null;
+  count: number;
+  nodes: Submission[];
 }

@@ -4,6 +4,7 @@ import {
 import type { CommandInteractionOption, CacheType } from 'discord.js'
 
 import config from '../../config'
+import { typeToTitleRecord } from '../submissionTypes'
 
 const replaceHyphensInKey = (name: string): string => name.replaceAll('-', '_')
 
@@ -15,7 +16,7 @@ const findDbGroupPrefix = (key: string, group: GroupType): string | undefined =>
   group.find((grKey) => key.startsWith(grKey))
 )
 
-const normalizeToDbKey = (
+export const normalizeToDbKey = (
   name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType,
 ): [name: string, isGroup: boolean] => {
   if (group) {
@@ -125,13 +126,14 @@ export const enableOptions = {
       .setRequired(isRequired)
   },
   submissionType(isRequired: boolean, option: SlashCommandStringOption): SlashCommandStringOption {
-    return option.setName('submission-types')
+    const opt = option.setName('submission-types')
       .setDescription('Set or override allowed type to submit')
-      .addChoice('Google Sheet', 'gsheet')
-      .addChoice('Google Doc', 'gdoc')
-      .addChoice('Tweet', 'tweet')
-      .addChoice('YouTube video', 'ytvideo')
-      .setRequired(isRequired)
+      .setRequired(isRequired);
+
+      (Object.keys(typeToTitleRecord) as (keyof typeof typeToTitleRecord)[]).forEach((value) => {
+        opt.addChoice(typeToTitleRecord[value], value)
+      })
+      return opt
   },
   approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('approval-threshold')
@@ -141,12 +143,12 @@ export const enableOptions = {
   },
   allowedToApproveRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('approver-roles')
-      .setDescription('If set, will allow only this role to approve')
+      .setDescription('If set, will allow only this role to approve/dismiss')
       .setRequired(isRequired)
   },
   allowedToApproveUsers(isRequired: boolean, option: SlashCommandUserOption): SlashCommandUserOption {
     return option.setName('approver-users')
-      .setDescription('If set, will allow only users picked to approve')
+      .setDescription('If set, will allow only users picked to approve/dismiss')
       .setRequired(isRequired)
   },
   submissionThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {

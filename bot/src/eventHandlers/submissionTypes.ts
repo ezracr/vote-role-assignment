@@ -1,4 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp'
+import axios from 'axios'
 
 import { SubmissionType } from '../db/dbTypes'
 
@@ -7,13 +8,14 @@ export const typeToTitleRecord = {
   gsheet: 'Google Sheet',
   tweet: 'Tweet',
   ytvideo: 'YouTube video',
+  audio: 'SoundCloud or Spotify track',
 } as const
 
 export type SubmissionTypeTitles = typeof typeToTitleRecord[SubmissionType];
 
 type Val = {
   readonly type: SubmissionType;
-  readonly normalize: (url: URL) => string | null;
+  readonly normalize: (url: URL) => Promise<string | null>;
   readonly shouldFetchTitle: boolean;
 }
 
@@ -22,11 +24,13 @@ const gdocPubMatcher = pathToRegexp('/document/d/e/:id/', undefined, { end: fals
 const gsheetMatcher = pathToRegexp('/spreadsheets/d/:id/', undefined, { end: false })
 const gsheetPubMatcher = pathToRegexp('/spreadsheets/d/e/:id/', undefined, { end: false })
 const tweetMatcher = pathToRegexp('/:user/status/:id', undefined, { end: false })
+const soundCloudMatcher = pathToRegexp('/:user/:track', undefined, { end: false })
+const spotifyMatcher = pathToRegexp('/track/:id', undefined, { end: false })
 
 const detectors: Record<SubmissionType, Val> = {
   gdoc: {
     type: 'gdoc',
-    normalize: (url: URL): string | null => {
+    normalize: async (url: URL): Promise<string | null> => {
       const { hostname, pathname } = url
       if (hostname === 'docs.google.com' && pathname.startsWith('/document/d/')) {
         const isPub = pathname.includes('/e/')
@@ -45,7 +49,7 @@ const detectors: Record<SubmissionType, Val> = {
   },
   gsheet: {
     type: 'gsheet',
-    normalize: (url: URL): string | null => {
+    normalize: async (url: URL): Promise<string | null> => {
       const { hostname, pathname } = url
       if (hostname === 'docs.google.com' && pathname.startsWith('/spreadsheets/d/')) {
         const isPub = pathname.includes('/e/')
@@ -64,7 +68,7 @@ const detectors: Record<SubmissionType, Val> = {
   },
   tweet: {
     type: 'tweet',
-    normalize: (url: URL): string | null => {
+    normalize: async (url: URL): Promise<string | null> => {
       if (url.hostname === 'twitter.com') {
         const matches = url.pathname.match(tweetMatcher)
         const username = matches?.[1]
@@ -79,7 +83,7 @@ const detectors: Record<SubmissionType, Val> = {
   },
   ytvideo: {
     type: 'ytvideo',
-    normalize: (url: URL): string | null => {
+    normalize: async (url: URL): Promise<string | null> => {
       if (url.hostname === 'www.youtube.com') {
         const vidId = url.searchParams.get('v')
         if (vidId) {
@@ -90,15 +94,45 @@ const detectors: Record<SubmissionType, Val> = {
     },
     shouldFetchTitle: false,
   },
+  audio: {
+    type: 'audio',
+    normalize: async (url: URL): Promise<string | null> => {
+      if (url.hostname === 'soundcloud.app.goo.gl' || url.hostname === 'soundcloud.com') {
+        let normUrl = url
+        if (url.hostname === 'soundcloud.app.goo.gl') {
+          const res: string | undefined = (await axios({ method: 'GET', url: url.href, timeout: 1000 })).request.res.responseUrl // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          if (!res) {
+            return null
+          }
+          normUrl = new URL(res)
+        }
+        const matches = normUrl.pathname.match(soundCloudMatcher)
+        const user = matches?.[1]
+        const track = matches?.[2]
+        if (user && track) {
+          return `https://soundcloud.com/${user}/${track}`
+        }
+      }
+      if (url.hostname === 'open.spotify.com') {
+        const matches = url.pathname.match(spotifyMatcher)
+        const id = matches?.[1]
+        if (id) {
+          return `https://open.spotify.com/track/${id}`
+        }
+      }
+      return null
+    },
+    shouldFetchTitle: true,
+  },
 }
 
 export const submissionTypes: ReadonlyMap<SubmissionType, Val> = new Map(Object.entries(detectors) as (readonly [SubmissionType, Val])[])
 
 export const allTypes: SubmissionType[] = Array.from(submissionTypes.keys())
 
-export const processUrl = (url: URL): { type: SubmissionType; url: string; } | null => {
+export const processUrl = async (url: URL): Promise<{ type: SubmissionType; url: string; } | null> => {
   for (const [, detector] of submissionTypes) {
-    const normUrl = detector.normalize(url)
+    const normUrl = await detector.normalize(url) // eslint-disable-line no-await-in-loop
     if (normUrl) {
       return {
         type: detector.type,

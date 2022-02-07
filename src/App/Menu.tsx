@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import useSWR from 'swr'
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Typography from '@mui/material/Typography';
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import Typography from '@mui/material/Typography'
 import { matchPath } from 'react-router'
 import { useLocation, useHistory } from 'react-router-dom'
-import Box from '@mui/material/Box';
+import Box from '@mui/material/Box'
 
 import Link from '../common/Link'
 import { ChSetting } from '../types'

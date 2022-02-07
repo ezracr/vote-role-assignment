@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link as RouterLink, LinkProps as RouterLinkProps } from 'react-router-dom'
-import MatLink, { LinkProps as MatLinkProps } from '@mui/material/Link';
+import MatLink, { LinkProps as MatLinkProps } from '@mui/material/Link'
 
 export type LinkProps = {
 

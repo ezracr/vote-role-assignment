@@ -39,6 +39,8 @@ type SetArgs = {
   'submission-threshold'?: string;
   'message-color'?: string;
 } & AddRemoveArgs
+
+type UpdateUnsetArg = keyof SetArgs
 type EnableOptionalArgs = SetArgs
 
 type TestStatsArg = { numOfPins?: number, roles?: string[], chSett?: Partial<ChSettingsData> }
@@ -73,6 +75,9 @@ function expectOrNot<T extends boolean>(isNot: T, ...args: Parameters<jest.Expec
 function expectOrNot(isNot: boolean, ...args: Parameters<jest.Expect>): jest.Matchers<void, unknown> | jest.JestMatchers<unknown> {
   return isNot ? expect(...args).not : expect(...args) // eslint-disable-line jest/valid-expect
 }
+
+const dismissLocator = By.xpath('.//*[contains(text(), \'Dismiss\')]/ancestor::button')
+const approveLocator = By.xpath('.//*[contains(text(), \'Approve\')]/ancestor::button')
 
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
@@ -138,7 +143,7 @@ export class CommUtils {
     })
   )
 
-  private sendUpdate = (subCommand: 'set' | 'add' | 'del', optArgs: AddRemoveArgs): Promise<void> => (
+  private sendUpdate = (subCommand: 'set' | 'add' | 'subtract' | 'unset', optArgs: AddRemoveArgs): Promise<void> => (
     this.sendCommand(`${config.commands.update.name} ${subCommand}`, {
       opt: transformToListArg(optArgs),
     })
@@ -151,8 +156,14 @@ export class CommUtils {
     this.sendUpdate('set', optArgs)
   )
 
-  sendUpdateDel = (optArgs: SetArgs): Promise<void> => (
-    this.sendUpdate('del', optArgs)
+  sendUpdateSubtract = (optArgs: SetArgs): Promise<void> => (
+    this.sendUpdate('subtract', optArgs)
+  )
+
+  sendUpdateUnset = (arg: UpdateUnsetArg): Promise<void> => (
+    this.sendCommand(`${config.commands.update.name} unset`, {
+      req: [{ listItem: arg }],
+    })
   )
 
   sendAddRole1 = (): Promise<void> => this.sendCommand('test add-role-1')
@@ -167,11 +178,23 @@ export class CommUtils {
   sendHelp = (): Promise<void> => this.sendCommand('help')
 
   doc1Url = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit?usp=sharing'
+  doc1UrlNorm = 'https://docs.google.com/document/d/1dr4w1C7whmPC0gBGdCamhzxGV88q4lelck7tGsZehS0/edit'
   docPub1Url = 'https://docs.google.com/document/d/e/2PACX-1vTV7TGOMu2p8UP9VNAt2PEK3qUuNpXFStfS_yZ-s9GdqMhpat0ybx_kBQtWdDW76uMRJ7xzA7DSs0tW/pub#'
+  docPub1UrlNorm = 'https://docs.google.com/document/d/e/2PACX-1vTV7TGOMu2p8UP9VNAt2PEK3qUuNpXFStfS_yZ-s9GdqMhpat0ybx_kBQtWdDW76uMRJ7xzA7DSs0tW/pub'
   sheet1Url = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit?usp=sharing'
+  sheet1UrlNorm = 'https://docs.google.com/spreadsheets/d/1QyCDY6KBjeg_ylGIdtkUi0E-hRPe5h_ech0n_kYO_rM/edit'
   sheetPub1Url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml#'
+  sheetPub1UrlNorm = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSG650HQvJXyLhdmxiFuEPXerpB5C9WP9VqVSyRnmPNl8Ez0UYzBEhed1aAs2r0YCjS6YX1j5HT3HQ9/pubhtml'
   tweet1Url = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221?usp=sharing'
+  tweet1UrlNorm = 'https://twitter.com/WAGMIcrypto/status/1481005302476681221'
   ytvideo1Url = 'https://www.youtube.com/watch?v=zqpFqfeXHnM&feature=youtu.be'
+  ytvideo1UrlNorm = 'https://www.youtube.com/watch?v=zqpFqfeXHnM'
+  openCloudUrl = 'https://soundcloud.com/aiyo-music/leaving-gravity?in=aiyo-music/sets/leaving-gravity-simulations'
+  openCloudUrlNorm = 'https://soundcloud.com/aiyo-music/leaving-gravity'
+  openCloudShortUrl = 'https://soundcloud.app.goo.gl/ca5QEH4zBBq73t63A'
+  openCloudShortUrlNorm = 'https://soundcloud.com/elijahwho/weusedtotalkeverynight'
+  spotifyUrl = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg?si=ae3ee0c8fd734e88'
+  spotifyUrlNorm = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg'
 
   sendDoc1 = (isUniqueQuery = false): Promise<void> => this.sendMessage(`${this.doc1Url}${isUniqueQuery ? Date.now() : ''}`)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
@@ -179,6 +202,9 @@ export class CommUtils {
   sendSheetPub1 = (): Promise<void> => this.sendMessage(this.sheetPub1Url)
   sendTweet1 = (): Promise<void> => this.sendMessage(this.tweet1Url)
   sendYtvideo1 = (): Promise<void> => this.sendMessage(this.ytvideo1Url)
+  sendOpenCloud1 = (): Promise<void> => this.sendMessage(this.openCloudUrl)
+  sendOpenCloudShort1 = (): Promise<void> => this.sendMessage(this.openCloudShortUrl)
+  sendSpotify1 = (): Promise<void> => this.sendMessage(this.spotifyUrl)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)
@@ -197,9 +223,10 @@ export class CommUtils {
 
   waitToFinishProcessingInteraction = async (): Promise<void> => {
     try {
-      const loadEl = await this.selUtils.findElementByCss(`${messageContainer} li svg`)
-      await this.driver.wait(wd.until.stalenessOf(loadEl), 2000)
+      const loadEl = await this.selUtils.findElementByCss(`${messageContainer} li svg[class*=dots-]`)
+      await this.driver.wait(wd.until.stalenessOf(loadEl), 3000)
     } catch (e: unknown) { } // eslint-disable-line no-empty
+    await this.driver.sleep(200)
   }
 
   findMessage = async (lastIndex = 1): Promise<wd.WebElement> => {
@@ -361,23 +388,31 @@ export class CommUtils {
   }
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(3)', msg)
+    const button = await msg.findElement(approveLocator)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(4)', msg)
+    const button = await msg.findElement(dismissLocator)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   expectDismissButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectNotExists('button:nth-of-type(4)', msg)
+    await this.selUtils.expectNotExists(dismissLocator, msg)
   }
 
   expectDismissButtonExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectExists('button:nth-of-type(4)', msg)
+    await this.selUtils.expectExists(dismissLocator, msg)
+  }
+
+  expectApproveButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectNotExists(approveLocator, msg)
+  }
+
+  expectApproveButtonExists = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectExists(approveLocator, msg)
   }
 
   expectNewVotingMessageToNotAppear = async (): Promise<void> => {
@@ -422,8 +457,10 @@ export class CommUtils {
     return JSON.parse(text)
   }
 
-  expectTestStats = async ({ numOfPins, roles, chSett }: TestStatsArg, isNot = false): Promise<void> => {
-    await this.sendTestStats()
+  expectTestStats = async ({ numOfPins, roles, chSett }: TestStatsArg, { isNot = false, useLast = false } = {}): Promise<void> => {
+    if (!useLast) {
+      await this.sendTestStats()
+    }
     const stats = await this.parseTestStats()
     if (numOfPins) {
       expectOrNot(isNot, stats.numOfPins).toEqual(numOfPins)

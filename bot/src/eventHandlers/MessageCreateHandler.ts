@@ -8,7 +8,7 @@ import {
 } from '../discUtils'
 import config from '../config'
 import {
-  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitleDesc, isApprovable, genDismissButton,
+  genLikeButton, genDislikeButton, genApproveButton, fetchSubmTitleDesc, isApprovable, genDismissButton, isDismissible,
 } from './handlUtils'
 import VotingMessage from './VotingMessage'
 import { processUrl } from './submissionTypes'
@@ -18,17 +18,15 @@ const isAllowedSubmType = (chData: ChSettingsData, type?: SubmissionType): boole
   return Boolean(!submission_types || submission_types.length === 0 || (type && submission_types.includes(type)))
 }
 
-const extractUrl = (chConfig: ChSettingsData, msg: Message<boolean>): { urlCount: number, typeUrl?: ReturnType<typeof processUrl> } => {
+const extractUrl = async (chConfig: ChSettingsData, msg: Message<boolean>): Promise<ReturnType<typeof processUrl> | undefined> => {
   const matches = msg.content.match(parseUrls()) ?? []
 
   for (const match of matches) {
-    const urlType = processUrl(new URL(match))
+    const urlType = await processUrl(new URL(match)) // eslint-disable-line no-await-in-loop
     if (urlType && isAllowedSubmType(chConfig, urlType.type)) {
-      return { typeUrl: urlType, urlCount: matches.length }
+      return urlType
     }
   }
-
-  return { urlCount: matches.length }
 }
 
 const isRoleAlreadyAwarded = async (chData: ChSettingsData, msg: Message<boolean>): Promise<boolean> => {
@@ -54,7 +52,7 @@ class MessageCreateHandler {
   constructor(private chConfig: ChSetting, private msg: Message<boolean>, private managers: Managers) { }
 
   private isLinkAlreadySaved = async (url: string): Promise<boolean> => (
-    Boolean(await this.managers.submissions.getByFilter({ link: url }))
+    Boolean((await this.managers.submissions.getMany({ link: url }))[0])
   )
 
   private genMessage = async (): Promise<{ newMsg: string | ReplyMessageOptions | null; entry?: Omit<InputEntry, 'message_id'> }> => {
@@ -63,7 +61,7 @@ class MessageCreateHandler {
       if (!canUserSubmit) { // TODO merge with `prUrl?.type && prUrl.url`
         return { newMsg: null }
       }
-      const { typeUrl: prUrl } = extractUrl(this.chConfig.data, this.msg)
+      const prUrl = await extractUrl(this.chConfig.data, this.msg)
       if (prUrl?.type && prUrl.url) {
         if (await this.isLinkAlreadySaved(prUrl.url)) return { newMsg: null }
 
@@ -78,7 +76,8 @@ class MessageCreateHandler {
             components: [
               genLikeButton(),
               genDislikeButton(),
-              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0), genDismissButton()] : []),
+              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0)] : []),
+              ...(isDismissible(this.chConfig.data) ? [genDismissButton()] : []),
             ],
           })
           const innerMsg = new VotingMessage({
@@ -108,7 +107,11 @@ class MessageCreateHandler {
         await pinMessage(botMsg)
       }
       if (entry) {
-        await this.addToSubmissions({ ...entry, message_id: botMsg.id })
+        if (!entry.is_candidate) {
+          setTimeout(() => botMsg.delete().catch(() => { }), 2000)
+          await this.msg.react('✅')
+        }
+        await this.addToSubmissions({ ...entry, message_id: entry.is_candidate ? botMsg.id : null })
       }
     }
   }

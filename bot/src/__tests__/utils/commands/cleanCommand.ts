@@ -8,7 +8,7 @@ import { removeRoleByName } from '../../../discUtils'
 
 const removeFromChannelByChId = async (chId: string): Promise<void> => {
   const channel = await client.channels.fetch(chId)
-  if (channel?.type === 'GUILD_TEXT') {
+  if (channel && 'bulkDelete' in channel) {
     const msgs = await channel.messages.fetch({ limit: 100 })
     await channel.bulkDelete(msgs)
   }
@@ -16,8 +16,8 @@ const removeFromChannelByChId = async (chId: string): Promise<void> => {
 
 export const handleCleanCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
   try {
-    const { guildId, channel } = interaction
-    if (guildId && channel?.type === 'GUILD_TEXT') {
+    const { guildId } = interaction
+    if (guildId) {
       await Promise.all([
         removeFromChannelByChId(config.testing.testChannel1Id),
         removeFromChannelByChId(config.testing.testChannel2Id),

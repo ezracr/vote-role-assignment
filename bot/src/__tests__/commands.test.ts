@@ -6,7 +6,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init()
+  utils = await Utils.init(true)
   await utils.comm.login1()
 })
 
@@ -43,6 +43,20 @@ describe('Returns non initilized message when the bot was not enabled in a chann
     await testNonInit('update set', {
       opt: { 'voting-threshold': '1' },
     })
+  })
+})
+
+describe('Message creation', () => {
+  it('Removes "saved to vault" message 2 seconds later', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendAddRole1()
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.sel.expectContainsText(msgEl, messages.messageCreateHandler.saved)
+    await utils.driver.sleep(2300)
+    await utils.sel.expectNotDisplayed(msgEl)
+    const usrMsgEl = await utils.comm.findMessage()
+    await utils.sel.expectExists('[data-name=✅]', usrMsgEl)
   })
 })
 
@@ -113,16 +127,31 @@ describe('/update', () => {
     })
   })
 
-  it('Saves values updated with remove', async () => {
+  it('Saves values updated with subtract', async () => {
     await utils.comm.sendEnable(roleName1, { 'submitter-roles': roleName2 })
-    await utils.comm.sendUpdateDel({
+    await utils.comm.sendUpdateSubtract({
       'submitter-roles': roleName2,
     })
     await utils.comm.expectTestStats({
       chSett: {
         'submitter_roles': [roleName2],
       },
-    }, true)
+    }, { isNot: true })
+  })
+
+  it('Removes fields picked in `unset`', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approval-threshold': '5', 'voting-threshold': '6' })
+    await utils.comm.sendUpdateUnset('approval-threshold')
+    await utils.comm.expectTestStats({
+      chSett: {
+        'approval_threshold': 5,
+      },
+    }, { isNot: true })
+    await utils.comm.expectTestStats({
+      chSett: {
+        'voting_threshold': 6,
+      },
+    }, { useLast: true })
   })
 })
 
@@ -132,7 +161,7 @@ describe('Submission threshold', () => {
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg)
-    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, true)
+    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, { isNot: true })
     await utils.comm.sendSheet1()
     const msg1 = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg1)
@@ -180,7 +209,7 @@ describe('Voting', () => {
     await utils.comm.expectInfo({ numOfDocs: 1 })
   })
 
-  it('Assigns the role when the threshold higher than in favor - against vote count', async () => {
+  it('Assigns the role when the threshold higher than (in favor - against) vote count', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
@@ -188,17 +217,28 @@ describe('Voting', () => {
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    const msg1 = await utils.comm.findLatestBotMessage()
+    await utils.comm.findMessagesContainer()
+    const msg1 = await utils.comm.findMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 0 })
   })
 })
 
 describe('Approval', () => {
+  it('Does not show the approve button without `approval-threshold`', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name, 'approver-roles': roleName1 })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectApproveButtonNotExists(msgEl)
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.comm.expectApproveButtonNotExists(msgEl)
+  })
+
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
       'approver-users': utils.comm.anotherUser.name,
       'approver-roles': roleName2,
+      'approval-threshold': '1',
     })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -207,7 +247,7 @@ describe('Approval', () => {
   })
 
   it('Assigns the role after one approval when no threshold specified', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name })
+    await utils.comm.sendEnable(roleName1, { 'approver-users': utils.comm.currUser.name, 'approval-threshold': '1' })
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickApprove(msgEl)
@@ -227,7 +267,7 @@ describe('Approval', () => {
   })
 
   it('Allows to undo an approval', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2 })
+    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2, 'approval-threshold': '1' })
     await utils.comm.sendAddRole2()
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -236,9 +276,20 @@ describe('Approval', () => {
     await utils.comm.clickApprove(msgEl)
     await utils.comm.expectApprovedByToNotContain(utils.comm.currUser.nameAt, msgEl)
   })
+})
 
-  it('Makes dismiss button dissapear when at least one approval', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2 })
+describe('Dismissal', () => {
+  it('Does not show the dismiss button without approver-roles or approver-users', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.expectDismissButtonNotExists(msgEl)
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.comm.expectDismissButtonNotExists(msgEl)
+  })
+
+  it('Makes the dismiss button dissapear when at least one approval', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approver-roles': roleName2, 'approval-threshold': '1' })
     await utils.comm.sendAddRole2()
     await utils.comm.sendDoc1()
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
@@ -247,9 +298,7 @@ describe('Approval', () => {
     await utils.comm.clickApprove(msgEl)
     await utils.comm.expectDismissButtonExists(msgEl)
   })
-})
 
-describe('Dismissal', () => {
   it('Doesn\'t do anything when approval role/group is different', async () => {
     await utils.comm.sendEnable(roleName1, {
       'approver-users': utils.comm.anotherUser.name,
@@ -286,35 +335,57 @@ describe('Submission types', () => {
     await expect(utils.comm.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
   })
 
-  it('Normalizes link', async () => {
-    await utils.comm.sendEnable(roleName1, { 'submission-types': typeToTitleRecord.gdoc, 'voting-threshold': '1' })
-    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.gsheet })
-    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.tweet })
+  it('Normalizes links, part 1', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submission-types': typeToTitleRecord.tweet, 'voting-threshold': '1' })
     await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.ytvideo })
-    await utils.comm.sendDoc1()
-    const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
-    await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
-    await utils.sel.expectContainsText(msgEl, utils.comm.doc1Url.slice(0, -12))
-    await utils.comm.sendDocPub1()
-    const msg4El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
-    await utils.sel.expectNotContainsText(msg4El, utils.comm.docPub1Url)
-    await utils.sel.expectContainsText(msg4El, utils.comm.docPub1Url.slice(0, -1))
-    await utils.comm.sendSheet1()
-    const msg1El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
-    await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
-    await utils.sel.expectContainsText(msg1El, utils.comm.sheet1Url.slice(0, -12))
-    await utils.comm.sendSheetPub1()
-    const msg5El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
-    await utils.sel.expectNotContainsText(msg5El, utils.comm.sheetPub1Url)
-    await utils.sel.expectContainsText(msg5El, utils.comm.sheetPub1Url.slice(0, -1))
+
     await utils.comm.sendTweet1()
     const msg2El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg2El, utils.comm.tweet1Url)
-    await utils.sel.expectContainsText(msg2El, utils.comm.tweet1Url.slice(0, -12))
+    await utils.sel.expectContainsText(msg2El, utils.comm.tweet1UrlNorm)
     await utils.comm.sendYtvideo1()
     const msg3El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.sel.expectNotContainsText(msg3El, utils.comm.tweet1Url)
-    await utils.sel.expectContainsText(msg3El, utils.comm.ytvideo1Url.slice(0, -17))
+    await utils.sel.expectContainsText(msg3El, utils.comm.ytvideo1UrlNorm)
+  })
+
+  it('Normalizes google sheet/doc links', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submission-types': typeToTitleRecord.gdoc, 'voting-threshold': '1' })
+    await utils.comm.sendUpdateAdd({ 'submission-types': typeToTitleRecord.gsheet })
+
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msgEl, utils.comm.doc1Url)
+    await utils.sel.expectContainsText(msgEl, utils.comm.doc1UrlNorm)
+    await utils.comm.sendDocPub1()
+    const msg4El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg4El, utils.comm.docPub1Url)
+    await utils.sel.expectContainsText(msg4El, utils.comm.docPub1UrlNorm)
+    await utils.comm.sendSheet1()
+    const msg1El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg1El, utils.comm.sheet1Url)
+    await utils.sel.expectContainsText(msg1El, utils.comm.sheet1UrlNorm)
+    await utils.comm.sendSheetPub1()
+    const msg5El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg5El, utils.comm.sheetPub1Url)
+    await utils.sel.expectContainsText(msg5El, utils.comm.sheetPub1UrlNorm)
+  })
+
+  it('Normalizes audio links', async () => {
+    await utils.comm.sendEnable(roleName1, { 'submission-types': typeToTitleRecord.audio })
+
+    await utils.comm.sendOpenCloud1()
+    const msg6El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg6El, utils.comm.openCloudUrl)
+    await utils.sel.expectContainsText(msg6El, utils.comm.openCloudUrlNorm)
+    await utils.comm.sendOpenCloudShort1()
+    const msg7El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg7El, utils.comm.openCloudShortUrl)
+    await utils.sel.expectContainsText(msg7El, utils.comm.openCloudShortUrlNorm)
+    await utils.comm.sendSpotify1()
+    const msg8El = await utils.comm.findAboutToAppearBotEmbedMessageBody()
+    await utils.sel.expectNotContainsText(msg8El, utils.comm.spotifyUrl)
+    await utils.sel.expectContainsText(msg8El, utils.comm.spotifyUrlNorm)
   })
 
   it('If not set, allows any type to be sent', async () => {

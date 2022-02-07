@@ -16,6 +16,7 @@ import { migrateCommand, migrateCommandHandler } from './eventHandlers/commands/
 import { helpCommand, helpCommandHandler } from './eventHandlers/commands/help'
 import { testCommand, testCommandHandler } from './__tests__/utils/commands/test'
 import apiMiddleware from './middlewares/apiMiddleware'
+import cron from './cron'
 // import prodMiddleware from './middlewares/prodMiddleware'
 
 const app = express().disable('x-powered-by')
@@ -27,7 +28,7 @@ app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-di
   res.status(404).send('Error 404')
 })
 
-app.listen(config.port, () => console.log('[WEB SERVER] ✅')) // eslint-disable-line no-console
+app.listen(config.port, () => console.log('[WEB] ✅')) // eslint-disable-line no-console
 
 const rest = new REST({ version: '9' }).setToken(config.token)
 
@@ -46,6 +47,7 @@ client.on('ready', async () => {
       const commands = await Promise.all(promCommands)
       const promPermSet = commands.map((command) => command?.permissions.set({ permissions: config.permissions }))
       await Promise.all(promPermSet)
+      cron()
     }
     console.log('[BOT] ✅') // eslint-disable-line no-console
   } catch (e: unknown) {
@@ -60,7 +62,7 @@ client.on('messageCreate', async (msg): Promise<void> => {
       await msg.delete()
     }
     const managers = new Managers()
-    const chConfig = await managers.settings.getByChId(msg.channelId)
+    const chConfig = (await managers.settings.getMany({ channel_id: msg.channelId }))[0]
     if (chConfig) {
       const handler = new MessageCreateHandler(chConfig, msg, managers)
       await handler.process()
@@ -105,7 +107,7 @@ client.on("interactionCreate", async (interaction): Promise<void> => {
     if (interaction.isButton()) {
       const { customId } = interaction
       if ((customId === 'like' || customId === 'dislike' || customId === 'approve' || customId === 'dismiss')) {
-        const chConfig = await managers.settings.getByChId(interaction.channelId)
+        const chConfig = (await managers.settings.getMany({ channel_id: interaction.channelId }))[0]
         if (chConfig) {
           const handler = new VoteInteractionHandler(chConfig, interaction, managers)
 

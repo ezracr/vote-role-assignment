@@ -39,6 +39,8 @@ type SetArgs = {
   'submission-threshold'?: string;
   'message-color'?: string;
 } & AddRemoveArgs
+
+type UpdateUnsetArg = keyof SetArgs
 type EnableOptionalArgs = SetArgs
 
 type TestStatsArg = { numOfPins?: number, roles?: string[], chSett?: Partial<ChSettingsData> }
@@ -141,7 +143,7 @@ export class CommUtils {
     })
   )
 
-  private sendUpdate = (subCommand: 'set' | 'add' | 'del', optArgs: AddRemoveArgs): Promise<void> => (
+  private sendUpdate = (subCommand: 'set' | 'add' | 'subtract' | 'unset', optArgs: AddRemoveArgs): Promise<void> => (
     this.sendCommand(`${config.commands.update.name} ${subCommand}`, {
       opt: transformToListArg(optArgs),
     })
@@ -154,8 +156,14 @@ export class CommUtils {
     this.sendUpdate('set', optArgs)
   )
 
-  sendUpdateDel = (optArgs: SetArgs): Promise<void> => (
-    this.sendUpdate('del', optArgs)
+  sendUpdateSubtract = (optArgs: SetArgs): Promise<void> => (
+    this.sendUpdate('subtract', optArgs)
+  )
+
+  sendUpdateUnset = (arg: UpdateUnsetArg): Promise<void> => (
+    this.sendCommand(`${config.commands.update.name} unset`, {
+      req: [{ listItem: arg }],
+    })
   )
 
   sendAddRole1 = (): Promise<void> => this.sendCommand('test add-role-1')
@@ -216,7 +224,7 @@ export class CommUtils {
   waitToFinishProcessingInteraction = async (): Promise<void> => {
     try {
       const loadEl = await this.selUtils.findElementByCss(`${messageContainer} li svg[class*=dots-]`)
-      await this.driver.wait(wd.until.stalenessOf(loadEl), 2000)
+      await this.driver.wait(wd.until.stalenessOf(loadEl), 3000)
     } catch (e: unknown) { } // eslint-disable-line no-empty
     await this.driver.sleep(200)
   }
@@ -449,8 +457,10 @@ export class CommUtils {
     return JSON.parse(text)
   }
 
-  expectTestStats = async ({ numOfPins, roles, chSett }: TestStatsArg, isNot = false): Promise<void> => {
-    await this.sendTestStats()
+  expectTestStats = async ({ numOfPins, roles, chSett }: TestStatsArg, { isNot = false, useLast = false } = {}): Promise<void> => {
+    if (!useLast) {
+      await this.sendTestStats()
+    }
     const stats = await this.parseTestStats()
     if (numOfPins) {
       expectOrNot(isNot, stats.numOfPins).toEqual(numOfPins)

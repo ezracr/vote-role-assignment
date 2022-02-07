@@ -111,18 +111,38 @@ class ChSettings {
     }
   }
 
-  async patchDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isDel = false): Promise<ChSetting | undefined> {
+  async removeDataField(channelId: string, fieldName: keyof ChSettingsData): Promise<ChSetting | undefined> {
     const client = await pool.connect()
     await client.query('BEGIN')
     const { rows: [oldChSett] } = await client.query<ChSetting>(`
       SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
     `, [channelId])
     if (oldChSett?.data) {
-      const mergedData = modifyArrVals(oldChSett.data, data, isDel)
+      delete oldChSett.data[fieldName] // eslint-disable-line @typescript-eslint/no-dynamic-delete
+      const { rows: [row] } = await client.query<ChSetting>(`
+        UPDATE channel_settings sts SET data = $2
+        WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
+        RETURNING *
+      `, [channelId, oldChSett.data])
+      await client.query('COMMIT')
+      return row
+    }
+    await client.query('COMMIT')
+  }
+
+  async patchDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isPop = false): Promise<ChSetting | undefined> {
+    const client = await pool.connect()
+    await client.query('BEGIN')
+    const { rows: [oldChSett] } = await client.query<ChSetting>(`
+      SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
+    `, [channelId])
+    if (oldChSett?.data) {
+      const mergedData = modifyArrVals(oldChSett.data, data, isPop)
       const chSettNew = this.patchByChId(channelId, { data: mergedData })
       await client.query('COMMIT')
       return chSettNew
     }
+    await client.query('COMMIT')
   }
 }
 

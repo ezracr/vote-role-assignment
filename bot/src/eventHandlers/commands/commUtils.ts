@@ -16,7 +16,7 @@ const findDbGroupPrefix = (key: string, group: GroupType): string | undefined =>
   group.find((grKey) => key.startsWith(grKey))
 )
 
-const normalizeToDbKey = (
+export const normalizeToDbKey = (
   name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType,
 ): [name: string, isGroup: boolean] => {
   if (group) {

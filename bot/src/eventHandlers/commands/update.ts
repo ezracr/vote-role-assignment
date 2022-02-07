@@ -5,7 +5,9 @@ import Managers from '../../db/managers'
 import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
-import { enableOptions, convertEnableToDbType as convertEnableDataToDbSettData } from './commUtils'
+import {
+  enableOptions, convertEnableToDbType as convertEnableDataToDbSettData, normalizeToDbKey,
+} from './commUtils'
 
 export const updateCommand = new SlashCommandBuilder()
   .setDefaultPermission(false)
@@ -42,13 +44,32 @@ export const updateCommand = new SlashCommandBuilder()
   )
   .addSubcommand((subcommand) =>
     subcommand
-      .setName('del')
+      .setName('subtract')
       .setDescription('Remove values from array params.')
       .addStringOption(enableOptions.submissionType.bind(null, false))
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addRoleOption(enableOptions.allowedToApproveRoles.bind(null, false))
       .addUserOption(enableOptions.allowedToApproveUsers.bind(null, false))
       .addRoleOption(enableOptions.submitterRoles.bind(null, false)),
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('unset')
+      .setDescription('Unset values')
+      .addStringOption((option) =>
+        option.setName('option')
+          .setDescription('Pick an option to unset')
+          .setRequired(true)
+          .addChoice('voting-threshold', 'voting-threshold')
+          .addChoice('allowed-to-vote-roles', 'allowed-to-vote-roles')
+          .addChoice('submission-types', 'submission-types')
+          .addChoice('approval-threshold', 'approval-threshold')
+          .addChoice('approver-roles', 'approver-roles')
+          .addChoice('approver-users', 'approver-users')
+          .addChoice('submission-threshold', 'submission-threshold')
+          .addChoice('message-color', 'message-color')
+          .addChoice('submitter-roles', 'submitter-roles'),
+      ),
   )
 
 const handleCommand = async (managers: Managers, interaction: CommandInteraction<CacheType>): Promise<string> => {
@@ -58,12 +79,20 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (!optionsData || optionsData.length === 0) {
       return messages.noArgs
     }
+    if (interaction.options.getSubcommand() === 'unset') {
+      const selected = optionsData[0]
+      if (typeof selected?.value === 'string') {
+        const [normKey] = normalizeToDbKey(selected.value)
+        const res = await managers.settings.removeDataField(interaction.channelId, normKey as keyof ChSettingsData)
+        if (res) return messages.done
+      }
+    }
     const dbSettData = convertEnableDataToDbSettData(optionsData)
     if (interaction.options.getSubcommand() === 'add') {
       const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData)
       if (res) return messages.done
     }
-    if (interaction.options.getSubcommand() === 'del') {
+    if (interaction.options.getSubcommand() === 'subtract') {
       const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData, true)
       if (res) return messages.done
     }

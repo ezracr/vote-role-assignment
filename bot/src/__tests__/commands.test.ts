@@ -127,16 +127,31 @@ describe('/update', () => {
     })
   })
 
-  it('Saves values updated with remove', async () => {
+  it('Saves values updated with subtract', async () => {
     await utils.comm.sendEnable(roleName1, { 'submitter-roles': roleName2 })
-    await utils.comm.sendUpdateDel({
+    await utils.comm.sendUpdateSubtract({
       'submitter-roles': roleName2,
     })
     await utils.comm.expectTestStats({
       chSett: {
         'submitter_roles': [roleName2],
       },
-    }, true)
+    }, { isNot: true })
+  })
+
+  it('Removes fields picked in `unset`', async () => {
+    await utils.comm.sendEnable(roleName1, { 'approval-threshold': '5', 'voting-threshold': '6' })
+    await utils.comm.sendUpdateUnset('approval-threshold')
+    await utils.comm.expectTestStats({
+      chSett: {
+        'approval_threshold': 5,
+      },
+    }, { isNot: true })
+    await utils.comm.expectTestStats({
+      chSett: {
+        'voting_threshold': 6,
+      },
+    }, { useLast: true })
   })
 })
 
@@ -146,7 +161,7 @@ describe('Submission threshold', () => {
     await utils.comm.sendDoc1()
     const msg = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg)
-    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, true)
+    await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, { isNot: true })
     await utils.comm.sendSheet1()
     const msg1 = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickVoteInFavor(msg1)

@@ -1,6 +1,6 @@
 {
   "name": "vote-role-assignment-bot",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Assigns a role automatically provided enough votes",
   "main": "dist/bot/src",
   "scripts": {

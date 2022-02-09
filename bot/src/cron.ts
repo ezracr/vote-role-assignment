@@ -7,7 +7,7 @@ export default function cleanup(): void {
   cron.schedule('0 0 * * *', async () => {
     try {
       const managers = new Managers()
-      const subms = await managers.submissions.getMany({ is_candidate: true, olderThanDays: 30 })
+      const subms = await managers.submissions.getMany({ is_candidate: true, olderThanDays: 30, limit: 50 })
       if (subms.length > 0) {
         await Promise.all(subms.map((subm) => (
           client.channels

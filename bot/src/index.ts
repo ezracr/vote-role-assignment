@@ -28,7 +28,7 @@ app.use((err: any, req: any, res: express.Response, next: any) => { // eslint-di
   res.status(404).send('Error 404')
 })
 
-app.listen(config.port, () => console.log('[WEB] ✅')) // eslint-disable-line no-console
+app.listen(config.port, () => console.log('[API] ✅')) // eslint-disable-line no-console
 
 const rest = new REST({ version: '9' }).setToken(config.token)
 

@@ -61,7 +61,7 @@ const decodeCursor = (cursor: string): { id: string, fld: string } | null => {
   const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   if (decoded) {
     const { id, fld } = decoded // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    if (typeof id === 'string' && fld === 'string') {
+    if (typeof id === 'string' && typeof fld === 'string') {
       const idNorm = id.trim()
       const fldNorm = fld.trim() // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (idNorm.length === 36 && fldNorm) {

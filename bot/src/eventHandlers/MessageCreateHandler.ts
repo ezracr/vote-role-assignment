@@ -98,7 +98,7 @@ class MessageCreateHandler {
             components: [
               genLikeButton(),
               genDislikeButton(),
-              ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0)] : []),
+              ...(isAppr ? [genApproveButton({ totalCount: this.chConfig.data.approval_threshold ?? 0 })] : []),
               ...(isDismissible(this.chConfig.data) ? [genDismissButton()] : []),
             ],
           })

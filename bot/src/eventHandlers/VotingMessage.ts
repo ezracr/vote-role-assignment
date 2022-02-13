@@ -18,7 +18,8 @@ type VotingMessageArg = {
   channelId: string;
   title?: string | null;
   similar?: Submission[] | string;
-  image?: MessageEmbedOptions['thumbnail'] | null
+  image?: MessageEmbedOptions['thumbnail'] | null;
+  isRejected?: boolean;
 }
 
 type FromArg = { oldEmbed: MessageEmbed | APIEmbed } & VotingMessageArg
@@ -50,6 +51,7 @@ class VotingMessage {
   title: VotingMessageArg['title']
   similar?: Submission[] | string
   image?: MessageEmbedOptions['thumbnail'] | null
+  isRejected?: boolean
 
   constructor(arg: VotingMessageArg) {
     this.authorId = arg.authorId
@@ -63,6 +65,7 @@ class VotingMessage {
     this.title = arg.title
     this.similar = arg.similar
     this.image = arg.image
+    this.isRejected = arg.isRejected
   }
 
   private calcTotalVotes = (): string => (
@@ -97,7 +100,7 @@ class VotingMessage {
         // },
         {
           name: 'Total votes',
-          value: this.calcTotalVotes(),
+          value: this.isRejected ? 'Rejected' : this.calcTotalVotes(),
           inline: true,
         },
         ...(((allowed_to_vote_roles?.length ?? 0) > 0) ? [{

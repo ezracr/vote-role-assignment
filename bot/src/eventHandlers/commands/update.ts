@@ -19,6 +19,7 @@ export const updateCommand = new SlashCommandBuilder()
       .setDescription('Set new values.')
       .addRoleOption(enableOptions.awardedRole.bind(null, false))
       .addIntegerOption(enableOptions.votingThreshold.bind(null, false))
+      .addIntegerOption(enableOptions.votingAgainstThreshold.bind(null, false))
       .addRoleOption(enableOptions.allowedToVoteRole.bind(null, false))
       .addStringOption(enableOptions.submissionType.bind(null, false))
       .addIntegerOption(enableOptions.approvalThreshold.bind(null, false))
@@ -68,7 +69,8 @@ export const updateCommand = new SlashCommandBuilder()
           .addChoice('approver-users', 'approver-users')
           .addChoice('submission-threshold', 'submission-threshold')
           .addChoice('message-color', 'message-color')
-          .addChoice('submitter-roles', 'submitter-roles'),
+          .addChoice('submitter-roles', 'submitter-roles')
+          .addChoice('voting-against-threshold', 'voting-against-threshold'),
       ),
   )
 

@@ -68,11 +68,13 @@ describe('/enable', () => {
     await utils.comm.sendEnable(roleName1, {
       'message-color': '000000',
       'submitter-roles': roleName2,
+      'voting-against-threshold': '1',
     })
     await utils.comm.expectTestStats({
       chSett: {
         'message_color': '000000',
         'submitter_roles': [roleName2],
+        'voting_against_threshold': 1,
       },
     })
   })
@@ -143,11 +145,17 @@ describe('/update', () => {
   })
 
   it('Removes fields picked in `unset`', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approval-threshold': '5', 'voting-threshold': '6' })
+    await utils.comm.sendEnable(roleName1, {
+      'approval-threshold': '5',
+      'voting-threshold': '6',
+      'voting-against-threshold': '1',
+    })
     await utils.comm.sendUpdateUnset('approval-threshold')
+    await utils.comm.sendUpdateUnset('voting-against-threshold')
     await utils.comm.expectTestStats({
       chSett: {
         'approval_threshold': 5,
+        'voting_against_threshold': 1,
       },
     }, { isNot: true })
     await utils.comm.expectTestStats({
@@ -155,6 +163,41 @@ describe('/update', () => {
         'voting_threshold': 6,
       },
     }, { useLast: true })
+  })
+})
+
+describe('Downvoting threshold', () => {
+  it('Disables the buttons and removes a submission when reached', async () => {
+    await utils.comm.sendEnable(roleName1, {
+      'voting-against-threshold': '1', 'approver-roles': roleName2, 'approval-threshold': '1',
+    })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteAgainst(msgEl)
+    const inFavorEl = await utils.comm.findInFavorButton(msgEl)
+    const againstEl = await utils.comm.findInFavorButton(msgEl)
+    const approveEl = await utils.comm.findApproveButton(msgEl)
+    const dismissEl = await utils.comm.findDismissButton(msgEl)
+    expect(await inFavorEl.isEnabled()).toBeFalsy()
+    expect(await againstEl.isEnabled()).toBeFalsy()
+    expect(await approveEl.isEnabled()).toBeFalsy()
+    expect(await dismissEl.isEnabled()).toBeFalsy()
+    await utils.comm.expectToBeRejectedMessage(msgEl)
+    await utils.comm.expectInfo({ numOfCandidates: 0 })
+  })
+
+  it('Subtracts upvotes from downvotes', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-against-threshold': '1' })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msgEl)
+    await utils.reInit()
+    await utils.comm.loginAnotherUser()
+    await utils.comm.openTestChannel1()
+    await utils.comm.waitTillReady()
+    const msg1El = await utils.comm.findMessage()
+    await utils.comm.clickVoteAgainst(msg1El)
+    await utils.comm.expectNotToBeRejectedMessage(msg1El)
   })
 })
 
@@ -220,7 +263,7 @@ describe('Voting', () => {
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    await utils.comm.findMessagesContainer()
+    await utils.comm.waitTillReady()
     const msg1 = await utils.comm.findMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 0 })

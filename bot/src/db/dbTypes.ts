@@ -11,6 +11,7 @@ export type ChSettingsData = {
   allowed_to_vote_roles?: string[];
   awarded_role: string;
   voting_threshold?: number;
+  voting_against_threshold?: number;
   title: string;
   submission_types?: SubmissionType[];
   approver_roles?: string[];

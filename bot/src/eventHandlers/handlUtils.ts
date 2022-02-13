@@ -7,30 +7,34 @@ import sharpPhash from 'sharp-phash'
 import { ChSettingsData, SubmissionType } from '../db/dbTypes'
 import config from '../config'
 
-export const genLikeButton = (count = 0): MessageButton => new MessageButton({
+export const genLikeButton = ({ count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'like',
   label: String(count),
+  disabled,
   emoji: '✅',
 })
 
-export const genDislikeButton = (count = 0): MessageButton => new MessageButton({
+export const genDislikeButton = ({ count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'dislike',
   label: String(count),
+  disabled,
   emoji: '❌',
 })
 
-export const genApproveButton = (totalCount = 0, count = 0): MessageButton => new MessageButton({
+export const genApproveButton = ({ totalCount = 0, count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'approve',
+  disabled,
   label: `Approve (${totalCount > 0 ? `${count}/${totalCount}` : count})`,
   // emoji: '🔥',
 })
 
-export const genDismissButton = (): MessageButton => new MessageButton({
+export const genDismissButton = ({ disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'dismiss',
+  disabled,
   label: `Dismiss`,
 })
 

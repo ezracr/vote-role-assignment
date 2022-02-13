@@ -39,6 +39,7 @@ type SetArgs = {
   'approval-threshold'?: string;
   'submission-threshold'?: string;
   'message-color'?: string;
+  'voting-against-threshold'?: string;
 } & AddRemoveArgs
 
 type UpdateUnsetArg = keyof SetArgs
@@ -412,20 +413,42 @@ export class CommUtils {
     msg.findElement(By.xpath('.//div[*[contains(text(), \'Similar entries from\')]]/div[starts-with(@class, \'embedFieldValue\')]'))
   )
 
+  findInFavorButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
+  )
+
   clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
+    const button = await this.findInFavorButton(msg)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
+
+  findVoteAgainstButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
+  )
+
+  clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
+    const button = await this.findVoteAgainstButton(msg)
+    await button.click()
+    await this.waitToFinishProcessingInteraction()
+  }
+
+  findApproveButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    msg.findElement(approveLocator)
+  )
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
-    const button = await msg.findElement(approveLocator)
+    const button = await this.findApproveButton(msg)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
 
+  findDismissButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    msg.findElement(dismissLocator)
+  )
+
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
-    const button = await msg.findElement(dismissLocator)
+    const button = await this.findDismissButton(msg)
     await button.click()
     await this.waitToFinishProcessingInteraction()
   }
@@ -448,12 +471,6 @@ export class CommUtils {
 
   expectNewVotingMessageToNotAppear = async (): Promise<void> => {
     await expect(this.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
-  }
-
-  clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
-    await button.click()
-    await this.waitToFinishProcessingInteraction()
   }
 
   expectChannelDisabled = async (): Promise<void> => {
@@ -509,5 +526,13 @@ export class CommUtils {
 
   expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {
     await this.selUtils.expectContainsText(msg, 'Voted in favor')
+  }
+
+  expectToBeRejectedMessage = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectContainsText(msg, 'Rejected')
+  }
+
+  expectNotToBeRejectedMessage = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectNotContainsText(msg, 'Rejected')
   }
 }

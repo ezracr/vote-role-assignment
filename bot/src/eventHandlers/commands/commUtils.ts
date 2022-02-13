@@ -120,6 +120,11 @@ export const enableOptions = {
       .setMinValue(1)
       .setRequired(isRequired)
   },
+  votingAgainstThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
+    return option.setName('voting-against-threshold')
+      .setDescription('A number of downvotes required to reject a submission')
+      .setRequired(isRequired)
+  },
   allowedToVoteRole(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {
     return option.setName('allowed-to-vote-roles')
       .setDescription('If set, will allow only this role to vote')

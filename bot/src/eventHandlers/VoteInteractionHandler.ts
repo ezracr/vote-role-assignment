@@ -50,6 +50,8 @@ class VoteInteractionHandler {
 
   private isGraterThanVotThreshold = (votes: number): boolean => votes >= (this.chConfig.data.voting_threshold ?? 0)
 
+  private isGraterThanDownVotThreshold = (votes: number): boolean => votes >= (this.chConfig.data.voting_against_threshold ?? 0)
+
   private isGraterThanApprThreshold = (approvals: number): boolean => (
     approvals >= (this.chConfig.data.approval_threshold ?? 0) || !isApprovable(this.chConfig.data)
   )
@@ -93,15 +95,23 @@ class VoteInteractionHandler {
     }
   }
 
-  private removeSubmission = async (): Promise<void> => {
+  private removeSubmission = async ({ shouldDeleteMsg = false }: { shouldDeleteMsg?: boolean } = {}): Promise<void> => {
     const { message: msg } = this.interaction
     const subm = await this.managers.submissions.deleteByFilter({ message_id: msg.id })
     if (subm && subm.submission_type === 'image') {
       fs.unlink(path.join(config.uploadsDirPath, subm.link)).catch((e) => console.log(e)) // eslint-disable-line no-console
     }
-    if (msg.type === 'REPLY' && msg.deletable) {
+    if (shouldDeleteMsg && msg.type === 'REPLY' && msg.deletable) {
       await msg.delete()
     }
+  }
+
+  private isRejected = async (votesAgainst: number): Promise<boolean> => {
+    if (this.type === 'dislike' && this.isGraterThanDownVotThreshold(votesAgainst)) {
+      await this.removeSubmission()
+      return true
+    }
+    return false
   }
 
   process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null | false> => { // eslint-disable-line complexity
@@ -111,7 +121,7 @@ class VoteInteractionHandler {
       const isAllowedToApprove = await this.canApprove()
 
       if (this.type === 'dismiss' && isAllowedToApprove) {
-        await this.removeSubmission()
+        await this.removeSubmission({ shouldDeleteMsg: true })
         return false
       }
 
@@ -137,6 +147,10 @@ class VoteInteractionHandler {
       const subm = (await this.managers.submissions.getMany({ message_id: msg.id }))[0]
       const oldEmbed = msg.embeds[0]
 
+      const upvotes = vts?.in_favor_count ?? 0
+      const downvotes = vts?.against_count ?? 0
+      const isRejected = await this.isRejected(downvotes - upvotes)
+
       if (subm && oldEmbed && oldEmbed.type === 'rich') {
         const innMessage = VotingMessage.fromEmbed({
           inFavor: vts?.in_favor,
@@ -149,18 +163,23 @@ class VoteInteractionHandler {
           color: this.chConfig.data.message_color,
           title: subm.title,
           oldEmbed,
+          isRejected,
         })
 
         const newActionRow = new MessageActionRow({
           components: [
-            genLikeButton(vts?.in_favor_count ?? 0),
-            genDislikeButton(vts?.against_count ?? 0),
-            ...(isAppr ? [genApproveButton(this.chConfig.data.approval_threshold ?? 0, apprs?.in_favor_count ?? 0)] : []),
-            ...(isDismissible(this.chConfig.data) && (apprs?.in_favor_count ?? 0) <= 0 ? [genDismissButton()] : []),
+            genLikeButton({ count: upvotes, disabled: isRejected }),
+            genDislikeButton({ count: downvotes, disabled: isRejected }),
+            ...(isAppr ? [genApproveButton({
+              totalCount: this.chConfig.data.approval_threshold ?? 0,
+              count: apprs?.in_favor_count ?? 0,
+              disabled: isRejected,
+            })] : []),
+            ...(isDismissible(this.chConfig.data) && upvotes <= 0 ? [genDismissButton({ disabled: isRejected })] : []),
           ],
         })
         if (this.type === 'like' || this.type === 'approve') {
-          await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
+          await this.assignRole(upvotes - downvotes, upvotes, innMessage)
         }
 
         return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow], attachments: [] }

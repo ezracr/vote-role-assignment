@@ -7,7 +7,7 @@ import Users from './Users'
 import { helpers, format, formatUpsert, formatWhereAnd } from './manUtils'
 
 type SumbissionOptional = SetOptional<
-  Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type'
+  Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type' | 'hash'
 >
 
 type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
@@ -72,7 +72,7 @@ const decodeCursor = (cursor: string): { id: string, fld: string } | null => {
   return null
 }
 
-const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, after, ...other }: GetManyFilter): string => {
+const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, after, hash, ...other }: GetManyFilter): string => {
   const query: string[] = []
   if (channel_id) {
     query.push(format(`ds."ch_settings"->>'channel_id' = $1`, [channel_id]))
@@ -89,7 +89,30 @@ const genGetManyWhereSt = ({ channel_id, olderThanDays: interval, after, ...othe
       query.push(format(`(ds."created", ds."id") < ($1, $2)`, [decAfter.fld, decAfter.id]))
     }
   }
+  if (hash) {
+    // `eulerto/pg_similarity` can be installed to improve performance, an indexable solution like `fake-name/pg-spgist_hamming`
+    // would be even better, but `pg-spgist_hamming` looks abandoned
+    return format('length(replace(($1::bit(64) # hash)::text, \'0\', \'\')) <= 5', [hash])
+  }
   return query.length === 0 ? 'TRUE' : query.join(' AND ')
+}
+
+type GetManyOrderBy = {
+  orderBy: 'created' | 'hash';
+  isAsc?: boolean;
+}
+
+const defOrderBy = { orderBy: 'created', isAsc: false } as const
+
+const genGetManyOrderSt = ({ orderBy, isAsc }: GetManyOrderBy = defOrderBy, filter?: GetManyFilter): string | null => {
+  const direction = isAsc ? 'ASC' : 'DESC'
+  if (orderBy === 'created') {
+    return `ds."created" ${direction}, ds."id" ${direction}`
+  }
+  if (orderBy === 'hash' && filter?.hash) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+    return format(`length(replace(($1::bit(64) # hash)::text, '0', '')) ${direction}`, [filter.hash])
+  }
+  return null
 }
 
 class Submissions {
@@ -151,13 +174,14 @@ class Submissions {
     return row
   }
 
-  async getMany({ limit, ...filter }: GetManyFilter): Promise<Submission[]> {
+  async getMany({ limit, ...filter }: GetManyFilter, orderBy?: GetManyOrderBy): Promise<Submission[]> {
     const whereSt = genGetManyWhereSt(filter)
+    const orderSt = genGetManyOrderSt(orderBy)
     const { rows } = await pool.query<Submission>(`
       SELECT *
       FROM documents_full ds
       WHERE ${whereSt}
-      ORDER BY ds."created" DESC, ds."id" DESC
+      ${orderSt ? `ORDER BY ${orderSt}` : ''}
       LIMIT $1
     `, [limit ?? 1])
     return rows
@@ -179,13 +203,13 @@ class Submissions {
     }
   }
 
-  async deleteByFilter(filter: DelFilter): Promise<string | undefined> {
+  async deleteByFilter(filter: DelFilter): Promise<Submission | undefined> {
     const whereSt = genDelWehereSt(filter)
     if (whereSt) {
-      const { rows: [row] } = await pool.query<Pick<Submission, 'id'>>(`
-        DELETE FROM documents ds WHERE ${whereSt} RETURNING "id"
+      const { rows: [row] } = await pool.query<Submission>(`
+        DELETE FROM documents ds WHERE ${whereSt} RETURNING *
       `)
-      return row?.id
+      return row
     }
   }
 }

@@ -1,7 +1,11 @@
-import { Message, MessageButton, PartialMessage } from 'discord.js'
+import fs from 'fs/promises'
+import path from 'path'
+import { Message, MessageAttachment, MessageButton, PartialMessage } from 'discord.js'
 import axios from 'axios'
+import sharpPhash from 'sharp-phash'
 
 import { ChSettingsData, SubmissionType } from '../db/dbTypes'
+import config from '../config'
 
 export const genLikeButton = (count = 0): MessageButton => new MessageButton({
   style: 'SECONDARY',
@@ -61,6 +65,7 @@ export const extractTitleDescFromFirstMsgEmbed = (msg: Message<boolean> | Partia
  */
 export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: string, type?: SubmissionType): Promise<TitleDesc> => {
   try {
+    if (type === 'audio') return {}
     const titleDesc = extractTitleDescFromFirstMsgEmbed(msg)
     if (titleDesc.title) {
       return titleDesc
@@ -78,4 +83,19 @@ export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: stri
     console.log(e) // eslint-disable-line no-console
   }
   return {}
+}
+
+type ProcessImageOut = {
+  fileName: string;
+  hash: string;
+  buffer: Buffer;
+}
+
+export const processImage = async (attachment: MessageAttachment): Promise<ProcessImageOut> => {
+  const request = await axios.get<Buffer>(attachment.url, { responseType: 'arraybuffer' })
+  const hash = await sharpPhash(request.data)
+  const fileName = `${attachment.id}-${attachment.name}`.toLowerCase()
+  await fs.writeFile(path.join(config.uploadsDirPath, fileName), request.data, { encoding: 'binary' })
+
+  return { fileName, hash, buffer: request.data }
 }

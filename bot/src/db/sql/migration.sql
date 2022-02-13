@@ -1,3 +1,12 @@
+-- 4.0
+ALTER TABLE documents ADD COLUMN "hash" bit(64);
+DROP VIEW documents_full;
+CREATE OR REPLACE VIEW documents_full AS
+  SELECT documents.*, row_to_json(users.*) "user", row_to_json(css.*) "ch_settings"
+  FROM documents
+    LEFT JOIN users ON documents."user_id" = users."id"
+    LEFT JOIN channel_settings css ON documents."ch_sett_id" = css."id";
+
 -- 3.0
 ALTER TABLE documents ADD COLUMN "usr_message_id" text COLLATE "C";
 ALTER TABLE documents ADD COLUMN "description" text;

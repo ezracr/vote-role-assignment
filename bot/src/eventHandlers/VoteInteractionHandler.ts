@@ -1,3 +1,5 @@
+import fs from 'fs/promises'
+import path from 'path'
 import {
   MessageActionRow, ButtonInteraction, CacheType, MessagePayload, InteractionUpdateOptions,
 } from 'discord.js'
@@ -6,6 +8,7 @@ import client from '../client'
 import { ChSetting } from '../db/dbTypes'
 import Managers from '../db/managers'
 import { assignRoleById, hasSomeRoles } from '../discUtils'
+import config from '../config'
 import {
   genLikeButton, genDislikeButton, genApproveButton, genDismissButton, isApprovable, isDismissible,
 } from './handlUtils'
@@ -90,6 +93,17 @@ class VoteInteractionHandler {
     }
   }
 
+  private removeSubmission = async (): Promise<void> => {
+    const { message: msg } = this.interaction
+    const subm = await this.managers.submissions.deleteByFilter({ message_id: msg.id })
+    if (subm && subm.submission_type === 'image') {
+      fs.unlink(path.join(config.uploadsDirPath, subm.link)).catch((e) => console.log(e)) // eslint-disable-line no-console
+    }
+    if (msg.type === 'REPLY' && msg.deletable) {
+      await msg.delete()
+    }
+  }
+
   process = async (): Promise<string | MessagePayload | InteractionUpdateOptions | null | false> => { // eslint-disable-line complexity
     try {
       const { message: msg, user, channelId } = this.interaction
@@ -97,12 +111,8 @@ class VoteInteractionHandler {
       const isAllowedToApprove = await this.canApprove()
 
       if (this.type === 'dismiss' && isAllowedToApprove) {
-        if (msg.type === 'REPLY' && msg.deletable) {
-          await msg.delete()
-          await this.managers.submissions.deleteByFilter({ message_id: msg.id })
-          return false
-        }
-        return null
+        await this.removeSubmission()
+        return false
       }
 
       const isAllowedToVote = await this.canVote()
@@ -125,9 +135,10 @@ class VoteInteractionHandler {
       const apprs = await this.managers.votes.getVoteCountsByMessageId({ message_id: msg.id, is_approval: true })
       const isAppr = isApprovable(this.chConfig.data)
       const subm = (await this.managers.submissions.getMany({ message_id: msg.id }))[0]
+      const oldEmbed = msg.embeds[0]
 
-      if (subm) {
-        const innMessage = new VotingMessage({
+      if (subm && oldEmbed && oldEmbed.type === 'rich') {
+        const innMessage = VotingMessage.fromEmbed({
           inFavor: vts?.in_favor,
           against: vts?.against,
           inFavorApprovals: isAppr ? apprs?.in_favor ?? [] : undefined,
@@ -137,7 +148,9 @@ class VoteInteractionHandler {
           url: subm.link,
           color: this.chConfig.data.message_color,
           title: subm.title,
+          oldEmbed,
         })
+
         const newActionRow = new MessageActionRow({
           components: [
             genLikeButton(vts?.in_favor_count ?? 0),
@@ -150,7 +163,7 @@ class VoteInteractionHandler {
           await this.assignRole((vts?.in_favor_count ?? 0) - (vts?.against_count ?? 0), apprs?.in_favor_count ?? 0, innMessage)
         }
 
-        return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow] }
+        return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow], attachments: [] }
       }
 
     } catch (e: unknown) {

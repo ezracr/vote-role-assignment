@@ -1,6 +1,7 @@
 import { MessageEmbed, MessageEmbedOptions } from 'discord.js'
+import { APIEmbed } from 'discord-api-types'
 
-import { ChSettingsData } from '../db/dbTypes'
+import { ChSettingsData, Submission } from '../db/dbTypes'
 import { convertIdToUserTag, convertIdsToUserTags, convertIdsToRoleTags } from '../discUtils'
 import config from '../config'
 import { genLinkToDocPage } from './commands/commUtils'
@@ -16,9 +17,11 @@ type VotingMessageArg = {
   chSettData: ChSettingsData;
   channelId: string;
   title?: string | null;
+  similar?: Submission[] | string;
+  image?: MessageEmbedOptions['thumbnail'] | null
 }
 
-type FromArg = { oldEmbed: MessageEmbed } & Pick<VotingMessageArg, 'inFavor' | 'against' | 'inFavorApprovals' | 'chSettData' | 'channelId'>
+type FromArg = { oldEmbed: MessageEmbed | APIEmbed } & VotingMessageArg
 
 const replaceEmptyWithZeroWidthSpace = (txt?: string | null): string => (
   !txt || !txt.trim() ? '\u200b' : txt
@@ -45,6 +48,8 @@ class VotingMessage {
   chSettData: ChSettingsData
   channelId: string
   title: VotingMessageArg['title']
+  similar?: Submission[] | string
+  image?: MessageEmbedOptions['thumbnail'] | null
 
   constructor(arg: VotingMessageArg) {
     this.authorId = arg.authorId
@@ -56,6 +61,8 @@ class VotingMessage {
     this.chSettData = arg.chSettData
     this.channelId = arg.channelId
     this.title = arg.title
+    this.similar = arg.similar
+    this.image = arg.image
   }
 
   private calcTotalVotes = (): string => (
@@ -66,9 +73,10 @@ class VotingMessage {
     const { allowed_to_vote_roles, submitter_roles, title, submission_types } = this.chSettData
     return {
       color: this.color,
-      title: this.title ?? this.url,
-      url: this.url,
+      title: this.image ? undefined : this.title ?? this.url,
+      url: this.image ? undefined : this.url,
       description: `by ${convertIdToUserTag(this.authorId)}`,
+      ...(this.image ? { thumbnail: this.image } : {}),
       fields: [
         {
           name: 'Voted in favor',
@@ -112,6 +120,12 @@ class VotingMessage {
           value: `[${title}](${genLinkToDocPage(this.channelId)})`,
           inline: true,
         },
+        ...(this.similar && this.similar.length > 0 ? [{
+          name: 'Similar entries from',
+          value: Array.isArray(this.similar)
+            ? this.similar.map((subm) => `[${subm.user.tag}](${config.baseUrl}${config.uploadsUrl}/${subm.link})`).join(', ')
+            : this.similar,
+        }] : []),
       ],
       footer: config.messages.votingMessage.footer,
     }
@@ -119,17 +133,12 @@ class VotingMessage {
 
   /**
    * Create a new object by parsing the old message in a form of a string.
-   * @param oldMessage The previous message.
-   * @param inFavor 'in favor' array will override the one from the message string if specified.
-   * @param against 'against' array will override the one from the message string if specified.
+   * @param oldEmbed The previous embed.
    */
-  static fromEmbed({ oldEmbed, inFavor, against, inFavorApprovals, chSettData, channelId }: FromArg): VotingMessage | undefined {
-    const usrIdLine = oldEmbed.description
-    const url = oldEmbed.url
-    if (url && usrIdLine) {
-      const id = usrIdLine.slice(usrIdLine.indexOf('<') + 3, usrIdLine.indexOf('>'))
-      return new VotingMessage({ authorId: id, url, inFavor, against, inFavorApprovals, color: oldEmbed.color, chSettData, channelId })
-    }
+  static fromEmbed({ oldEmbed, ...inputArg }: FromArg): VotingMessage {
+    const similar = oldEmbed.fields?.find(({ name }) => name === 'Similar entries from')?.value
+    const image = oldEmbed.thumbnail
+    return new VotingMessage({ ...inputArg, similar, image })
   }
 }
 

@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 import config from '../config'
 import { typeToTitleRecord } from '../eventHandlers/submissionTypes'
 import { SendCommandArgs } from './utils/commUtils'
@@ -12,6 +14,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await utils.comm.openTestChannel1()
+  await utils.comm.waitTillReady()
 })
 
 afterEach(async () => {
@@ -319,6 +322,22 @@ describe('Dismissal', () => {
     await utils.comm.clickDismiss(msgEl)
     await utils.sel.expectNotDisplayed(msgEl)
   })
+
+  it('Removes dismissed images', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1', 'approver-roles': roleName2 })
+    await utils.comm.sendAddRole2()
+    await utils.comm.sendImg(utils.comm.img1Path)
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    const imgEl = await utils.sel.findElementByCss('a img', msgEl)
+    const srcAttr = await imgEl.getAttribute('src')
+    const lastQueryStart = srcAttr.lastIndexOf('?')
+    const imgName = srcAttr.slice(srcAttr.lastIndexOf('/') + 1, lastQueryStart === -1 ? undefined : lastQueryStart)
+    const imgUrl = `http://localhost:3000/uploads/${imgName}`
+    const imgRes = await axios.get(imgUrl)
+    expect(imgRes.status).toBe(200)
+    await utils.comm.clickDismiss(msgEl)
+    await expect(axios.get(imgUrl)).rejects.toThrow()
+  })
 })
 
 describe('Submission types', () => {
@@ -420,6 +439,28 @@ describe('Submission types', () => {
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
     await utils.comm.expectTestStats({ numOfPins: 0 })
+  })
+
+  it('Accepts jpg, png, gif, webp attachments', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendImg(utils.comm.img1Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img2Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img3Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img4Path)
+    await utils.comm.findAboutToAppearBotMessage()
+  })
+
+  it('Recognises duplicate image submissions', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendImg(utils.comm.img1Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img2Path) // takes the first frame of a gif
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    const similarEl = await utils.comm.findSimilarEntriesField(msgEl)
+    expect(await utils.sel.getInnerHtml(similarEl)).toContain(utils.comm.img1Name)
   })
 })
 

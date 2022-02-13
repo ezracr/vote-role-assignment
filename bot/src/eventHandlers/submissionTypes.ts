@@ -9,12 +9,13 @@ export const typeToTitleRecord = {
   tweet: 'Tweet',
   ytvideo: 'YouTube video',
   audio: 'SoundCloud or Spotify track',
+  image: 'Image',
 } as const
 
 export type SubmissionTypeTitles = typeof typeToTitleRecord[SubmissionType];
 
 type Val = {
-  readonly type: SubmissionType;
+  readonly type: SubmissionTypeDetector;
   readonly normalize: (url: URL) => Promise<string | null>;
   readonly shouldFetchTitle: boolean;
 }
@@ -27,7 +28,9 @@ const tweetMatcher = pathToRegexp('/:user/status/:id', undefined, { end: false }
 const soundCloudMatcher = pathToRegexp('/:user/:track', undefined, { end: false })
 const spotifyMatcher = pathToRegexp('/track/:id', undefined, { end: false })
 
-const detectors: Record<SubmissionType, Val> = {
+type SubmissionTypeDetector = Exclude<SubmissionType, 'image'>
+
+const detectors: Record<SubmissionTypeDetector, Val> = {
   gdoc: {
     type: 'gdoc',
     normalize: async (url: URL): Promise<string | null> => {
@@ -126,11 +129,13 @@ const detectors: Record<SubmissionType, Val> = {
   },
 }
 
-export const submissionTypes: ReadonlyMap<SubmissionType, Val> = new Map(Object.entries(detectors) as (readonly [SubmissionType, Val])[])
+export const submissionTypes: ReadonlyMap<SubmissionTypeDetector, Val> = new Map(
+  Object.entries(detectors) as (readonly [SubmissionTypeDetector, Val])[],
+)
 
 export const allTypes: SubmissionType[] = Array.from(submissionTypes.keys())
 
-export const processUrl = async (url: URL): Promise<{ type: SubmissionType; url: string; } | null> => {
+export const processUrl = async (url: URL): Promise<{ type: SubmissionTypeDetector; url: string; } | null> => {
   for (const [, detector] of submissionTypes) {
     const normUrl = await detector.normalize(url) // eslint-disable-line no-await-in-loop
     if (normUrl) {

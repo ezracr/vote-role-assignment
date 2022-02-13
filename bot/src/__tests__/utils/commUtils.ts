@@ -1,3 +1,4 @@
+import path from 'path'
 import wd from 'selenium-webdriver'
 
 import config from '../../config'
@@ -195,6 +196,11 @@ export class CommUtils {
   openCloudShortUrlNorm = 'https://soundcloud.com/elijahwho/weusedtotalkeverynight'
   spotifyUrl = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg?si=ae3ee0c8fd734e88'
   spotifyUrlNorm = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg'
+  img1Name = 'img1.png'
+  img1Path = path.join(__dirname, '..', 'fixtures', this.img1Name)
+  img2Path = path.join(__dirname, '..', 'fixtures', 'img2.gif')
+  img3Path = path.join(__dirname, '..', 'fixtures', 'img3.jpg')
+  img4Path = path.join(__dirname, '..', 'fixtures', 'img4.webp')
 
   sendDoc1 = (isUniqueQuery = false): Promise<void> => this.sendMessage(`${this.doc1Url}${isUniqueQuery ? Date.now() : ''}`)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
@@ -206,8 +212,29 @@ export class CommUtils {
   sendOpenCloudShort1 = (): Promise<void> => this.sendMessage(this.openCloudShortUrl)
   sendSpotify1 = (): Promise<void> => this.sendMessage(this.spotifyUrl)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
+  sendImg = async (imgPath: string): Promise<void> => {
+    const inputEl = await this.selUtils.findElementByCss('.file-input')
+    await inputEl.sendKeys(imgPath)
+    const txtField = await this.findTextField()
+    await txtField.sendKeys(Key.ENTER)
+    await this.waitUntilFileUploaded()
+  }
 
   findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)
+
+  waitTillReady = async (): Promise<void> => {
+    await this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)
+  }
+
+  waitUntilFileUploaded = async (): Promise<void> => {
+    try {
+      const uploadLocator = By.css(`${messageContainer} [data-list-item-id^=chat-messages___Uploader]`)
+      const el = await this.driver.wait(wd.until.elementLocated(uploadLocator), 1000)
+      await this.driver.wait(wd.until.stalenessOf(el), 2000)
+    } catch (e: unknown) {
+      console.log(e) // eslint-disable-line no-console
+    }
+  }
 
   findMessagesContainer = (): Promise<wd.WebElement> => {
     return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 5000)
@@ -380,6 +407,10 @@ export class CommUtils {
     }
     throw new Error('Can\'t find the bot\'s message.')
   }
+
+  findSimilarEntriesField = async (msg: wd.WebElement): Promise<wd.WebElement> => (
+    msg.findElement(By.xpath('.//div[*[contains(text(), \'Similar entries from\')]]/div[starts-with(@class, \'embedFieldValue\')]'))
+  )
 
   clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
     const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)

@@ -40,7 +40,6 @@ ReactDOM.render(
         </SWRConfig>
       </HelmetProvider>
     </ThemeProvider>,
-
   </React.StrictMode>,
   document.getElementById('root'),
 )

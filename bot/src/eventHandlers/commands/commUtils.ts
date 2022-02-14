@@ -117,7 +117,7 @@ export const enableOptions = {
   },
   messageColor(isRequired: boolean, option: SlashCommandStringOption): SlashCommandStringOption {
     return option.setName('message-color')
-      .setDescription('The color of the message\'s border, e.g. #dfc600')
+      .setDescription('The color of the message\'s border, e.g. dfc600')
       .setRequired(isRequired)
   },
   submitterRoles(isRequired: boolean, option: SlashCommandRoleOption): SlashCommandRoleOption {

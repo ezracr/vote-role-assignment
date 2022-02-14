@@ -31,6 +31,8 @@ ${res.join('\n')}
 \`\`\`
 **Approvals/dismissals**
 Either \`approver-roles\` or \`approver-users\` are needed to be set for the dismiss button to show up. In addition to these two, set \`approval-threshold\` if you want the submissions to be approvable.
+**Modifying settings' fields**
+Calling enable again will fully rewrite the settings (submissions will be unaffected). If you want to update an individual field, then \`update set\` and \`update unset\` will come in handy. To append or subtract an item from an array option, you can use \`update add\` and \`update subtract\` respectively.
 `
 }
 

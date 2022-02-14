@@ -3,7 +3,7 @@ A discord bot that assigns the specified role automatically provided enough vote
 
 - Available commands: `enable`, `disable`, `update`, `info`, `migrate`.
 - Records likes and dislikes, it's possible to undo your vote. But it won't cancel the awarded role if the threshold was met.
-- Allows only users with the roles `allowed-to-vote-role1` and `allowed-to-vote-role2` to vote. If `allowed-to-vote-role` is not set, anyone can vote.
+- Allows only users with the roles `allowed-to-vote-roles` to vote. If `allowed-to-vote-role` is not set, anyone can vote.
 - Once `voting-threshold` is met, assigns `awarded-role` and saves the document to the db.
 - If the user already has the role, then it will be immediately saved to the db.
 - The page's url with the list of documents can be accessed with the info command.

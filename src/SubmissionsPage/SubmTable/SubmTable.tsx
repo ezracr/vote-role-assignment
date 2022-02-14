@@ -26,7 +26,7 @@ const normTitle = (title: string | null, description: string | null, link: strin
     if (description.length > 60) {
       const slicedDesc = description.trim().slice(0, 60)
       const lastWordBoundary = slicedDesc.lastIndexOf(' ')
-      const normDesc = lastWordBoundary !== -1 ? slicedDesc.slice(0, lastWordBoundary) : slicedDesc
+      const normDesc = lastWordBoundary === -1 ? slicedDesc : slicedDesc.slice(0, lastWordBoundary)
       return `${normDesc}…`
     } else return description
   }

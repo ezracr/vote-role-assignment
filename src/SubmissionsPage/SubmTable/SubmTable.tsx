@@ -20,6 +20,19 @@ export type SubmTableProps = {
   channelId?: string;
 }
 
+const normTitle = (title: string | null, description: string | null, link: string): string => {
+  if (title) return title
+  if (description) {
+    if (description.length > 60) {
+      const slicedDesc = description.trim().slice(0, 60)
+      const lastWordBoundary = slicedDesc.lastIndexOf(' ')
+      const normDesc = lastWordBoundary !== -1 ? slicedDesc.slice(0, lastWordBoundary) : slicedDesc
+      return `${normDesc}…`
+    } else return description
+  }
+  return link
+}
+
 const SubmTable: React.FC<SubmTableProps> = ({ items, channelId }) => {
   const [activeImg, setActiveImg] = useState<Submission | null>(null)
 
@@ -62,7 +75,7 @@ const SubmTable: React.FC<SubmTableProps> = ({ items, channelId }) => {
                       onClick={toggleActiveImg}
                     />
                   )}
-                  {item.submission_type !== 'image' && <Link href={item.link}>{item.title ? item.title : item.link}</Link>}
+                  {item.submission_type !== 'image' && <Link href={item.link}>{normTitle(item.title, item.description, item.link)}</Link>}
                 </TableCell>
                 <TableCell sx={{ wordBreak: 'break-word' }} align="right">{item.user.tag}</TableCell>
                 <TableCell align="right">

@@ -69,9 +69,8 @@ export const extractTitleDescFromFirstMsgEmbed = (msg: Message<boolean> | Partia
  */
 export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: string, type?: SubmissionType): Promise<TitleDesc> => {
   try {
-    if (type === 'audio') return {}
     const titleDesc = extractTitleDescFromFirstMsgEmbed(msg)
-    if (titleDesc.title) {
+    if (titleDesc.title || titleDesc.description) {
       return titleDesc
     }
     if ((type === 'gsheet' || type === 'gdoc') && url.includes('/e/')) {

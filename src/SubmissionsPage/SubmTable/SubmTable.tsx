@@ -66,7 +66,11 @@ const SubmTable: React.FC<SubmTableProps> = ({ items, channelId }) => {
                 </TableCell>
                 <TableCell sx={{ wordBreak: 'break-word' }} align="right">{item.user.tag}</TableCell>
                 <TableCell align="right">
-                  {item.message_id && <Link href={`https://discord.com/channels/${config.guildId}/${channelId}/${item.message_id}`}>link</Link>}
+                  {(item.message_id || item.usr_message_id) && (
+                    <Link href={`https://discord.com/channels/${config.guildId}/${channelId}/${item.message_id ?? item.usr_message_id}`}>
+                      link
+                    </Link>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

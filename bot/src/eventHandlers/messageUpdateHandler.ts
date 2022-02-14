@@ -11,7 +11,7 @@ const messageUpdateHandler = async (
       const titleDesc = extractTitleDescFromFirstMsgEmbed(newMessage)
       if (titleDesc.title) {
         const managers = new Managers()
-        await managers.submissions.patchByFilter({ usr_message_id: oldMessage.id }, titleDesc)
+        await managers.submissions.update({ usr_message_id: oldMessage.id }, titleDesc)
       }
     }
   } catch (e: unknown) {

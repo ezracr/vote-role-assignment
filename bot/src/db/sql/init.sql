@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS documents(
 
 CREATE INDEX CONCURRENTLY documents_message_id_index ON documents ("message_id");
 CREATE INDEX CONCURRENTLY documents_usr_message_id_index ON documents ("usr_message_id");
+CREATE INDEX CONCURRENTLY documents_created_id_index ON documents ("created", "id");
 
 CREATE TABLE IF NOT EXISTS votes(
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,

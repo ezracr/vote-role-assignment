@@ -53,7 +53,7 @@ class ChSettings {
     }
   }
 
-  async patchByChId(
+  async updateByChId(
     chId: string, payload: Partial<Omit<ChSetting, 'data'>> & { data?: Partial<ChSetting['data']> }, client?: PoolClient,
   ): Promise<ChSetting | undefined> {
     const { data, ...regularFields } = payload
@@ -78,12 +78,12 @@ class ChSettings {
         SELECT * FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
       `, [intoChId])
       if (newChSett) {
-        await this.documents.updateManyChSettIdByChId(fromChId, newChSett.id, client)
+        await this.documents.update({ channel_id: fromChId }, { ch_sett_id: newChSett.id }, client)
         await client.query('SAVEPOINT last')
         await this.deleteByChId(fromChId, client, 'last')
         res = (await this.getMany({ channel_id: intoChId }))[0]
       } else {
-        res = await this.patchByChId(fromChId, { channel_id: intoChId }, client)
+        res = await this.updateByChId(fromChId, { channel_id: intoChId }, client)
       }
       await client.query('COMMIT')
       return res
@@ -130,7 +130,7 @@ class ChSettings {
     await client.query('COMMIT')
   }
 
-  async patchDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isPop = false): Promise<ChSetting | undefined> {
+  async updateDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isPop = false): Promise<ChSetting | undefined> {
     const client = await pool.connect()
     await client.query('BEGIN')
     const { rows: [oldChSett] } = await client.query<ChSetting>(`
@@ -138,7 +138,7 @@ class ChSettings {
     `, [channelId])
     if (oldChSett?.data) {
       const mergedData = modifyArrVals(oldChSett.data, data, isPop)
-      const chSettNew = this.patchByChId(channelId, { data: mergedData })
+      const chSettNew = this.updateByChId(channelId, { data: mergedData })
       await client.query('COMMIT')
       return chSettNew
     }

@@ -40,6 +40,7 @@ export type Submission = {
   usr_message_id: string | null;
   created: string;
   hash: string | null;
+  ch_sett_id: string;
 }
 
 export type Vote = {

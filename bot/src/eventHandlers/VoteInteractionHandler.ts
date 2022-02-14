@@ -50,7 +50,9 @@ class VoteInteractionHandler {
 
   private isGraterThanVotThreshold = (votes: number): boolean => votes >= (this.chConfig.data.voting_threshold ?? 0)
 
-  private isGraterThanDownVotThreshold = (votes: number): boolean => votes >= (this.chConfig.data.voting_against_threshold ?? 0)
+  private isGraterThanDownvotThreshold = (votes: number): boolean => (
+    Boolean(this.chConfig.data.voting_against_threshold && votes >= this.chConfig.data.voting_against_threshold)
+  )
 
   private isGraterThanApprThreshold = (approvals: number): boolean => (
     approvals >= (this.chConfig.data.approval_threshold ?? 0) || !isApprovable(this.chConfig.data)
@@ -83,7 +85,7 @@ class VoteInteractionHandler {
         const link = innMessage.url
         const { type } = await processUrl(new URL(link)) ?? {}
         if (link && type && this.interaction.message.type === 'REPLY') {
-          await this.managers.submissions.patchByFilter({ message_id: this.interaction.message.id }, {
+          await this.managers.submissions.update({ message_id: this.interaction.message.id }, {
             is_candidate: false,
           })
         }
@@ -107,7 +109,7 @@ class VoteInteractionHandler {
   }
 
   private isRejected = async (votesAgainst: number): Promise<boolean> => {
-    if (this.type === 'dislike' && this.isGraterThanDownVotThreshold(votesAgainst)) {
+    if (this.type === 'dislike' && this.isGraterThanDownvotThreshold(votesAgainst)) {
       await this.removeSubmission()
       return true
     }
@@ -175,11 +177,11 @@ class VoteInteractionHandler {
               count: apprs?.in_favor_count ?? 0,
               disabled: isRejected,
             })] : []),
-            ...(isDismissible(this.chConfig.data) && upvotes <= 0 ? [genDismissButton({ disabled: isRejected })] : []),
+            ...(isDismissible(this.chConfig.data) && (apprs?.in_favor_count ?? 0) <= 0 ? [genDismissButton({ disabled: isRejected })] : []),
           ],
         })
         if (this.type === 'like' || this.type === 'approve') {
-          await this.assignRole(upvotes - downvotes, upvotes, innMessage)
+          await this.assignRole(upvotes - downvotes, apprs?.in_favor_count ?? 0, innMessage)
         }
 
         return { content: '\u200b', embeds: [innMessage.toEmbed()], components: [newActionRow], attachments: [] }

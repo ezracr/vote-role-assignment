@@ -6,6 +6,7 @@ CREATE OR REPLACE VIEW documents_full AS
   FROM documents
     LEFT JOIN users ON documents."user_id" = users."id"
     LEFT JOIN channel_settings css ON documents."ch_sett_id" = css."id";
+CREATE INDEX CONCURRENTLY documents_created_id_index ON documents ("created", "id");
 
 -- 3.0
 ALTER TABLE documents ADD COLUMN "usr_message_id" text COLLATE "C";

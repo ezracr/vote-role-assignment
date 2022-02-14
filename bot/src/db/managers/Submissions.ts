@@ -11,17 +11,19 @@ type SumbissionOptional = SetOptional<
 >
 
 type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
-type UpsertOuput = Submission & { old_message_id: string | undefined }
 
-type PatchFilter = Partial<Pick<Submission, 'message_id' | 'usr_message_id'>>
+type UpdateFilter = Partial<Omit<Submission, 'ch_settings' | 'user'>> & Partial<Pick<ChSetting, 'channel_id'>>
+type UpdatePayload = Partial<Omit<Submission, 'message_id'>>
 
-const genPatchWhereSt = (filter: PatchFilter): string => {
+const genUpdateWhereSt = ({ channel_id, ...other }: UpdateFilter): string => {
   const query: string[] = []
-  if (filter.message_id) {
-    query.push(format(`ds."message_id" = $1`, [filter.message_id]))
+
+  if (channel_id) {
+    query.push(format('ds."ch_sett_id" = (SELECT cs1."id" FROM channel_settings cs1 WHERE "channel_id" = $1)', [channel_id]))
   }
-  if (filter.usr_message_id) {
-    query.push(format(`ds."usr_message_id" = $1`, [filter.usr_message_id]))
+
+  if (Object.keys(other).length !== 0) {
+    query.push(formatWhereAnd(other, 'ds'))
   }
   return query.length === 0 ? 'TRUE' : query.join(' AND ')
 }
@@ -118,14 +120,14 @@ const genGetManyOrderSt = ({ orderBy, isAsc }: GetManyOrderBy = defOrderBy, filt
 class Submissions {
   users = new Users()
 
-  async upsert(data: UpsertInput): Promise<UpsertOuput | undefined> {
+  async upsert(data: UpsertInput): Promise<Submission | undefined> {
     const { user, ...submission } = data
     const upUser = await this.users.upsert(user)
 
-    const { rows: [doc] } = await pool.query<UpsertOuput>(`
+    const { rows: [doc] } = await pool.query<Submission>(`
       ${formatUpsert({ ...submission, user_id: data.user.id }, ['link'], 'documents')}
-      RETURNING *, (SELECT ds1."message_id" FROM documents ds1 WHERE ds1."link" = $1) "old_message_id"
-    `, [data.link])
+      RETURNING *
+    `)
 
     if (doc && upUser) {
       doc.user = upUser
@@ -133,23 +135,14 @@ class Submissions {
     }
   }
 
-  async patchByFilter(filter: PatchFilter, payload: Partial<Omit<Submission, 'message_id'>>): Promise<Submission | undefined> {
+  async update(filter: UpdateFilter, payload: UpdatePayload, client?: PoolClient): Promise<Submission | undefined> {
     const setSt = helpers.sets(payload)
-    const { rows: [row] } = await pool.query<Submission>(`
+    const { rows: [row] } = await (client ?? pool).query<Submission>(`
       UPDATE documents ds SET ${setSt}
-      WHERE ${genPatchWhereSt(filter)}
+      WHERE ${genUpdateWhereSt(filter)}
       RETURNING *
     `)
     return row
-  }
-
-  async updateManyChSettIdByChId(oldChId: string, newChSettId: string, client?: PoolClient): Promise<Submission[] | undefined> {
-    const { rows } = await (client ?? pool).query<Submission>(`
-      UPDATE documents ds SET "ch_sett_id" = $2
-      WHERE ds."ch_sett_id" = (SELECT cs1."id" FROM channel_settings cs1 WHERE "channel_id" = $1)
-      RETURNING *
-    `, [oldChId, newChSettId])
-    return rows
   }
 
   async getNumOfDocsPerChannel(

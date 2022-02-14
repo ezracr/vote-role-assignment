@@ -6,33 +6,7 @@ import type { CommandInteractionOption, CacheType } from 'discord.js'
 import config from '../../config'
 import { typeToTitleRecord } from '../submissionTypes'
 
-const replaceHyphensInKey = (name: string): string => name.replaceAll('-', '_')
-
-const isAppendId = (key: string, appIdKeys: AppendIdType): boolean => (
-  appIdKeys.some((appIdKey) => key === appIdKey)
-)
-
-const findDbGroupPrefix = (key: string, group: GroupType): string | undefined => (
-  group.find((grKey) => key.startsWith(grKey))
-)
-
-export const normalizeToDbKey = (
-  name: string, group?: GroupType, appendId?: AppendIdType, rename?: RenameType,
-): [name: string, isGroup: boolean] => {
-  if (group) {
-    const groupPrefix = findDbGroupPrefix(name, group)
-    if (groupPrefix) {
-      return [replaceHyphensInKey(`${groupPrefix}s`), true]
-    }
-  }
-  if (rename?.[name]) {
-    return [replaceHyphensInKey(rename[name]!), false] // eslint-disable-line @typescript-eslint/no-non-null-assertion
-  }
-  if (appendId && isAppendId(name, appendId)) {
-    return [replaceHyphensInKey(`${name}_id`), false]
-  }
-  return [replaceHyphensInKey(name), false]
-}
+export const replaceHyphensInKey = (name: string): string => name.replaceAll('-', '_')
 
 const normalizeToDbValue = (val: CommandInteractionOption<CacheType>): string | number | boolean | undefined => {
   if (val.type === 'ROLE') {
@@ -63,41 +37,20 @@ type ValType = string | number | true | (string | number | true)[]
 export type ConvertToDbTypeRet = Record<string, ValType>
 
 /**
- * Turns hyphens into underscores in object keys. Extracts role and channel ids from `optionsData` values.
+ * Turns hyphens into underscores in object keys.
  *
  * @param optionsData Option's data from `interaction.options.data` or `interaction.options.data[ind].options` if it's a subcommand.
- * @param group Group several fields into one, e.g. if `group` is set to `option`,
- * this object `{ option1: 1, options2: 2 }` will turn into `{ options: [1, 2] }`. 's' will be added automatically.
- * @param appendId Append '_id' to keys, e.g. `appendId: ['test']`, { test: 1 } => { test_id: 1 }.
- * @param rename Rename one key name to another.
  * @param toArray Convert values of given keys to an array.
- * @param valueOverrides Override value for a given key.
  */
 export const convertToDbType = ({
-  optionsData, group, appendId, rename, valueOverrides, toArray,
+  optionsData, toArray,
 }: ConvertDbTypeInput): Record<string, ValType> => {
   return optionsData.reduce<Record<string, ValType>>((acc, val) => {
-    const [normKey, isGroup] = normalizeToDbKey(val.name, group, appendId, rename)
+    const normKey = replaceHyphensInKey(val.name)
     const normValue = normalizeToDbValue(val)
-
-    if (valueOverrides?.[val.name]) {
-      acc[normKey] = valueOverrides[val.name]! // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      return acc
-    }
 
     if (toArray?.includes(val.name)) {
       acc[normKey] = [normValue as any] // eslint-disable-line @typescript-eslint/no-explicit-any
-      return acc
-    }
-
-    if (isGroup) {
-      if (!acc[normKey]) acc[normKey] = []
-      if (normValue) {
-        const arr = acc[normKey]
-        if (Array.isArray(arr)) {
-          arr.push(normValue)
-        }
-      }
       return acc
     }
 
@@ -135,10 +88,10 @@ export const enableOptions = {
       .setDescription('Set or override allowed type to submit')
       .setRequired(isRequired);
 
-      (Object.keys(typeToTitleRecord) as (keyof typeof typeToTitleRecord)[]).forEach((value) => {
-        opt.addChoice(typeToTitleRecord[value], value)
-      })
-      return opt
+    (Object.keys(typeToTitleRecord) as (keyof typeof typeToTitleRecord)[]).forEach((value) => {
+      opt.addChoice(typeToTitleRecord[value], value)
+    })
+    return opt
   },
   approvalThreshold(isRequired: boolean, option: SlashCommandIntegerOption): SlashCommandIntegerOption {
     return option.setName('approval-threshold')

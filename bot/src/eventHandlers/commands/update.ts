@@ -6,7 +6,7 @@ import { ReportableError } from '../../db/managers/manUtils'
 import { ChSettingsData } from '../../db/dbTypes'
 import config from '../../config'
 import {
-  enableOptions, convertEnableToDbType as convertEnableDataToDbSettData, normalizeToDbKey,
+  enableOptions, convertEnableToDbType as convertEnableDataToDbSettData, replaceHyphensInKey,
 } from './commUtils'
 
 export const updateCommand = new SlashCommandBuilder()
@@ -84,22 +84,22 @@ const handleCommand = async (managers: Managers, interaction: CommandInteraction
     if (interaction.options.getSubcommand() === 'unset') {
       const selected = interaction.options.get('option')
       if (typeof selected?.value === 'string') {
-        const [normKey] = normalizeToDbKey(selected.value)
+        const normKey = replaceHyphensInKey(selected.value)
         const res = await managers.settings.removeDataField(interaction.channelId, normKey as keyof ChSettingsData)
         if (res) return messages.done
       }
     }
     const dbSettData = convertEnableDataToDbSettData(optionsData)
     if (interaction.options.getSubcommand() === 'add') {
-      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData)
+      const res = await managers.settings.updateDataArrayFields(interaction.channelId, dbSettData)
       if (res) return messages.done
     }
     if (interaction.options.getSubcommand() === 'subtract') {
-      const res = await managers.settings.patchDataArrayFields(interaction.channelId, dbSettData, true)
+      const res = await managers.settings.updateDataArrayFields(interaction.channelId, dbSettData, true)
       if (res) return messages.done
     }
     if (interaction.options.getSubcommand() === 'set') {
-      const res = await managers.settings.patchByChId(interaction.channelId, { data: dbSettData as unknown as ChSettingsData })
+      const res = await managers.settings.updateByChId(interaction.channelId, { data: dbSettData as unknown as ChSettingsData })
       if (res) return messages.done
     }
     return config.messages.wasNotEnabled

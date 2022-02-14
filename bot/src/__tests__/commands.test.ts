@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await utils.comm.openTestChannel1()
-  await utils.comm.waitTillReady()
+  await utils.comm.waitUntilReady()
 })
 
 afterEach(async () => {
@@ -102,6 +102,24 @@ describe('/enable', () => {
     const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.clickVoteAgainst(msgEl)
     await utils.sel.expectContainsText(msgEl, 'Test Document')
+  })
+})
+
+describe('/disable', () => {
+  it('Does not accept submissions in a disabled channel', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDisable()
+    await utils.comm.sendDoc1(true)
+    await expect(utils.comm.findAboutToAppearBotMessage()).rejects.toThrow()
+  })
+
+  it('Does not remove submissions from a disabled channel', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDoc1(true)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendDisable()
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.expectInfo({ numOfCandidates: 1 })
   })
 })
 
@@ -194,7 +212,7 @@ describe('Downvoting threshold', () => {
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    await utils.comm.waitTillReady()
+    await utils.comm.waitUntilReady()
     const msg1El = await utils.comm.findMessage()
     await utils.comm.clickVoteAgainst(msg1El)
     await utils.comm.expectNotToBeRejectedMessage(msg1El)
@@ -247,6 +265,16 @@ describe('/help', () => {
 })
 
 describe('Voting', () => {
+  it('Allows to toggle a vote', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '2' })
+    await utils.comm.sendDoc1()
+    const msg = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteAgainst(msg)
+    await utils.comm.expectTotalVotes(msg, 0, 2)
+    await utils.comm.clickVoteInFavor(msg)
+    await utils.comm.expectTotalVotes(msg, 1, 2)
+  })
+
   it('Assigns the role after one vote when no threshold specified', async () => {
     await utils.comm.sendEnable(roleName1)
     await utils.comm.sendDoc1()
@@ -263,7 +291,7 @@ describe('Voting', () => {
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    await utils.comm.waitTillReady()
+    await utils.comm.waitUntilReady()
     const msg1 = await utils.comm.findMessage()
     await utils.comm.clickVoteInFavor(msg1)
     await utils.comm.expectInfo({ numOfDocs: 0 })

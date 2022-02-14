@@ -4,7 +4,7 @@ import parseUrls from 'url-regex-safe'
 import Managers from '../db/managers'
 import { ChSettingsData, SubmissionType, Submission, ChSetting } from '../db/dbTypes'
 import {
-  unpinMessageByMessageId, pinMessage, hasSomeRoles,
+  pinMessage, hasSomeRoles,
 } from '../discUtils'
 import config from '../config'
 import {
@@ -143,7 +143,9 @@ class MessageCreateHandler {
     }
   }
 
-  addToSubmissions = async (inputSubm: InputEntry): Promise<Submission | undefined> => {
+  private addToSubmissions = async (inputSubm: InputEntry): Promise<Submission | undefined> => {
+    // It also fetches the title in `messageUpdateHandler`, but if that happened before the entry was inserted,
+    // then it will be added here
     const titleDesc = await fetchSubmTitleDesc(this.msg, inputSubm.link, inputSubm.submission_type)
 
     const entry = await this.managers.submissions.upsert({
@@ -160,10 +162,6 @@ class MessageCreateHandler {
       hash: inputSubm.hash,
       ...titleDesc,
     })
-    if (entry?.old_message_id && entry.message_id !== entry.old_message_id) {
-      // await removeMessageByMessageId(this.msg, entry.old_message_id)
-      await unpinMessageByMessageId(this.msg, entry.old_message_id)
-    }
     return entry
   }
 }

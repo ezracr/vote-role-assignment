@@ -128,17 +128,22 @@ class MessageCreateHandler {
 
   process = async (): Promise<void> => {
     const { newMsg, entry } = await this.genMessage()
-    if (newMsg) {
+    if (newMsg && entry) {
       const botMsg = await this.msg.reply(newMsg)
       if (typeof newMsg !== 'string' && (newMsg.components?.length ?? 0) > 0) {
         await pinMessage(botMsg)
       }
-      if (entry) {
-        if (!entry.is_candidate) {
-          setTimeout(() => botMsg.delete().catch(() => { }), 2000)
-          await this.msg.react('✅')
+      if (!entry.is_candidate) {
+        setTimeout(() => botMsg.delete().catch(() => { }), 2000)
+        await this.msg.react('✅')
+      }
+      try {
+        const newSubm = await this.addToSubmissions({ ...entry, message_id: entry.is_candidate ? botMsg.id : null })
+        if (!newSubm) {
+          await botMsg.delete()
         }
-        await this.addToSubmissions({ ...entry, message_id: entry.is_candidate ? botMsg.id : null })
+      } catch (e: unknown) {
+        await botMsg.delete()
       }
     }
   }

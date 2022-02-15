@@ -8,7 +8,7 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init(true)
+  utils = await Utils.init()
   await utils.comm.login1()
 })
 

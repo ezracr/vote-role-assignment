@@ -373,10 +373,10 @@ export class CommUtils {
         const header = await this.selUtils.findElementByCss(`h2`, msg)
         if ((await header.getText()).toLowerCase().includes('bot')) {
           await this.waitForWasPinnedByMessageToDissapear()
+          await this.driver.sleep(50) // Takes a bit of time to insert it in the db in `MessageCreateHandler.addToSubmissions`
           return msg
         }
       } catch (e: unknown) { }
-      await this.driver.sleep(20)
     }
     throw new Error('Can\'t find the bot\'s message.')
   }

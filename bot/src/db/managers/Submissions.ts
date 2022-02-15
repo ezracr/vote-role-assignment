@@ -10,7 +10,7 @@ type SumbissionOptional = SetOptional<
   Submission, 'title' | 'description' | 'message_id' | 'usr_message_id' | 'is_candidate' | 'submission_type' | 'hash'
 >
 
-type UpsertInput = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
+type UpsertPayload = Omit<SumbissionOptional, 'id' | 'ch_settings' | 'created'> & { ch_sett_id: string }
 
 type UpdateFilter = Partial<Omit<Submission, 'ch_settings' | 'user'>> & Partial<Pick<ChSetting, 'channel_id'>>
 type UpdatePayload = Partial<Omit<Submission, 'message_id'>>
@@ -120,7 +120,7 @@ const genGetManyOrderSt = ({ orderBy, isAsc }: GetManyOrderBy = defOrderBy, filt
 class Submissions {
   users = new Users()
 
-  async upsert(data: UpsertInput): Promise<Submission | undefined> {
+  async upsert(data: UpsertPayload): Promise<Submission | undefined> {
     const { user, ...submission } = data
     const upUser = await this.users.upsert(user)
 

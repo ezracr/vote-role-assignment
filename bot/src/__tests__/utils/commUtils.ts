@@ -287,8 +287,8 @@ export class CommUtils {
   findMessageText = async (lastIndex: number | wd.WebElement = 0): Promise<string> => {
     const msg = typeof lastIndex === 'number' ? await this.findMessage(lastIndex + 1) : lastIndex
     try {
-      const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
-      return await msgBody.getText()
+      const msgBodyEl = await this.selUtils.findElementByCss('h2+div', msg)
+      return await msgBodyEl.getText()
     } catch (e: unknown) { }
     return msg.getText()
   }
@@ -332,28 +332,28 @@ export class CommUtils {
   }
 
   sendMessage = async (msg: string): Promise<void> => {
-    const txtField = await this.findTextField()
-    await txtField.sendKeys(msg)
-    await txtField.sendKeys(Key.ENTER)
+    const txtFieldEl = await this.findTextField()
+    await txtFieldEl.sendKeys(msg)
+    await txtFieldEl.sendKeys(Key.ENTER)
   }
 
   sendCommand = async (name: string, args?: SendCommandArgs): Promise<void> => {
-    const txtField = await this.findTextField()
-    await txtField.sendKeys(`/${name}`)
+    const txtFieldEl = await this.findTextField()
+    await txtFieldEl.sendKeys(`/${name}`)
     await this.driver.wait(wd.until.elementLocated(By.css('[data-list-id=channel-autocomplete]')), 5000)
-    await txtField.sendKeys(Key.ENTER)
+    await txtFieldEl.sendKeys(Key.ENTER)
     if (args?.req) {
       for (const [i, arg] of args.req.entries()) {
-        await this.processSendCommandReqArg(txtField, arg, i === args.req.length - 1)
+        await this.processSendCommandReqArg(txtFieldEl, arg, i === args.req.length - 1)
       }
     }
     if (args?.opt) {
       const keys = Object.keys(args.opt)
       for (const key of keys) {
-        await this.processSendCommandOptArg(txtField, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await this.processSendCommandOptArg(txtFieldEl, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
     }
-    await txtField.sendKeys(Key.ENTER)
+    await txtFieldEl.sendKeys(Key.ENTER)
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -368,13 +368,13 @@ export class CommUtils {
 
   findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
     for (let i = 0; i < 50 * 1; i++) {
-      const msg = await this.findMessage() // TODO
+      const msgEl = await this.findMessage() // TODO
       try {
-        const header = await this.selUtils.findElementByCss(`h2`, msg)
-        if ((await header.getText()).toLowerCase().includes('bot')) {
+        const headerEl = await this.selUtils.findElementByCss(`h2`, msgEl)
+        if ((await headerEl.getText()).toLowerCase().includes('bot')) {
           await this.waitForWasPinnedByMessageToDissapear()
           await this.driver.sleep(50) // Takes a bit of time to insert it in the db in `MessageCreateHandler.addToSubmissions`
-          return msg
+          return msgEl
         }
       } catch (e: unknown) { }
     }
@@ -402,8 +402,8 @@ export class CommUtils {
   )
 
   clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.findInFavorButton(msg)
-    await button.click()
+    const buttonEl = await this.findInFavorButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -412,8 +412,8 @@ export class CommUtils {
   )
 
   clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.findVoteAgainstButton(msg)
-    await button.click()
+    const buttonEl = await this.findVoteAgainstButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -422,8 +422,8 @@ export class CommUtils {
   )
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.findApproveButton(msg)
-    await button.click()
+    const buttonEl = await this.findApproveButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -432,8 +432,8 @@ export class CommUtils {
   )
 
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.findDismissButton(msg)
-    await button.click()
+    const buttonEl = await this.findDismissButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -483,9 +483,9 @@ export class CommUtils {
   }
 
   private parseTestStats = async (): Promise<any> => {
-    const msg = await this.findMessage()
-    const body = await this.findMessageWithTitleBody(msg)
-    const text = await body.getText()
+    const msgEl = await this.findMessage()
+    const bodyEl = await this.findMessageWithTitleBody(msgEl)
+    const text = await bodyEl.getText()
     return JSON.parse(text)
   }
 
@@ -521,7 +521,7 @@ export class CommUtils {
   }
 
   expectTotalVotes = async (msg: wd.WebElement, inFavor: number, maxVotes: number): Promise<void> => {
-    const field = await this.findTotalVotesField(msg)
-    await this.selUtils.expectContainsText(field, `${inFavor}/${maxVotes}`)
+    const fieldEl = await this.findTotalVotesField(msg)
+    await this.selUtils.expectContainsText(fieldEl, `${inFavor}/${maxVotes}`)
   }
 }

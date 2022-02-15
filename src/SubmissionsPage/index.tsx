@@ -8,17 +8,24 @@ import TabContext from '@mui/lab/TabContext'
 import TabList from '@mui/lab/TabList'
 import TabPanel from '@mui/lab/TabPanel'
 
+import ErrorPage from '../ErrorPage'
 import { ChSetting } from '../types'
 import CandidatesTab from './SubmTab'
 
 const SubmissionsPage: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>()
-  const { data: category } = useSWR<ChSetting>(`/api/categories/${channelId}`)
+  const { data: category, error } = useSWR<ChSetting, Error>(`/api/categories/${channelId}`)
 
   const [value, setValue] = React.useState('1')
 
   const handleChange = (event: React.SyntheticEvent, newValue: string): void => {
     setValue(newValue)
+  }
+
+  if (error) {
+    return (
+      <ErrorPage error={error} />
+    )
   }
 
   return (

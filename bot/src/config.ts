@@ -1,3 +1,4 @@
+import path from 'path'
 import dotenv from 'dotenv'
 
 import pjson from '../../package.json'
@@ -19,6 +20,8 @@ const config = {
     },
   ],
   baseUrl: process.env.BASE_URL ?? 'http://localhost:3001',
+  uploadsDirPath: path.join(process.cwd(), 'uploads/'),
+  uploadsUrl: process.env.UPLOADS_URL ?? '/uploads',
   commands: {
     enable: {
       name: 'enable',

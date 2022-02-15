@@ -6,6 +6,7 @@ services:
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_DB: bot
+    shm_size: 400mb
     command: postgres -c shared_buffers=400MB -c work_mem=10MB
     env_file: local.env
 
@@ -19,3 +20,5 @@ services:
     env_file: local.env
     depends_on:
       - postgres
+    # volumes:
+    #   - /path-to-bot/uploads:/app/uploads

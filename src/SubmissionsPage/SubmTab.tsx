@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 import LoadingButton from '@mui/lab/LoadingButton'
 
 import { PaginatedSubmissions, Submission } from '../types'
-import SubmTable from './Table'
+import SubmTable from './SubmTable/SubmTable'
 
 export type SubmTabProps = {
   isCandidate?: boolean;

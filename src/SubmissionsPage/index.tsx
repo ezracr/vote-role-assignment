@@ -1,4 +1,5 @@
 import React from 'react'
+import { Helmet } from 'react-helmet-async'
 import Typography from '@mui/material/Typography'
 import { useParams } from 'react-router-dom'
 import useSWR from 'swr'
@@ -8,12 +9,13 @@ import TabContext from '@mui/lab/TabContext'
 import TabList from '@mui/lab/TabList'
 import TabPanel from '@mui/lab/TabPanel'
 
+import ErrorPage from '../ErrorPage'
 import { ChSetting } from '../types'
 import CandidatesTab from './SubmTab'
 
 const SubmissionsPage: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>()
-  const { data: category } = useSWR<ChSetting>(`/api/categories/${channelId}`)
+  const { data: category, error } = useSWR<ChSetting, Error>(`/api/categories/${channelId}`)
 
   const [value, setValue] = React.useState('1')
 
@@ -21,10 +23,21 @@ const SubmissionsPage: React.FC = () => {
     setValue(newValue)
   }
 
+  if (error) {
+    return (
+      <ErrorPage error={error} />
+    )
+  }
+
+  const title = category?.data.title ?? ''
+
   return (
     <>
+      <Helmet>
+        <title>{title}</title>
+      </Helmet>
       <Typography variant="h1">
-        {category?.data.title ?? ''}
+        {title}
       </Typography>
       <Box sx={{ width: '100%', typography: 'body1' }}>
         <TabContext value={value}>

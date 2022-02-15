@@ -1,3 +1,4 @@
+import path from 'path'
 import wd from 'selenium-webdriver'
 
 import config from '../../config'
@@ -6,8 +7,6 @@ import { SubmissionTypeTitles } from '../../eventHandlers/submissionTypes'
 import { SelUtils } from './selUtils'
 
 /* eslint-disable no-await-in-loop, @typescript-eslint/no-unsafe-member-access, no-empty, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-
-const messageContainer = '[data-list-id=chat-messages]'
 
 type SendCommandArgsValListItem = { listItem: string }
 type SendCommandArgsVal = string | SendCommandArgsValListItem
@@ -38,6 +37,7 @@ type SetArgs = {
   'approval-threshold'?: string;
   'submission-threshold'?: string;
   'message-color'?: string;
+  'voting-against-threshold'?: string;
 } & AddRemoveArgs
 
 type UpdateUnsetArg = keyof SetArgs
@@ -65,8 +65,6 @@ const transformToListArg = (input?: Record<string, string>): SendCommandOptArgs 
     : undefined
 )
 
-const msgContainerCss = 'div>div:nth-of-type(2)'
-
 const replaceNewLinesWithWhiteSpaces = (msgTxt: string): string => msgTxt.replaceAll(/[\r\n]+/g, ' ')
 
 type ExpectOrNotRet<T extends boolean> = T extends true ? jest.Matchers<void, unknown> : jest.JestMatchers<unknown>;
@@ -76,8 +74,13 @@ function expectOrNot(isNot: boolean, ...args: Parameters<jest.Expect>): jest.Mat
   return isNot ? expect(...args).not : expect(...args) // eslint-disable-line jest/valid-expect
 }
 
-const dismissLocator = By.xpath('.//*[contains(text(), \'Dismiss\')]/ancestor::button')
-const approveLocator = By.xpath('.//*[contains(text(), \'Approve\')]/ancestor::button')
+const messageContainer = '[data-list-id=chat-messages]'
+
+const locators = {
+  dismissButton: By.xpath('.//*[contains(text(), \'Dismiss\')]/ancestor::button'),
+  approveButton: By.xpath('.//*[contains(text(), \'Approve\')]/ancestor::button'),
+  textField: By.css('[data-slate-editor=true]'),
+}
 
 export class CommUtils {
   private selUtils = new SelUtils(this.driver)
@@ -143,6 +146,8 @@ export class CommUtils {
     })
   )
 
+  sendDisable = (): Promise<void> => this.sendCommand('disable')
+
   private sendUpdate = (subCommand: 'set' | 'add' | 'subtract' | 'unset', optArgs: AddRemoveArgs): Promise<void> => (
     this.sendCommand(`${config.commands.update.name} ${subCommand}`, {
       opt: transformToListArg(optArgs),
@@ -195,6 +200,11 @@ export class CommUtils {
   openCloudShortUrlNorm = 'https://soundcloud.com/elijahwho/weusedtotalkeverynight'
   spotifyUrl = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg?si=ae3ee0c8fd734e88'
   spotifyUrlNorm = 'https://open.spotify.com/track/3JaEwcDTq45HAczyI0KEBg'
+  img1Name = 'img1.png'
+  img1Path = path.join(__dirname, '..', 'fixtures', this.img1Name)
+  img2Path = path.join(__dirname, '..', 'fixtures', 'img2.gif')
+  img3Path = path.join(__dirname, '..', 'fixtures', 'img3.jpg')
+  img4Path = path.join(__dirname, '..', 'fixtures', 'img4.webp')
 
   sendDoc1 = (isUniqueQuery = false): Promise<void> => this.sendMessage(`${this.doc1Url}${isUniqueQuery ? Date.now() : ''}`)
   sendDocPub1 = (): Promise<void> => this.sendMessage(this.docPub1Url)
@@ -206,16 +216,29 @@ export class CommUtils {
   sendOpenCloudShort1 = (): Promise<void> => this.sendMessage(this.openCloudShortUrl)
   sendSpotify1 = (): Promise<void> => this.sendMessage(this.spotifyUrl)
   // sendUnsupLink = (): Promise<void> => this.sendMessage('https://localhost:3000')
-
-  findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(By.css('[data-slate-editor=true]')), 5000)
-
-  findMessagesContainer = (): Promise<wd.WebElement> => {
-    return this.driver.wait(wd.until.elementLocated(By.css(messageContainer)), 5000)
-    // TODO wait for the messages to be fully populated
+  sendImg = async (imgPath: string): Promise<void> => {
+    const inputEl = await this.selUtils.findElementByCss('.file-input')
+    await inputEl.sendKeys(imgPath)
+    const txtField = await this.findTextField()
+    await txtField.sendKeys(Key.ENTER)
+    await this.waitUntilFileInMessageUploaded()
   }
-  findReplyMessageContainer = (msg: wd.WebElement): Promise<wd.WebElement> => (
-    this.selUtils.findElementByCss(msgContainerCss, msg)
-  )
+
+  findTextField = (): Promise<wd.WebElement> => this.driver.wait(wd.until.elementLocated(locators.textField), 5000)
+
+  waitUntilReady = async (): Promise<void> => {
+    await this.findTextField()
+  }
+
+  waitUntilFileInMessageUploaded = async (): Promise<void> => {
+    try {
+      const uploadLocator = By.css(`${messageContainer} [data-list-item-id^=chat-messages___Uploader]`)
+      const el = await this.driver.wait(wd.until.elementLocated(uploadLocator), 1000)
+      await this.driver.wait(wd.until.stalenessOf(el), 2000)
+    } catch (e: unknown) {
+      console.log(e) // eslint-disable-line no-console
+    }
+  }
 
   findMessageWithTitleBody = (msg: wd.WebElement): Promise<wd.WebElement> => (
     this.selUtils.findElementByCss(`h2+div`, msg)
@@ -264,8 +287,8 @@ export class CommUtils {
   findMessageText = async (lastIndex: number | wd.WebElement = 0): Promise<string> => {
     const msg = typeof lastIndex === 'number' ? await this.findMessage(lastIndex + 1) : lastIndex
     try {
-      const msgBody = await this.selUtils.findElementByCss('h2+div', msg)
-      return await msgBody.getText()
+      const msgBodyEl = await this.selUtils.findElementByCss('h2+div', msg)
+      return await msgBodyEl.getText()
     } catch (e: unknown) { }
     return msg.getText()
   }
@@ -309,28 +332,28 @@ export class CommUtils {
   }
 
   sendMessage = async (msg: string): Promise<void> => {
-    const txtField = await this.findTextField()
-    await txtField.sendKeys(msg)
-    await txtField.sendKeys(Key.ENTER)
+    const txtFieldEl = await this.findTextField()
+    await txtFieldEl.sendKeys(msg)
+    await txtFieldEl.sendKeys(Key.ENTER)
   }
 
   sendCommand = async (name: string, args?: SendCommandArgs): Promise<void> => {
-    const txtField = await this.findTextField()
-    await txtField.sendKeys(`/${name}`)
+    const txtFieldEl = await this.findTextField()
+    await txtFieldEl.sendKeys(`/${name}`)
     await this.driver.wait(wd.until.elementLocated(By.css('[data-list-id=channel-autocomplete]')), 5000)
-    await txtField.sendKeys(Key.ENTER)
+    await txtFieldEl.sendKeys(Key.ENTER)
     if (args?.req) {
       for (const [i, arg] of args.req.entries()) {
-        await this.processSendCommandReqArg(txtField, arg, i === args.req.length - 1)
+        await this.processSendCommandReqArg(txtFieldEl, arg, i === args.req.length - 1)
       }
     }
     if (args?.opt) {
       const keys = Object.keys(args.opt)
       for (const key of keys) {
-        await this.processSendCommandOptArg(txtField, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await this.processSendCommandOptArg(txtFieldEl, key, args.opt[key]!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
     }
-    await txtField.sendKeys(Key.ENTER)
+    await txtFieldEl.sendKeys(Key.ENTER)
     await this.waitToFinishProcessingInteraction()
   }
 
@@ -345,15 +368,15 @@ export class CommUtils {
 
   findAboutToAppearBotMessage = async (): Promise<wd.WebElement> => {
     for (let i = 0; i < 50 * 1; i++) {
-      const msg = await this.findMessage() // TODO
+      const msgEl = await this.findMessage() // TODO
       try {
-        const header = await this.selUtils.findElementByCss(`h2`, msg)
-        if ((await header.getText()).toLowerCase().includes('bot')) {
+        const headerEl = await this.selUtils.findElementByCss(`h2`, msgEl)
+        if ((await headerEl.getText()).toLowerCase().includes('bot')) {
           await this.waitForWasPinnedByMessageToDissapear()
-          return msg
+          await this.driver.sleep(50) // Takes a bit of time to insert it in the db in `MessageCreateHandler.addToSubmissions`
+          return msgEl
         }
       } catch (e: unknown) { }
-      await this.driver.sleep(20)
     }
     throw new Error('Can\'t find the bot\'s message.')
   }
@@ -362,67 +385,76 @@ export class CommUtils {
     this.selUtils.findElementByCss('[id^=message-accessories]', await this.findAboutToAppearBotMessage())
   )
 
-  findLatestBotMessage = async (): Promise<wd.WebElement> => {
-    const cont = await this.findMessagesContainer()
+  private findField = async (msg: wd.WebElement, title: string): Promise<wd.WebElement> => (
+    msg.findElement(By.xpath(`.//div[*[contains(text(), '${title}')]]/div[starts-with(@class, 'embedFieldValue')]`))
+  )
 
-    // :nth-last-of-type(-n + 10)
-    const lastTenHeaders = await this.selUtils.findElementsByCss('li', cont)
-    for (let i = lastTenHeaders.length - 1; i >= 0; i--) {
-      const msg = lastTenHeaders[i]
-      const text = (await msg?.getText())?.toLowerCase()
-      if (msg && text && text.includes('bot') && text.includes('voted in favor')) {
-        return msg
-        // const message = await header.findElement(By.xpath('//parent::li'))
-        // if (message) {
-        //   return message
-        // }
-      }
-    }
-    throw new Error('Can\'t find the bot\'s message.')
-  }
+  findSimilarEntriesField = async (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.findField(msg, 'Similar entries from')
+  )
+
+  findTotalVotesField = async (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.findField(msg, 'Total votes')
+  )
+
+  findInFavorButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
+  )
 
   clickVoteInFavor = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(1)', msg)
-    await button.click()
+    const buttonEl = await this.findInFavorButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
+
+  findVoteAgainstButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
+  )
+
+  clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
+    const buttonEl = await this.findVoteAgainstButton(msg)
+    await buttonEl.click()
+    await this.waitToFinishProcessingInteraction()
+  }
+
+  findApproveButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    msg.findElement(locators.approveButton)
+  )
 
   clickApprove = async (msg: wd.WebElement): Promise<void> => {
-    const button = await msg.findElement(approveLocator)
-    await button.click()
+    const buttonEl = await this.findApproveButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
+  findDismissButton = (msg: wd.WebElement): Promise<wd.WebElement> => (
+    msg.findElement(locators.dismissButton)
+  )
+
   clickDismiss = async (msg: wd.WebElement): Promise<void> => {
-    const button = await msg.findElement(dismissLocator)
-    await button.click()
+    const buttonEl = await this.findDismissButton(msg)
+    await buttonEl.click()
     await this.waitToFinishProcessingInteraction()
   }
 
   expectDismissButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectNotExists(dismissLocator, msg)
+    await this.selUtils.expectNotExists(locators.dismissButton, msg)
   }
 
   expectDismissButtonExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectExists(dismissLocator, msg)
+    await this.selUtils.expectExists(locators.dismissButton, msg)
   }
 
   expectApproveButtonNotExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectNotExists(approveLocator, msg)
+    await this.selUtils.expectNotExists(locators.approveButton, msg)
   }
 
   expectApproveButtonExists = async (msg: wd.WebElement): Promise<void> => {
-    await this.selUtils.expectExists(approveLocator, msg)
+    await this.selUtils.expectExists(locators.approveButton, msg)
   }
 
   expectNewVotingMessageToNotAppear = async (): Promise<void> => {
     await expect(this.findAboutToAppearBotEmbedMessageBody()).rejects.toThrow()
-  }
-
-  clickVoteAgainst = async (msg: wd.WebElement): Promise<void> => {
-    const button = await this.selUtils.findElementByCss('button:nth-of-type(2)', msg)
-    await button.click()
-    await this.waitToFinishProcessingInteraction()
   }
 
   expectChannelDisabled = async (): Promise<void> => {
@@ -451,9 +483,9 @@ export class CommUtils {
   }
 
   private parseTestStats = async (): Promise<any> => {
-    const msg = await this.findMessage()
-    const body = await this.findMessageWithTitleBody(msg)
-    const text = await body.getText()
+    const msgEl = await this.findMessage()
+    const bodyEl = await this.findMessageWithTitleBody(msgEl)
+    const text = await bodyEl.getText()
     return JSON.parse(text)
   }
 
@@ -478,5 +510,18 @@ export class CommUtils {
 
   expectMessageToBeVotingMessage = async (msg: wd.WebElement): Promise<void> => {
     await this.selUtils.expectContainsText(msg, 'Voted in favor')
+  }
+
+  expectToBeRejectedMessage = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectContainsText(msg, 'Rejected')
+  }
+
+  expectNotToBeRejectedMessage = async (msg: wd.WebElement): Promise<void> => {
+    await this.selUtils.expectNotContainsText(msg, 'Rejected')
+  }
+
+  expectTotalVotes = async (msg: wd.WebElement, inFavor: number, maxVotes: number): Promise<void> => {
+    const fieldEl = await this.findTotalVotesField(msg)
+    await this.selUtils.expectContainsText(fieldEl, `${inFavor}/${maxVotes}`)
   }
 }

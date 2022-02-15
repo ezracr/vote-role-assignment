@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 import config from '../config'
 import { typeToTitleRecord } from '../eventHandlers/submissionTypes'
 import { SendCommandArgs } from './utils/commUtils'
@@ -6,12 +8,13 @@ import Utils from './utils/Utils'
 let utils: Utils
 
 beforeAll(async () => {
-  utils = await Utils.init(true)
+  utils = await Utils.init()
   await utils.comm.login1()
 })
 
 beforeEach(async () => {
   await utils.comm.openTestChannel1()
+  await utils.comm.waitUntilReady()
 })
 
 afterEach(async () => {
@@ -65,11 +68,13 @@ describe('/enable', () => {
     await utils.comm.sendEnable(roleName1, {
       'message-color': '000000',
       'submitter-roles': roleName2,
+      'voting-against-threshold': '1',
     })
     await utils.comm.expectTestStats({
       chSett: {
         'message_color': '000000',
         'submitter_roles': [roleName2],
+        'voting_against_threshold': 1,
       },
     })
   })
@@ -97,6 +102,24 @@ describe('/enable', () => {
     const msgEl = await utils.comm.findAboutToAppearBotEmbedMessageBody()
     await utils.comm.clickVoteAgainst(msgEl)
     await utils.sel.expectContainsText(msgEl, 'Test Document')
+  })
+})
+
+describe('/disable', () => {
+  it('Does not accept submissions in a disabled channel', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDisable()
+    await utils.comm.sendDoc1(true)
+    await expect(utils.comm.findAboutToAppearBotMessage()).rejects.toThrow()
+  })
+
+  it('Does not remove submissions from a disabled channel', async () => {
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.sendDoc1(true)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendDisable()
+    await utils.comm.sendEnable(roleName1)
+    await utils.comm.expectInfo({ numOfCandidates: 1 })
   })
 })
 
@@ -140,11 +163,17 @@ describe('/update', () => {
   })
 
   it('Removes fields picked in `unset`', async () => {
-    await utils.comm.sendEnable(roleName1, { 'approval-threshold': '5', 'voting-threshold': '6' })
+    await utils.comm.sendEnable(roleName1, {
+      'approval-threshold': '5',
+      'voting-threshold': '6',
+      'voting-against-threshold': '1',
+    })
     await utils.comm.sendUpdateUnset('approval-threshold')
+    await utils.comm.sendUpdateUnset('voting-against-threshold')
     await utils.comm.expectTestStats({
       chSett: {
         'approval_threshold': 5,
+        'voting_against_threshold': 1,
       },
     }, { isNot: true })
     await utils.comm.expectTestStats({
@@ -155,16 +184,51 @@ describe('/update', () => {
   })
 })
 
+describe('Downvoting threshold', () => {
+  it('Disables the buttons and removes a submission when reached', async () => {
+    await utils.comm.sendEnable(roleName1, {
+      'voting-against-threshold': '1', 'approver-roles': roleName2, 'approval-threshold': '1',
+    })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteAgainst(msgEl)
+    const inFavorEl = await utils.comm.findInFavorButton(msgEl)
+    const againstEl = await utils.comm.findInFavorButton(msgEl)
+    const approveEl = await utils.comm.findApproveButton(msgEl)
+    const dismissEl = await utils.comm.findDismissButton(msgEl)
+    expect(await inFavorEl.isEnabled()).toBeFalsy()
+    expect(await againstEl.isEnabled()).toBeFalsy()
+    expect(await approveEl.isEnabled()).toBeFalsy()
+    expect(await dismissEl.isEnabled()).toBeFalsy()
+    await utils.comm.expectToBeRejectedMessage(msgEl)
+    await utils.comm.expectInfo({ numOfCandidates: 0 })
+  })
+
+  it('Subtracts upvotes from downvotes', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-against-threshold': '1' })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msgEl)
+    await utils.reInit()
+    await utils.comm.loginAnotherUser()
+    await utils.comm.openTestChannel1()
+    await utils.comm.waitUntilReady()
+    const msg1El = await utils.comm.findMessage()
+    await utils.comm.clickVoteAgainst(msg1El)
+    await utils.comm.expectNotToBeRejectedMessage(msg1El)
+  })
+})
+
 describe('Submission threshold', () => {
   it('Assings the role only when enough documents were sent', async () => {
     await utils.comm.sendEnable(roleName1, { 'submission-threshold': '2' })
     await utils.comm.sendDoc1()
-    const msg = await utils.comm.findAboutToAppearBotMessage()
-    await utils.comm.clickVoteInFavor(msg)
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msgEl)
     await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] }, { isNot: true })
     await utils.comm.sendSheet1()
-    const msg1 = await utils.comm.findAboutToAppearBotMessage()
-    await utils.comm.clickVoteInFavor(msg1)
+    const msg1El = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msg1El)
     await utils.comm.expectInfo({ numOfDocs: 2 })
     await utils.comm.expectTestStats({ roles: [roleName1.slice(1)] })
   })
@@ -201,25 +265,35 @@ describe('/help', () => {
 })
 
 describe('Voting', () => {
+  it('Allows to toggle a vote', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '2' })
+    await utils.comm.sendDoc1()
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteAgainst(msgEl)
+    await utils.comm.expectTotalVotes(msgEl, 0, 2)
+    await utils.comm.clickVoteInFavor(msgEl)
+    await utils.comm.expectTotalVotes(msgEl, 1, 2)
+  })
+
   it('Assigns the role after one vote when no threshold specified', async () => {
     await utils.comm.sendEnable(roleName1)
     await utils.comm.sendDoc1()
-    const msg = await utils.comm.findAboutToAppearBotMessage()
-    await utils.comm.clickVoteInFavor(msg)
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteInFavor(msgEl)
     await utils.comm.expectInfo({ numOfDocs: 1 })
   })
 
   it('Assigns the role when the threshold higher than (in favor - against) vote count', async () => {
     await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
     await utils.comm.sendDoc1()
-    const msg = await utils.comm.findAboutToAppearBotMessage()
-    await utils.comm.clickVoteAgainst(msg)
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.clickVoteAgainst(msgEl)
     await utils.reInit()
     await utils.comm.loginAnotherUser()
     await utils.comm.openTestChannel1()
-    await utils.comm.findMessagesContainer()
-    const msg1 = await utils.comm.findMessage()
-    await utils.comm.clickVoteInFavor(msg1)
+    await utils.comm.waitUntilReady()
+    const msg1El = await utils.comm.findMessage()
+    await utils.comm.clickVoteInFavor(msg1El)
     await utils.comm.expectInfo({ numOfDocs: 0 })
   })
 })
@@ -318,6 +392,22 @@ describe('Dismissal', () => {
     const msgEl = await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.clickDismiss(msgEl)
     await utils.sel.expectNotDisplayed(msgEl)
+  })
+
+  it('Removes dismissed images', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1', 'approver-roles': roleName2 })
+    await utils.comm.sendAddRole2()
+    await utils.comm.sendImg(utils.comm.img1Path)
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    const imgEl = await utils.sel.findElementByCss('a img', msgEl)
+    const srcAttr = await imgEl.getAttribute('src')
+    const lastQueryStart = srcAttr.lastIndexOf('?')
+    const imgName = srcAttr.slice(srcAttr.lastIndexOf('/') + 1, lastQueryStart === -1 ? undefined : lastQueryStart)
+    const imgUrl = `http://localhost:3000/uploads/${imgName}`
+    const imgRes = await axios.get(imgUrl)
+    expect(imgRes.status).toBe(200)
+    await utils.comm.clickDismiss(msgEl)
+    await expect(axios.get(imgUrl)).rejects.toThrow()
   })
 })
 
@@ -420,6 +510,28 @@ describe('Submission types', () => {
     await utils.comm.findAboutToAppearBotMessage()
     await utils.comm.expectInfo({ numOfCandidates: 0, numOfDocs: 1 })
     await utils.comm.expectTestStats({ numOfPins: 0 })
+  })
+
+  it('Accepts jpg, png, gif, webp attachments', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendImg(utils.comm.img1Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img2Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img3Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img4Path)
+    await utils.comm.findAboutToAppearBotMessage()
+  })
+
+  it('Recognises duplicate image submissions', async () => {
+    await utils.comm.sendEnable(roleName1, { 'voting-threshold': '1' })
+    await utils.comm.sendImg(utils.comm.img1Path)
+    await utils.comm.findAboutToAppearBotMessage()
+    await utils.comm.sendImg(utils.comm.img2Path) // takes the first frame of a gif
+    const msgEl = await utils.comm.findAboutToAppearBotMessage()
+    const similarEl = await utils.comm.findSimilarEntriesField(msgEl)
+    expect(await utils.sel.getInnerHtml(similarEl)).toContain(utils.comm.img1Name)
   })
 })
 

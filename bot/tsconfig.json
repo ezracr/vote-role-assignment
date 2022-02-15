@@ -99,5 +99,5 @@
     "skipLibCheck": true,                                /* Skip type checking all .d.ts files. */
     "noErrorTruncation": true,
   },
-  "include": ["./src", "./jest/jest.d.ts"],
+  "include": ["./src", "./jest/jest.d.ts", "./libs.d.ts"],
 }

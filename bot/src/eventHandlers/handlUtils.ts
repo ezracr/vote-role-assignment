@@ -1,32 +1,40 @@
-import { Message, MessageButton, PartialMessage } from 'discord.js'
+import fs from 'fs/promises'
+import path from 'path'
+import { Message, MessageAttachment, MessageButton, PartialMessage } from 'discord.js'
 import axios from 'axios'
+import sharpPhash from 'sharp-phash'
 
 import { ChSettingsData, SubmissionType } from '../db/dbTypes'
+import config from '../config'
 
-export const genLikeButton = (count = 0): MessageButton => new MessageButton({
+export const genLikeButton = ({ count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'like',
   label: String(count),
+  disabled,
   emoji: '✅',
 })
 
-export const genDislikeButton = (count = 0): MessageButton => new MessageButton({
+export const genDislikeButton = ({ count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'dislike',
   label: String(count),
+  disabled,
   emoji: '❌',
 })
 
-export const genApproveButton = (totalCount = 0, count = 0): MessageButton => new MessageButton({
+export const genApproveButton = ({ totalCount = 0, count = 0, disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'approve',
+  disabled,
   label: `Approve (${totalCount > 0 ? `${count}/${totalCount}` : count})`,
   // emoji: '🔥',
 })
 
-export const genDismissButton = (): MessageButton => new MessageButton({
+export const genDismissButton = ({ disabled = false } = {}): MessageButton => new MessageButton({
   style: 'SECONDARY',
   customId: 'dismiss',
+  disabled,
   label: `Dismiss`,
 })
 
@@ -62,7 +70,7 @@ export const extractTitleDescFromFirstMsgEmbed = (msg: Message<boolean> | Partia
 export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: string, type?: SubmissionType): Promise<TitleDesc> => {
   try {
     const titleDesc = extractTitleDescFromFirstMsgEmbed(msg)
-    if (titleDesc.title) {
+    if (titleDesc.title || titleDesc.description) {
       return titleDesc
     }
     if ((type === 'gsheet' || type === 'gdoc') && url.includes('/e/')) {
@@ -78,4 +86,19 @@ export const fetchSubmTitleDesc = async (msg: Message<boolean> | null, url: stri
     console.log(e) // eslint-disable-line no-console
   }
   return {}
+}
+
+type ProcessImageOut = {
+  fileName: string;
+  hash: string;
+  buffer: Buffer;
+}
+
+export const processImage = async (attachment: MessageAttachment): Promise<ProcessImageOut> => {
+  const request = await axios.get<Buffer>(attachment.url, { responseType: 'arraybuffer' })
+  const hash = await sharpPhash(request.data)
+  const fileName = `${attachment.id}-${attachment.name}`.toLowerCase()
+  await fs.writeFile(path.join(config.uploadsDirPath, fileName), request.data, { encoding: 'binary' })
+
+  return { fileName, hash, buffer: request.data }
 }

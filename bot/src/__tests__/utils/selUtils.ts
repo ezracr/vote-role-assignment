@@ -5,8 +5,6 @@ import wd, { Locator } from 'selenium-webdriver'
 export class SelUtils { // eslint-disable-line import/prefer-default-export
   constructor(private driver: wd.WebDriver) { } // eslint-disable-line no-useless-constructor
 
-  getTextContUntrimmed = (el: wd.WebElement): Promise<string> => el.getAttribute('textContent')
-
   getInnerHtml = (el: wd.WebElement): Promise<string> => el.getAttribute('innerHTML')
 
   findElementByCss = async (cssSelector: string | Locator, context?: string | wd.WebElement): Promise<wd.WebElement> => {
@@ -67,22 +65,4 @@ export class SelUtils { // eslint-disable-line import/prefer-default-export
     const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
     expect(await el.getText()).not.toContain(text)
   }
-
-  waitUntilClickable = async (cssSelectorOrEl: string | wd.WebElement, timeout = 100): Promise<wd.WebElement> => {
-    const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
-    await this.driver.wait(wd.until.elementIsVisible(el), timeout)
-    await this.driver.wait(wd.until.elementIsEnabled(el), timeout)
-    return el
-  }
-
-  private sendRepeatedKeys = async (
-    cssSelectorOrEl: string | wd.WebElement, numOfPos: number, arrowKeyCode: string,
-  ): Promise<void> => {
-    const el = await this.cssSelectorOrElToEl(cssSelectorOrEl)
-    await el.sendKeys(...new Array(numOfPos).fill(arrowKeyCode)) // eslint-disable-line @typescript-eslint/no-unsafe-argument
-  }
-
-  arrowDown = async (cssSelectorOrEl: string | wd.WebElement, numOfPos = 1): Promise<void> => (
-    this.sendRepeatedKeys(cssSelectorOrEl, numOfPos, Key.ARROW_DOWN)
-  )
 }

@@ -7,10 +7,15 @@ export default function apiMiddleware(app: Application): void {
     try {
       const managers = new Managers()
       const setting = (await managers.settings.getMany({ channel_id: req.params.chId }))[0]
-      res.json(setting ?? null)
+
+      if (setting) {
+        res.json(setting)
+      } else {
+        res.status(404).json(null)
+      }
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
-      res.json(null)
+      res.status(500).json(null)
     }
   })
 
@@ -21,7 +26,7 @@ export default function apiMiddleware(app: Application): void {
       res.json(settings)
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
-      res.json(null)
+      res.status(500).json(null)
     }
   })
 
@@ -38,7 +43,7 @@ export default function apiMiddleware(app: Application): void {
       res.json(subm)
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
-      res.json(null)
+      res.status(500).json(null)
     }
   })
 }

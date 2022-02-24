@@ -78,13 +78,6 @@
       "last 1 safari version"
     ]
   },
-  "lint-staged": {
-    "*.ts": [
-      "kcd-scripts lint --fix --max-warnings=0",
-      "git add --force"
-    ]
-  },
-  "pre-commit": "lint:staged",
   "engines": {
     "node": ">=16"
   }

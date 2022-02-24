@@ -13,20 +13,6 @@ class Users {
 
     return rows[0]
   }
-
-  async delById(data: Pick<User, 'id'>, client?: PoolClient, savepoint?: string): Promise<User['id'] | undefined> {
-    try {
-      await (client ?? pool).query<User>(`
-        DELETE FROM users us WHERE us."id" = $1
-    `, [data.id])
-
-      return data.id
-    } catch (e: unknown) {
-      if (client && savepoint) {
-        await client.query(`ROLLBACK TO ${savepoint}`)
-      }
-    }
-  }
 }
 
 export default Users

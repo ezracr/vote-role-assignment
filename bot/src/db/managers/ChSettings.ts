@@ -90,6 +90,8 @@ class ChSettings {
     } catch (e: unknown) {
       console.log(e) // eslint-disable-line no-console
       await client.query('ROLLBACK')
+    } finally {
+      client.release()
     }
   }
 
@@ -113,36 +115,48 @@ class ChSettings {
 
   async removeDataField(channelId: string, fieldName: keyof ChSettingsData): Promise<ChSetting | undefined> {
     const client = await pool.connect()
-    await client.query('BEGIN')
-    const { rows: [oldChSett] } = await client.query<ChSetting>(`
-      SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
-    `, [channelId])
-    if (oldChSett?.data) {
-      delete oldChSett.data[fieldName] // eslint-disable-line @typescript-eslint/no-dynamic-delete
-      const { rows: [row] } = await client.query<ChSetting>(`
+    try {
+      await client.query('BEGIN')
+      const { rows: [oldChSett] } = await client.query<ChSetting>(`
+        SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
+      `, [channelId])
+      if (oldChSett?.data) {
+        delete oldChSett.data[fieldName] // eslint-disable-line @typescript-eslint/no-dynamic-delete
+        const { rows: [row] } = await client.query<ChSetting>(`
         UPDATE channel_settings sts SET data = $2
         WHERE sts."channel_id" = $1 AND sts."is_disabled" = FALSE
         RETURNING *
       `, [channelId, oldChSett.data])
+        await client.query('COMMIT')
+        return row
+      }
       await client.query('COMMIT')
-      return row
+    } catch (e: unknown) {
+      console.log(e) // eslint-disable-line no-console
+    } finally {
+      client.release()
     }
-    await client.query('COMMIT')
   }
 
   async updateDataArrayFields(channelId: string, data: Partial<ChSettingsData>, isPop = false): Promise<ChSetting | undefined> {
     const client = await pool.connect()
     await client.query('BEGIN')
-    const { rows: [oldChSett] } = await client.query<ChSetting>(`
-      SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
-    `, [channelId])
-    if (oldChSett?.data) {
-      const mergedData = modifyArrVals(oldChSett.data, data, isPop)
-      const chSettNew = this.updateByChId(channelId, { data: mergedData })
+    try {
+      const { rows: [oldChSett] } = await client.query<ChSetting>(`
+        SELECT "data" FROM channel_settings cs WHERE cs."channel_id" = $1 FOR UPDATE
+      `, [channelId])
+      if (oldChSett?.data) {
+        const mergedData = modifyArrVals(oldChSett.data, data, isPop)
+        const chSettNew = await this.updateByChId(channelId, { data: mergedData })
+        await client.query('COMMIT')
+        return chSettNew
+      }
       await client.query('COMMIT')
-      return chSettNew
+    } catch (e: unknown) {
+      console.log(e) // eslint-disable-line no-console
+    } finally {
+      client.release()
     }
-    await client.query('COMMIT')
   }
 }
 

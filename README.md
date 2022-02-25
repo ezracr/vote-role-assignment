@@ -15,7 +15,7 @@ A discord bot that assigns the specified role automatically provided enough vote
 - In the roles hierarchy move the bot's role above the roles it should be able to assign.
 
 ### DB
-If `pgdata` does not exists, it will be created and automatically populated with `src/db/sql/init.sql`
+If `pgdata` does not exists, it will be created and automatically populated with `bot/src/db/sql/init.sql`
 
 ### `local.env` structure
 ```
@@ -30,8 +30,8 @@ If the port is different, then you need to modify it in `docker-compose.yml` and
 ### `.env.bot.development` structure
 If you want to test the project, in addition to the fields above add (name should be user's server name without `@`):
 ```bash
-TEST_USER_NAME1=
-TEST_USER_ID1=
+TEST_USER_NAME1=     # how the name is displayed on the server, for example 'ezra (test)'
+TEST_USER_ID1=       # for example '858792788937801728'
 TEST_MAIL1=
 TEST_PASS1=
 TEST_USER_NAME2=

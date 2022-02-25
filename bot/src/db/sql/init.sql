@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS documents(
   "is_candidate" boolean DEFAULT false,
   "message_id" text COLLATE "C",
   "usr_message_id" text COLLATE "C",
+  "hash" bit(64),
   UNIQUE("link")
 );
 
